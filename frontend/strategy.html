@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阶梯动态持有策略系统</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<style>
+:root {
+  --bg-primary: #0f1923;
+  --bg-secondary: #1a2a3a;
+  --bg-card: #1e3044;
+  --bg-card-alt: #243850;
+  --border-color: #2a4058;
+  --border-light: #3a5a78;
+  --text-primary: #e8edf2;
+  --text-secondary: #a0b4c8;
+  --text-muted: #6a8aaa;
+  --text-bright: #ffffff;
+  --color-bull: #00d4aa;
+  --color-bear: #ff4757;
+  --color-warn: #ffa940;
+  --color-buy: #00d4aa;
+  --color-sell: #ff4757;
+  --color-hold: #4dabf7;
+  --color-wait: #8c8c8c;
+  --color-stop: #cf1322;
+  --radius: 8px;
+  --transition: 0.2s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+}
+.container { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+/* Header */
+.header { 
+  display: flex; align-items: center; justify-content: space-between; 
+  padding: 16px 0 12px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
+}
+.header-title { display: flex; align-items: center; gap: 12px; }
+.header-title h1 { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+.header-title .strategy-badge { 
+  background: #1a3a5a; color: var(--color-hold); font-size: 11px;
+  padding: 3px 10px; border-radius: 20px; border: 1px solid var(--color-hold);
+}
+.header-info { display: flex; align-items: center; gap: 20px; font-size: 13px; color: var(--text-secondary); }
+.header-info .label { color: var(--text-muted); }
+.header-info .value { color: var(--text-bright); font-weight: 600; }
+
+/* Strategy Banner */
+.strategy-banner {
+  background: linear-gradient(135deg, #0a1e3a 0%, #142a4a 50%, #0a1e3a 100%);
+  border: 1px solid var(--border-color); border-radius: var(--radius);
+  padding: 16px 20px; margin-bottom: 20px;
+  display: grid; grid-template-columns: auto 1fr auto; gap: 20px; align-items: center;
+}
+.strategy-rule { display: flex; gap: 8px; flex-wrap: wrap; }
+.rule-step { 
+  display: flex; align-items: center; gap: 6px;
+  background: var(--bg-card); padding: 4px 12px; border-radius: 20px; font-size: 12px;
+}
+.rule-step .arrow { color: var(--text-muted); } .rule-step .highlight { color: var(--color-hold); font-weight: 600; }
+.strategy-params { display: flex; gap: 12px; }
+.param-tag {
+  display: flex; align-items: center; gap: 4px; font-size: 12px;
+  background: var(--bg-card-alt); padding: 3px 10px; border-radius: 4px;
+}
+.param-tag .key { color: var(--text-muted); } .param-tag .val { color: var(--text-bright); font-weight: 600; }
+
+/* Stats Bar */
+.stats-bar {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius);
+  padding: 12px 16px; text-align: center;
+}
+.stat-card .stat-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+.stat-card .stat-value { font-size: 24px; font-weight: 700; }
+.stat-card .stat-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+/* Tabs */
+.tabs { display: flex; gap: 0; margin-bottom: 20px; border-bottom: 2px solid var(--border-color); }
+.tab-btn {
+  padding: 10px 20px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--text-muted); transition: all var(--transition);
+  position: relative; border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active { color: var(--color-hold); border-bottom-color: var(--color-hold); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Signal Cards */
+.signal-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px;
+}
+.signal-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius); padding: 16px; transition: all var(--transition);
+}
+.signal-card:hover { border-color: var(--border-light); }
+.signal-card.stock-stop { border-left: 3px solid var(--color-stop); }
+.signal-card.stock-sell { border-left: 3px solid var(--color-sell); }
+.signal-card.stock-hold { border-left: 3px solid var(--color-hold); }
+.signal-card.stock-buy { border-left: 3px solid var(--color-buy); }
+.signal-card.stock-wait { border-left: 3px solid var(--color-wait); }
+
+.sc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.sc-name { font-size: 16px; font-weight: 700; color: var(--text-bright); }
+.sc-code { font-size: 11px; color: var(--text-muted); }
+.sc-action {
+  padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700;
+}
+.sc-action.act-buy { background: #0a3a2a; color: var(--color-buy); }
+.sc-action.act-sell { background: #3a1a1a; color: var(--color-sell); }
+.sc-action.act-hold { background: #0a2a4a; color: var(--color-hold); }
+.sc-action.act-wait { background: #2a2a2a; color: var(--color-wait); }
+.sc-action.act-stop { background: #4a0a0a; color: #ff6b7a; }
+.sc-action.act-buy { background: #0a3a2a; color: var(--color-buy); }
+.sc-action.act-buy { background: #0a3a2a; color: var(--color-buy); }
+
+.sc-price-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+.sc-price { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+.sc-profit { font-size: 14px; font-weight: 600; }
+.sc-profit.up { color: var(--color-bull); } .sc-profit.down { color: var(--color-bear); }
+
+.sc-metrics { 
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
+  padding: 10px 0; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
+}
+.sc-m .sc-m-label { font-size: 10px; color: var(--text-muted); }
+.sc-m .sc-m-value { font-size: 14px; font-weight: 600; margin-top: 2px; }
+
+.sc-reason {
+  font-size: 12px; color: var(--text-secondary); padding: 6px 8px;
+  background: var(--bg-secondary); border-radius: 4px; margin-top: 6px;
+}
+
+/* Checkpoint Progress */
+.checkpoint-bar {
+  display: flex; align-items: center; gap: 2px; margin: 8px 0;
+}
+.cp-node {
+  flex: 1; text-align: center; padding: 4px 2px;
+  font-size: 10px; border-radius: 3px;
+}
+.cp-node.passed { background: #0a3a2a; color: var(--color-buy); }
+.cp-node.active { background: #1a3a5a; color: var(--color-hold); font-weight: 700; }
+.cp-node.future { background: var(--bg-secondary); color: var(--text-muted); }
+.cp-node.failed { background: #3a1a1a; color: var(--color-sell); }
+.cp-arrow { color: var(--text-muted); font-size: 10px; }
+
+/* Holdings Table */
+.holdings-table { width: 100%; border-collapse: collapse; }
+.holdings-table th {
+  background: var(--bg-secondary); color: var(--text-muted); font-size: 11px;
+  font-weight: 600; text-transform: uppercase; padding: 10px 14px;
+  text-align: left; border-bottom: 2px solid var(--border-color); white-space: nowrap;
+}
+.holdings-table td {
+  padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary); vertical-align: middle;
+}
+.holdings-table tr:hover td { color: var(--text-primary); }
+.holdings-table tr.row-stop td { background: rgba(207,19,34,0.05); }
+.holdings-table tr.row-sell td { background: rgba(255,71,87,0.05); }
+.holdings-table tr.row-hold td { background: rgba(77,171,247,0.03); }
+
+.table-action {
+  padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600;
+  white-space: nowrap;
+}
+.table-action.act-buy { background: #0a3a2a; color: var(--color-buy); }
+.table-action.act-sell { background: #3a1a1a; color: var(--color-sell); }
+.table-action.act-hold { background: #0a2a4a; color: var(--color-hold); }
+.table-action.act-wait { background: #2a2a2a; color: var(--color-wait); }
+.table-action.act-stop { background: #4a0a0a; color: #ff6b7a; }
+
+/* Buy Signals Section */
+.buy-signals { margin-top: 20px; }
+.buy-signals h3 { font-size: 15px; color: var(--text-secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+/* Loading */
+.loading { 
+  text-align: center; padding: 40px; color: var(--text-muted); font-size: 14px;
+}
+.spinner { 
+  display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border-color);
+  border-top-color: var(--color-hold); border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin-bottom: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Error */
+.error-msg {
+  background: rgba(207,19,34,0.1); border: 1px solid rgba(207,19,34,0.3);
+  border-radius: var(--radius); padding: 16px; text-align: center;
+  color: #ff6b7a; font-size: 14px;
+}
+
+@media(max-width:768px) {
+  .stats-bar { grid-template-columns: repeat(3, 1fr); }
+  .strategy-banner { grid-template-columns: 1fr; gap: 10px; }
+  .signal-grid { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .header-info { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-title">
+      <h1>📊 阶梯动态持有策略</h1>
+      <span class="strategy-badge">STEP_LOCK V1</span>
+    </div>
+    <div class="header-info">
+      <span><span class="label">评估日期</span> <span class="value" id="evalDate">-</span></span>
+      <span><span class="label">数据状态</span> <span class="value" id="dataStatus">-</span></span>
+      <button onclick="refreshData()" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-color);padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;">🔄 刷新</button>
+    </div>
+  </div>
+
+  <!-- Strategy Banner -->
+  <div class="strategy-banner" id="strategyBanner">
+    <div style="font-size:13px;color:var(--text-muted);white-space:nowrap;">📋 规则</div>
+    <div class="strategy-rule">
+      <div class="rule-step">买入 <span class="highlight">评分≥30</span></div>
+      <div class="rule-step"><span class="arrow">→</span> 5日检查 <span class="highlight">评分<20则止损</span></div>
+      <div class="rule-step"><span class="arrow">→</span> 10日检查 <span class="highlight">评分≥20</span></div>
+      <div class="rule-step"><span class="arrow">→</span> 20日检查 <span class="highlight">评分≥20</span></div>
+      <div class="rule-step"><span class="arrow">→</span> 30日检查 <span class="highlight">评分≥30</span></div>
+      <div class="rule-step"><span class="arrow">→</span> 每10日再评估</div>
+      <div class="rule-step">🛑 回撤止损 <span class="highlight">从最高点10%</span></div>
+      <div class="rule-step">⏰ 最久 <span class="highlight">60日</span></div>
+    </div>
+    <div class="strategy-params" id="strategyParams"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card"><div class="stat-label">持仓</div><div class="stat-value" id="statHoldings">-</div><div class="stat-sub">只</div></div>
+    <div class="stat-card"><div class="stat-label">🟢 持有</div><div class="stat-value" style="color:var(--color-hold)" id="statHold">-</div><div class="stat-sub">继续持有</div></div>
+    <div class="stat-card"><div class="stat-label">🔴 卖出</div><div class="stat-value" style="color:var(--color-sell)" id="statSell">-</div><div class="stat-sub">建议平仓</div></div>
+    <div class="stat-card"><div class="stat-label">🛑 止损</div><div class="stat-value" style="color:#ff6b7a" id="statStop">-</div><div class="stat-sub">触发止损</div></div>
+    <div class="stat-card"><div class="stat-label">🟢 买入</div><div class="stat-value" style="color:var(--color-buy)" id="statBuy">-</div><div class="stat-sub">可买入</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('holdings', this)">📋 持仓买卖信号</button>
+    <button class="tab-btn" onclick="switchTab('signals', this)">🔍 全量选股信号</button>
+    <button class="tab-btn" onclick="switchTab('buy', this)">🟢 买入候选</button>
+  </div>
+
+  <!-- Tab: 持仓买卖信号 -->
+  <div class="tab-content active" id="tabHoldings">
+    <div id="holdingsContent"><div class="loading"><div class="spinner"></div>加载持仓信号...</div></div>
+  </div>
+
+  <!-- Tab: 全量信号 -->
+  <div class="tab-content" id="tabSignals">
+    <div id="signalsContent"><div class="loading"><div class="spinner"></div>加载全量信号...</div></div>
+  </div>
+
+  <!-- Tab: 买入候选 -->
+  <div class="tab-content" id="tabBuy">
+    <div id="buyContent"><div class="loading"><div class="spinner"></div>加载买入候选...</div></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api/v1/management/strategy';
+let API_KEY = '';
+const _cache_buster = () => '?_t=' + Date.now();
+
+function api(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return fetch(API_BASE + path + sep + '_t=' + Date.now(), { headers: {} })
+    .then(r => r.json())
+    .then(d => d.code === 0 ? d.data : Promise.reject(d.error || d.message));
+}
+
+// ─── 策略规则描述 ───
+function getCheckpointLabel(cp, holdDays) {
+  if (cp === 0) return { label: '买入', desc: '等待买入信号' };
+  if (cp === 10) {
+    const checked = holdDays >= 10 ? '✅' : '⏳';
+    return { label: `P1-10日${checked}`, desc: holdDays >= 10 ? '已过10日检查' : `距10日检查还有${10-holdDays}日` };
+  }
+  if (cp === 20) return { label: 'P2-20日', desc: holdDays >= 20 ? '已过20日检查' : `距20日检查还有${20-holdDays}日` };
+  if (cp === 30) return { label: 'P3-30日', desc: holdDays >= 30 ? '已过30日检查' : `距30日检查还有${30-holdDays}日` };
+  return { label: '30日+', desc: '定期再评估中' };
+}
+
+// ─── 渲染 ───
+function renderSignalCards(signals, containerId) {
+  const container = document.getElementById(containerId);
+  if (!signals || signals.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">暂无信号数据</div>';
+    return;
+  }
+
+  let html = '<div class="signal-grid">';
+  for (const s of signals) {
+    const actionClass = {
+      'STOP_LOSS': 'act-stop', 'SELL': 'act-sell',
+      'HOLD': 'act-hold', 'BUY': 'act-buy', 'WAIT': 'act-wait'
+    }[s.action] || 'act-wait';
+    const stockClass = {
+      'STOP_LOSS': 'stock-stop', 'SELL': 'stock-sell',
+      'HOLD': 'stock-hold', 'BUY': 'stock-buy', 'WAIT': 'stock-wait'
+    }[s.action] || 'stock-wait';
+    const actionLabel = {
+      'STOP_LOSS': '🛑 止损', 'SELL': '🔴 卖出',
+      'HOLD': '⏸️ 持有', 'BUY': '🟢 买入', 'WAIT': '⏳ 等待'
+    }[s.action] || s.action;
+    const profitClass = s.profit_pct >= 0 ? 'up' : 'down';
+
+    // 检查点渲染
+    let cpHtml = '';
+    if (s.holding_status === 'HOLDING') {
+      const checkpoints = [
+        { name: '买入', score: null, threshold: null, time: 0 },
+        { name: 'P1(10日)', score: null, threshold: s.stop_loss_pct > 10 ? 10 : 10, time: 10 },
+        { name: 'P2(20日)', score: null, threshold: 20, time: 20 },
+        { name: 'P3(30日)', score: null, threshold: 30, time: 30 },
+      ];
+      cpHtml = '<div class="checkpoint-bar">';
+      for (let i = 0; i < checkpoints.length; i++) {
+        const cp = checkpoints[i];
+        let statusClass = 'future';
+        if (s.hold_days >= cp.time && s.action === 'HOLD') statusClass = 'passed';
+        else if (s.hold_days >= cp.time && s.action === 'SELL' && s.current_checkpoint === cp.time) statusClass = 'failed';
+        else if (s.hold_days >= cp.time) statusClass = 'passed';
+        else if (s.current_checkpoint === cp.time && s.hold_days < cp.time) statusClass = 'active';
+        cpHtml += `<div class="cp-node ${statusClass}">${cp.name}</div>`;
+        if (i < checkpoints.length - 1) cpHtml += '<div class="cp-arrow">›</div>';
+      }
+      cpHtml += '</div>';
+    }
+
+    html += `
+      <div class="signal-card ${stockClass}">
+        <div class="sc-top">
+          <div>
+            <div class="sc-name">${s.stock_name} <span class="sc-code">${s.ts_code}</span></div>
+          </div>
+          <div class="sc-action ${actionClass}">${actionLabel}</div>
+        </div>
+        <div class="sc-price-row">
+          <span class="sc-price">¥${s.current_price.toFixed(2)}</span>
+          ${s.price_source === 'realtime' ? '<span style="font-size:11px;background:rgba(0,212,170,0.1);color:var(--color-bull);padding:2px 8px;border-radius:8px;">🟢实时</span>' : ''}
+          ${s.profit_pct !== 0 ? `<span class="sc-profit ${profitClass}">${s.profit_pct > 0 ? '+' : ''}${s.profit_pct.toFixed(2)}%</span>` : ''}
+        </div>
+        <div class="sc-metrics">
+          <div class="sc-m"><div class="sc-m-label">评分</div><div class="sc-m-value">${s.buy_score.toFixed(1)}</div></div>
+          <div class="sc-m"><div class="sc-m-label">持有天数</div><div class="sc-m-value">${s.hold_days}日</div></div>
+          <div class="sc-m"><div class="sc-m-label">回撤</div><div class="sc-m-value" style="color:${s.drawdown_pct < 0 ? 'var(--color-bear)' : 'var(--color-bull)'}">${s.drawdown_pct.toFixed(1)}%</div></div>
+        </div>
+        ${cpHtml}
+        ${s.reduce_flag ? '<div style="margin-top:4px;font-size:12px;background:rgba(255,169,64,0.1);color:var(--color-warn);padding:4px 8px;border-radius:4px;">⚠️ 触发减仓线：建议减半仓</div>' : ''}
+        <div class="sc-reason">💬 ${s.action_reason}</div>
+      </div>
+    `;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function renderTable(signals, containerId) {
+  const container = document.getElementById(containerId);
+  if (!signals || signals.length === 0) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);">暂无数据</div>';
+    return;
+  }
+
+  let html = `<table class="holdings-table"><thead><tr>
+    <th>股票</th><th>评分</th><th>持有期</th><th>成本</th><th>现价</th><th>盈亏</th><th>回撤</th><th>检查点</th><th>信号</th><th>操作理由</th>
+  </tr></thead><tbody>`;
+  for (const s of signals) {
+    const rowClass = { 'STOP_LOSS': 'row-stop', 'SELL': 'row-sell', 'HOLD': 'row-hold' }[s.action] || '';
+    const actClass = { 'STOP_LOSS': 'act-stop', 'SELL': 'act-sell', 'HOLD': 'act-hold', 'BUY': 'act-buy', 'WAIT': 'act-wait' }[s.action] || '';
+    const actLabel = { 'STOP_LOSS': '🛑止损', 'SELL': '🔴卖出', 'HOLD': '⏸️持有', 'BUY': '🟢买入', 'WAIT': '⏳等待' }[s.action] || s.action;
+    const cp = getCheckpointLabel(s.current_checkpoint, s.hold_days);
+    html += `<tr class="${rowClass}">
+      <td><strong>${s.stock_name}</strong><br><span style="font-size:11px;color:var(--text-muted)">${s.ts_code}</span></td>
+      <td>${s.buy_score.toFixed(1)}</td>
+      <td>${s.hold_days}日</td>
+      <td>${s.cost_price ? '¥'+s.cost_price.toFixed(2) : '-'}</td>
+      <td>¥${s.current_price.toFixed(2)}</td>
+      <td style="color:${s.profit_pct >= 0 ? 'var(--color-bull)' : 'var(--color-bear)'}">${s.profit_pct >= 0 ? '+' : ''}${s.profit_pct.toFixed(2)}%</td>
+      <td style="color:${s.drawdown_pct < 0 ? 'var(--color-bear)' : 'var(--color-bull)'}">${s.drawdown_pct.toFixed(1)}%</td>
+      <td style="font-size:11px">${cp.label}<br><span style="color:var(--text-muted)">${cp.desc}</span></td>
+      <td><span class="table-action ${actClass}">${actLabel}</span></td>
+      <td style="font-size:12px;max-width:200px">${s.action_reason}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+// ─── 数据加载 ───
+async function loadAll() {
+  document.getElementById('evalDate').textContent = '加载中...';
+  
+  try {
+    // 策略配置
+    const configs = await api('/config');
+    const cfg = configs[0];
+    document.getElementById('strategyParams').innerHTML = cfg ? `
+      <span class="param-tag"><span class="key">买入≥</span><span class="val">${cfg.params.buy_min_score}</span></span>
+      <span class="param-tag"><span class="key">P1≥</span><span class="val">${cfg.params.p1_score}</span></span>
+      <span class="param-tag"><span class="key">P2≥</span><span class="val">${cfg.params.p2_score}</span></span>
+      <span class="param-tag"><span class="key">P3≥</span><span class="val">${cfg.params.p3_score}</span></span>
+      <span class="param-tag"><span class="key">止损</span><span class="val">${cfg.params.stop_loss_pct}%</span></span>
+      <span class="param-tag"><span class="key">最久</span><span class="val">${cfg.params.max_hold_days}日</span></span>
+      <span class="param-tag"><span class="key">冷却</span><span class="val">${cfg.params.cool_days}日</span></span>
+    ` : '';
+    
+    // 持仓信号
+    const hd = await api('/holdings-actions');
+    document.getElementById('evalDate').textContent = hd.trade_date || '-';
+    
+    // 统计
+    const acts = {};
+    for (const s of hd.signals) acts[s.action] = (acts[s.action] || 0) + 1;
+    document.getElementById('statHoldings').textContent = hd.signals.filter(s => s.holding_status === 'HOLDING').length;
+    document.getElementById('statHold').textContent = acts['HOLD'] || 0;
+    document.getElementById('statSell').textContent = (acts['SELL'] || 0);
+    document.getElementById('statStop').textContent = acts['STOP_LOSS'] || 0;
+    document.getElementById('statBuy').textContent = acts['BUY'] || 0;
+    
+    // 持仓Tab: 用卡片
+    const holdings = hd.signals.filter(s => s.holding_status === 'HOLDING');
+    renderSignalCards(holdings, 'holdingsContent');
+    
+    // 全量信号Tab
+    const sig = await api('/signals');
+    renderSignalCards(sig.signals || [], 'signalsContent');
+    
+    // 买入候选Tab
+    const buySignals = (sig.signals || []).filter(s => s.action === 'BUY');
+    if (buySignals.length > 0) {
+      document.getElementById('buyContent').innerHTML = `<h3 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+        🟢 ${buySignals.length}只满足买入条件</h3>`;
+      renderSignalCards(buySignals, 'buyContent');
+    } else {
+      // 展示评分最高的WAIT
+      const waits = (sig.signals || []).filter(s => s.action === 'WAIT').sort((a,b) => b.buy_score - a.buy_score).slice(0, 10);
+      document.getElementById('buyContent').innerHTML = `<h3 style="margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--text-secondary);">
+        ⏳ 暂无满足买入条件的股票，评分最高的WAIT股票如下</h3>`;
+      renderSignalCards(waits, 'buyContent');
+    }
+    
+    document.getElementById('dataStatus').textContent = '✅ 正常';
+    
+  } catch (e) {
+    document.getElementById('dataStatus').textContent = '❌ 异常';
+    document.getElementById('holdingsContent').innerHTML = `<div class="error-msg">❌ 加载失败: ${e}</div>`;
+    document.getElementById('signalsContent').innerHTML = `<div class="error-msg">❌ 加载失败: ${e}</div>`;
+    document.getElementById('buyContent').innerHTML = `<div class="error-msg">❌ 加载失败: ${e}</div>`;
+  }
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+}
+
+async function refreshData() {
+  document.getElementById('dataStatus').textContent = '♻️ 实时刷新中...';
+  try {
+    // 1. 实时评分刷新（用实时价重算全量评分）
+    const r1 = await fetch('/api/v1/management/system/refresh-realtime', {
+      method: 'POST',
+      headers: {}
+    });
+    const d1 = await r1.json();
+    if (d1.code === 0) {
+      // 2. 同步更新watch_pool_snapshot（写入最新评分+实时价）
+      await fetch('/api/v1/management/watch-pool/refresh', {
+        method: 'POST',
+        headers: {}
+      });
+    }
+    // 3. 触发策略评估（用实时价重算持仓信号）
+    await api('/run');
+  } catch(e) {
+    console.warn('refresh warn:', e);
+  }
+  loadAll();
+}
+
+// ─── 启动 ───
+loadAll();
+</script>
+</body>
+</html>

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 个股分析</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+
+<style>
+:root {
+  --bg-primary: #0f1923;
+  --bg-secondary: #1a2a3a;
+  --bg-card: #1e3044;
+  --bg-card-alt: #243850;
+  --border-color: #2a4058;
+  --border-light: #3a5a78;
+  --text-primary: #e8edf2;
+  --text-secondary: #a0b4c8;
+  --text-muted: #6a8aaa;
+  --text-bright: #ffffff;
+  --color-bull: #00d4aa;
+  --color-bear: #ff4757;
+  --color-warn: #ffa940;
+  --color-buy: #00d4aa;
+  --color-hold: #4dabf7;
+  --color-stop: #cf1322;
+  --radius: 8px;
+  --transition: 0.2s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+/* Header */
+.header { 
+  display: flex; align-items: center; justify-content: space-between; 
+  padding: 16px 0 12px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
+}
+.header-title h1 { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+.header-info { display: flex; align-items: center; gap: 12px; }
+
+/* Search Bar */
+.search-box {
+  display: flex; gap: 10px; margin-bottom: 20px; align-items: center;
+}
+.search-box input {
+  flex: 1; max-width: 300px;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  color: var(--text-primary); padding: 10px 16px; border-radius: var(--radius);
+  font-size: 15px; outline: none;
+}
+.search-box input:focus { border-color: var(--color-hold); }
+.search-box button {
+  background: var(--color-hold); color: #fff; border: none;
+  padding: 10px 24px; border-radius: var(--radius); font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all var(--transition);
+}
+.search-box button:hover { filter: brightness(1.2); }
+.search-box button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Loading */
+.loading {
+  text-align: center; padding: 60px; color: var(--text-muted);
+}
+.spinner {
+  display: inline-block; width: 32px; height: 32px;
+  border: 3px solid var(--border-color); border-top-color: var(--color-hold);
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px;
+}
+.spinner-text { font-size: 14px; margin-top: 8px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Data Sources Tag */
+.source-tag {
+  font-size: 11px; color: var(--text-muted); padding: 2px 8px;
+  background: var(--bg-secondary); border-radius: 3px;
+  display: inline-block; margin-top: 4px;
+}
+
+/* Report Section */
+.report-section {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
+}
+.report-section h2 {
+  font-size: 16px; color: var(--color-hold); margin-bottom: 12px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+}
+.report-section .content {
+  font-size: 14px; line-height: 1.8; color: var(--text-secondary);
+  white-space: pre-wrap;
+}
+.report-section .content strong { color: var(--text-primary); }
+.report-section .source-info {
+  font-size: 11px; color: var(--text-muted);
+  padding: 8px 12px; background: var(--bg-secondary);
+  border-radius: 4px; margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;
+}
+
+/* History */
+.history-list {
+  margin-top: 20px;
+}
+.history-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius); margin-bottom: 8px; cursor: pointer;
+  transition: all var(--transition);
+}
+.history-item:hover { border-color: var(--border-light); }
+.history-item .hi-date { font-size: 13px; color: var(--text-muted); }
+.history-item .hi-summary { font-size: 13px; color: var(--text-secondary); }
+.history-item .hi-action { font-size: 12px; color: var(--color-hold); }
+
+/* Error */
+.error-msg {
+  background: rgba(207,19,34,0.1); border: 1px solid rgba(207,19,34,0.3);
+  border-radius: var(--radius); padding: 16px; text-align: center;
+  color: #ff6b7a; font-size: 14px;
+}
+
+/* History Tab */
+.tabs { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); }
+.tab-btn {
+  padding: 10px 20px; font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none; background: transparent;
+  color: var(--text-muted); transition: all var(--transition);
+  border-bottom: 2px solid transparent; margin-bottom: -2px;
+}
+.tab-btn:hover { color: var(--text-secondary); }
+.tab-btn.active { color: var(--color-hold); border-bottom-color: var(--color-hold); }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+@media(max-width:768px) {
+  .search-box { flex-direction: column; align-items: stretch; }
+  .search-box input { max-width: 100%; }
+  .header { flex-direction: column; gap: 8px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="header-title">
+      <h1>🧠 AI 个股分析</h1>
+    </div>
+    <div class="header-info">
+      <span style="font-size:12px;color:var(--text-muted)">基于DeepSeek · 数据可溯源</span>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-box">
+    <input type="text" id="stockInput" placeholder="输入股票代码或名称 (如 300476.SZ 或 胜宏科技)" onkeydown="if(event.key==='Enter') startAnalysis()">
+    <button id="analyzeBtn" onclick="startAnalysis()">🚀 开始分析</button>
+    <button onclick="switchToHistory()" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border-color);padding:10px 16px;border-radius:var(--radius);cursor:pointer;font-size:13px;">📋 历史记录</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('report', this)">📄 分析报告</button>
+    <button class="tab-btn" onclick="switchTab('history', this);loadHistory()">📋 历史记录</button>
+  </div>
+
+  <!-- Report Tab -->
+  <div class="tab-content active" id="tabReport">
+    <div id="reportContent">
+      <div style="text-align:center;padding:60px;color:var(--text-muted);">
+        <div style="font-size:48px;margin-bottom:12px;">🔍</div>
+        <p>输入股票代码，点击"开始分析"</p>
+        <p style="font-size:12px;margin-top:8px;">系统将采集真实数据 → 调用DeepSeek生成14项全面分析报告</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div class="tab-content" id="tabHistory">
+    <div id="historyContent">
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">
+        <p>先搜索股票查看历史分析记录</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api/v1/management';
+let API_KEY = '';
+  .catch(() => {});
+
+function api(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(API_BASE + path, opts).then(r => r.json());
+}
+
+// ─── 解析输入 ───
+function parseInput(input) {
+  input = input.trim();
+  // 如果包含中文，可能是股票名称
+  if (/[\u4e00-\u9fa5]/.test(input)) return { name: input };
+  // 如果是代码格式
+  if (/^\d{6}/.test(input)) {
+    if (input.startsWith('6')) return { ts_code: input + '.SH' };
+    return { ts_code: input.includes('.') ? input : input + '.SZ' };
+  }
+  return { ts_code: input };
+}
+
+// ─── 开始分析 ───
+async function startAnalysis() {
+  const input = document.getElementById('stockInput').value;
+  if (!input) return;
+  
+  const parsed = parseInput(input);
+  const tsCode = parsed.ts_code;
+  
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('analyzeBtn').textContent = '⏳ 分析中...';
+  
+  document.getElementById('reportContent').innerHTML = `
+    <div class="loading">
+      <div class="spinner"></div>
+      <div class="spinner-text">正在采集真实数据...</div>
+    </div>`;
+  
+  try {
+    const result = await api('/ai/analyze', 'POST', { ts_code: tsCode });
+    
+    if (result.code === 0) {
+      renderReport(result.data);
+      // 切到报告Tab
+      switchTab('report', document.querySelectorAll('.tab-btn')[0]);
+    } else {
+      document.getElementById('reportContent').innerHTML = `
+        <div class="error-msg">❌ ${result.error || '分析失败'}</div>`;
+    }
+  } catch (e) {
+    document.getElementById('reportContent').innerHTML = `
+      <div class="error-msg">❌ 请求失败: ${e.message}</div>`;
+  }
+  
+  document.getElementById('analyzeBtn').disabled = false;
+  document.getElementById('analyzeBtn').textContent = '🚀 开始分析';
+}
+
+// ─── 渲染报告 ───
+function renderReport(data) {
+  const report = data.report;
+  const sources = data.data_sources || {};
+  const score = data.score || {};
+  
+  // 将报告按【N.】分割成章节
+  const sections = report.split(/(?=【)/);
+  
+  let html = `
+    <div style="margin-bottom:16px;padding:16px;background:var(--bg-card-alt);border-radius:var(--radius);border:1px solid var(--border-color);">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <div>
+          <span style="font-size:18px;font-weight:700;color:var(--text-bright);">${data.name}</span>
+          <span style="font-size:13px;color:var(--text-muted);margin-left:8px;">${data.ts_code}</span>
+          <span style="font-size:12px;color:var(--text-muted);margin-left:12px;">
+            📅 ${data.note_date}
+          </span>
+        </div>
+        <div style="font-size:12px;color:var(--text-secondary);">
+          评分: <span style="color:${score.composite_score >= 40 ? 'var(--color-bull)' : score.composite_score >= 20 ? 'var(--color-warn)' : 'var(--color-bear)'}">${score.composite_score || 'N/A'}</span>
+          | 最新价: <span style="color:var(--text-bright)">${data.latest_close || 'N/A'}</span>
+        </div>
+      </div>
+    </div>`;
+  
+  // 数据来源摘要
+  html += `<div style="margin-bottom:16px;padding:12px;background:var(--bg-secondary);border-radius:var(--radius);">`;
+  html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;">📊 数据来源</div>`;
+  html += `<div style="display:flex;flex-wrap:wrap;gap:6px;">`;
+  for (const [key, val] of Object.entries(sources)) {
+    html += `<span class="source-tag">${key}: ${val}</span>`;
+  }
+  html += `</div></div>`;
+  
+  // 报告章节
+  for (const section of sections) {
+    if (!section.trim()) continue;
+    // 提取标题（【N. xxx】）
+    const titleMatch = section.match(/^【\d+\.\s*(.+?)】/);
+    if (titleMatch) {
+      const title = titleMatch[1];
+      const content = section.substring(titleMatch[0].length).trim();
+      html += `
+        <div class="report-section">
+          <h2>${title}</h2>
+          <div class="content">${content}</div>
+        </div>`;
+    } else {
+      // 开头的引言部分
+      html += `
+        <div class="report-section">
+          <div class="content">${section.trim()}</div>
+        </div>`;
+    }
+  }
+  
+  document.getElementById('reportContent').innerHTML = html;
+}
+
+// ─── 切换到历史记录 Tab并加载数据 ───
+function switchToHistory() {
+  // 找到历史tab按钮并激活
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  if (tabBtns.length >= 2) {
+    switchTab('history', tabBtns[1]);
+  }
+  loadHistory();
+}
+
+// ─── 加载历史记录 ───
+async function loadHistory() {
+  const input = document.getElementById('stockInput').value;
+  if (!input) {
+    document.getElementById('historyContent').innerHTML = `
+      <div style="text-align:center;padding:40px;color:var(--text-muted);">
+        <p>⚠️ 请先输入股票代码/名称</p>
+      </div>`;
+    return;
+  }
+  
+  const parsed = parseInput(input);
+  const tsCode = parsed.ts_code;
+  
+  document.getElementById('historyContent').innerHTML = `
+    <div class="loading"><div class="spinner"></div><div>加载历史记录...</div></div>`;
+  
+  try {
+    const result = await api(`/stock-notes?ts_code=${tsCode}&limit=10`);
+    
+    if (result.code === 0) {
+      const notes = result.data.notes || [];
+      if (!notes.length) {
+        document.getElementById('historyContent').innerHTML = `
+          <div style="text-align:center;padding:40px;color:var(--text-muted);">
+            <p>暂无历史分析记录</p>
+          </div>`;
+        return;
+      }
+      
+      let html = `<div class="history-list"><h3 style="margin-bottom:12px;color:var(--text-secondary);">📋 ${notes[0].name || tsCode} 的历史分析记录</h3>`;
+      for (const note of notes) {
+        html += `
+          <div class="history-item" onclick="viewHistoryNote('${note.ts_code}')">
+            <div>
+              <div class="hi-date">${note.note_date}</div>
+              <div class="hi-summary">${note.summary || note.full_report?.substring(0, 100) || ''}</div>
+            </div>
+            <div class="hi-action">查看 →</div>
+          </div>`;
+      }
+      html += `</div>`;
+      document.getElementById('historyContent').innerHTML = html;
+    } else {
+      document.getElementById('historyContent').innerHTML = `
+        <div class="error-msg">❌ ${result.error}</div>`;
+    }
+  } catch(e) {
+    document.getElementById('historyContent').innerHTML = `
+      <div class="error-msg">❌ ${e.message}</div>`;
+  }
+}
+
+async function viewHistoryNote(tsCode) {
+  document.getElementById('stockInput').value = tsCode;
+  switchTab('report', document.querySelectorAll('.tab-btn')[0]);
+  startAnalysis();
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+}
+</script>
+</body>
+</html>

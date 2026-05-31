@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI分析历史查询</title>
+<style>
+:root {
+  --bg-primary: #0f1923;
+  --bg-secondary: #1a2a3a;
+  --bg-card: #1e3044;
+  --bg-card-alt: #243850;
+  --border-color: #2a4058;
+  --border-light: #3a5a78;
+  --text-primary: #e8edf2;
+  --text-secondary: #a0b4c8;
+  --text-muted: #6a8aaa;
+  --text-bright: #ffffff;
+  --color-bull: #00d4aa;
+  --color-bear: #ff4757;
+  --color-hold: #4dabf7;
+  --color-warn: #ffa940;
+  --radius: 8px;
+  --transition: 0.2s ease;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--bg-primary); color: var(--text-primary); min-height: 100vh;
+}
+.container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0 12px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px;
+}
+.header h1 { font-size: 22px; font-weight: 700; color: var(--text-bright); }
+.header .sub { font-size: 12px; color: var(--text-muted); }
+
+/* Search */
+.search-box {
+  display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end;
+}
+.search-box .field { display: flex; flex-direction: column; gap: 4px; }
+.search-box .field label { font-size: 11px; color: var(--text-muted); }
+.search-box input, .search-box select {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  color: var(--text-primary); padding: 8px 12px; border-radius: var(--radius);
+  font-size: 13px; outline: none;
+}
+.search-box input:focus, .search-box select:focus { border-color: var(--color-hold); }
+.search-box button {
+  background: var(--color-hold); color: #fff; border: none;
+  padding: 8px 20px; border-radius: var(--radius); font-size: 13px;
+  font-weight: 600; cursor: pointer; transition: all var(--transition);
+}
+.search-box button:hover { filter: brightness(1.2); }
+
+/* Result List */
+.result-item {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 10px;
+  cursor: pointer; transition: all var(--transition);
+}
+.result-item:hover { border-color: var(--border-light); }
+.ri-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ri-name { font-size: 16px; font-weight: 700; color: var(--text-bright); }
+.ri-code { font-size: 12px; color: var(--text-muted); margin-left: 8px; }
+.ri-date { font-size: 12px; color: var(--text-muted); }
+.ri-summary { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+.ri-action { font-size: 12px; color: var(--color-hold); margin-top: 8px; }
+.ri-type {
+  font-size: 11px; padding: 2px 8px; border-radius: 4px;
+  background: rgba(77,171,247,0.1); color: var(--color-hold);
+}
+
+/* Detail Modal */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7); z-index: 1000;
+  justify-content: center; align-items: flex-start; padding: 40px 16px;
+  overflow-y: auto;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-primary); border: 1px solid var(--border-color);
+  border-radius: var(--radius); max-width: 900px; width: 100%; padding: 24px;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  background: transparent; border: none; color: var(--text-muted);
+  font-size: 20px; cursor: pointer;
+}
+.modal-close:hover { color: var(--text-primary); }
+.modal-header { margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); }
+.modal-body { font-size: 14px; line-height: 1.8; color: var(--text-secondary); white-space: pre-wrap; }
+.modal-body strong { color: var(--text-primary); }
+
+/* Pagination */
+.pagination {
+  display: flex; gap: 6px; justify-content: center; margin-top: 20px;
+}
+.pagination button {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  color: var(--text-secondary); padding: 6px 12px; border-radius: 4px;
+  cursor: pointer; font-size: 13px;
+}
+.pagination button.active { background: var(--color-hold); color: #fff; border-color: var(--color-hold); }
+.pagination button:hover:not(.active) { border-color: var(--border-light); }
+.page-info { font-size: 12px; color: var(--text-muted); display: flex; align-items: center; margin-left: 12px; }
+
+/* Loading & Empty */
+.loading { text-align: center; padding: 60px; color: var(--text-muted); }
+.spinner { display: inline-block; width: 24px; height: 24px;
+  border: 3px solid var(--border-color); border-top-color: var(--color-hold);
+  border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.empty-state { text-align: center; padding: 60px; color: var(--text-muted); }
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+
+@media(max-width:768px) {
+  .search-box { flex-direction: column; }
+  .search-box .field { width: 100%; }
+  .search-box input { width: 100%; }
+  .modal { padding: 16px; }
+}
+</style>
+
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <h1>📋 AI分析历史查询</h1>
+      <div class="sub">按股票代码/名称/时间范围查询AI分析报告</div>
+    </div>
+    <a href="/stock-manager/ai-analysis.html" style="color:var(--color-hold);font-size:13px;text-decoration:none;">🧠 新建分析 →</a>
+  </div>
+
+  <!-- Search -->
+  <div class="search-box">
+    <div class="field">
+      <label>股票代码/名称</label>
+      <input type="text" id="searchName" placeholder="输入代码或名称..." style="width:200px">
+    </div>
+    <div class="field">
+      <label>开始日期</label>
+      <input type="date" id="searchDateFrom" style="width:160px">
+    </div>
+    <div class="field">
+      <label>结束日期</label>
+      <input type="date" id="searchDateTo" style="width:160px">
+    </div>
+    <div class="field" style="justify-content:flex-end;">
+      <button onclick="search()">🔍 查询</button>
+      <button onclick="clearSearch()" style="background:transparent;color:var(--text-secondary);border:1px solid var(--border-color);margin-left:6px;">✕ 清空</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultInfo" style="font-size:13px;color:var(--text-muted);margin-bottom:12px;"></div>
+  <div id="resultList"></div>
+  <div id="pagination" class="pagination"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <div style="font-size:18px;font-weight:700;color:var(--text-bright);" id="modalTitle"></div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="modalMeta"></div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api/v1/management';
+let API_KEY = '';
+let currentPage = 1;
+let totalRecords = 0;
+
+async function search(page) {
+  page = page || 1;
+  currentPage = page;
+  
+  const name = document.getElementById('searchName').value.trim();
+  const dateFrom = document.getElementById('searchDateFrom').value;
+  const dateTo = document.getElementById('searchDateTo').value;
+  
+  let params = `limit=15&page=${page}`;
+  if (name) {
+    if (/^\d/.test(name)) {
+      params += '&ts_code=' + encodeURIComponent(name);
+    } else {
+      params += '&name=' + encodeURIComponent(name);
+    }
+  }
+  if (dateFrom) params += '&date_from=' + dateFrom;
+  if (dateTo) params += '&date_to=' + dateTo;
+  
+  document.getElementById('resultList').innerHTML = '<div class="loading"><div class="spinner"></div><div>查询中...</div></div>';
+  document.getElementById('resultInfo').textContent = '';
+  
+  try {
+    const resp = await fetch(`${API_BASE}/stock-notes?${params}`, {
+      headers: {}
+    });
+    const d = await resp.json();
+    
+    if (d.code === 0) {
+      const data = d.data;
+      totalRecords = data.total;
+      renderResults(data.notes || []);
+      renderPagination(data.total, data.page, data.limit || 15);
+    } else {
+      document.getElementById('resultList').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>${d.error || '查询失败'}</p></div>`;
+    }
+  } catch(e) {
+    document.getElementById('resultList').innerHTML = `<div class="empty-state"><div class="icon">❌</div><p>请求失败</p></div>`;
+  }
+}
+
+function renderResults(notes) {
+  const list = document.getElementById('resultList');
+  document.getElementById('resultInfo').textContent = `共 ${totalRecords} 条记录`;
+  
+  if (!notes.length) {
+    list.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
+    return;
+  }
+  
+  list.innerHTML = notes.map(n => `
+    <div class="result-item" onclick="openDetail('${n.ts_code}','${n.note_date}')">
+      <div class="ri-header">
+        <div>
+          <span class="ri-name">${n.name}</span>
+          <span class="ri-code">${n.ts_code}</span>
+          <span class="ri-type">${n.report_type || 'AI_ANALYSIS'}</span>
+        </div>
+        <span class="ri-date">${formatDate(n.note_date)}</span>
+      </div>
+      <div class="ri-summary">${n.summary || (n.full_report || '').substring(0, 120) || '无摘要'}</div>
+      <div class="ri-action">查看完整报告 →</div>
+    </div>
+  `).join('');
+}
+
+function renderPagination(total, page, limit) {
+  const pages = Math.ceil(total / limit);
+  const container = document.getElementById('pagination');
+  if (pages <= 1) { container.innerHTML = ''; return; }
+  
+  let html = `<button onclick="search(${page-1})" ${page<=1?'disabled':''} style="${page<=1?'opacity:0.3':''}">‹</button>`;
+  for (let i = Math.max(1, page-2); i <= Math.min(pages, page+2); i++) {
+    html += `<button class="${i===page?'active':''}" onclick="search(${i})">${i}</button>`;
+  }
+  html += `<button onclick="search(${page+1})" ${page>=pages?'disabled':''} style="${page>=pages?'opacity:0.3':''}">›</button>`;
+  html += `<span class="page-info">共 ${total} 条，${pages} 页</span>`;
+  container.innerHTML = html;
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  return d.substring(0, 19).replace('T', ' ');
+}
+
+async function openDetail(tsCode, noteDate) {
+  document.getElementById('modalOverlay').classList.add('show');
+  document.getElementById('modalTitle').textContent = '加载中...';
+  document.getElementById('modalBody').textContent = '';
+  
+  try {
+    const resp = await fetch(`${API_BASE}/stock-notes?ts_code=${encodeURIComponent(tsCode)}&limit=50`, {
+      headers: {}
+    });
+    const d = await resp.json();
+    
+    if (d.code === 0) {
+      const notes = d.data.notes || [];
+      // 找对应时间的记录
+      const note = notes.find(n => n.note_date === noteDate) || notes[0];
+      if (note) {
+        document.getElementById('modalTitle').textContent = `${note.name} (${note.ts_code})`;
+        document.getElementById('modalMeta').textContent = `分析时间: ${formatDate(note.note_date)}`;
+        document.getElementById('modalBody').textContent = note.full_report || '报告内容为空';
+      }
+    }
+  } catch(e) {
+    document.getElementById('modalBody').textContent = '加载失败';
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function clearSearch() {
+  document.getElementById('searchName').value = '';
+  document.getElementById('searchDateFrom').value = '';
+  document.getElementById('searchDateTo').value = '';
+  search();
+}
+
+// 回车搜索
+document.getElementById('searchName').addEventListener('keydown', e => { if(e.key==='Enter') search(); });
+
+// 启动时默认加载全部
+search();
+</script>
+</body>
+</html>

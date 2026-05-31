@@ -1,0 +1,7566 @@
+{
+  "tables": [
+    {
+      "name": "backtest_hengjiyuan_daily",
+      "comment": "恒纪元每日判定回测",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "backtest_hengjiyuan_summary",
+      "comment": "恒纪元回测汇总",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "backtest_pool",
+      "comment": "回测股票池 - 回测数据筛选入口",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "backtest_score_daily",
+      "comment": "个股综合评分每日回测",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "chanlun_structure",
+      "comment": "缠论结构分析表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "cycle_judgment",
+      "comment": "周期判定表(悟道篇) — 指数周期状态",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "daily_kline",
+      "comment": "日线K线表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "daily_kline_qfq",
+      "comment": "前复权日线",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "daily_market_summary",
+      "comment": "每日市场汇总表 — 数出一源",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "daily_snapshot",
+      "comment": "每日快照汇总表 — 全市场指标快照",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "hengjiyuan_evaluation",
+      "comment": "恒纪元评估表 — 悟道篇恒纪元状态评估",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "momentum_daily_index",
+      "comment": "每日动量分层指标 — 因子IC/多空利差报表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "money_flow",
+      "comment": "资金流向表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "pipeline_exec_log",
+      "comment": "数据管道执行日志表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "portfolio_account",
+      "comment": "账户资产表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "portfolio_holdings",
+      "comment": "持仓管理表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "realtime_score",
+      "comment": "实时评分表(盘中)",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "season_daily_signal",
+      "comment": "每日操作信号表 — 季节判定衍生操作建议",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "season_state",
+      "comment": "恒纪元四季判定结果表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "signal_change_log",
+      "comment": "信号变更日志表 — 信号变更审计",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "stock_basic",
+      "comment": "股票基础信息表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "stock_notes",
+      "comment": "AI分析报告备注表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "stock_pool",
+      "comment": "股票池管理表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "strategy_config",
+      "comment": "买卖策略配置",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "strategy_signal",
+      "comment": "策略信号表(8889核心输出)",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "strategy_signal_daily",
+      "comment": "每日策略信号评估",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "system_config",
+      "comment": "系统配置表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "technical_indicator",
+      "comment": "技术指标表",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "trend_score",
+      "comment": "趋势评分表(8888核心输出)",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "v_daily_comprehensive",
+      "comment": "VIEW",
+      "type": "VIEW",
+      "engine": "",
+      "rows": "VIEW"
+    },
+    {
+      "name": "watch_pool",
+      "comment": "投资组合监控股票池",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    },
+    {
+      "name": "watch_pool_snapshot",
+      "comment": "监控池快照表 — 最新评分截面数据(80~94只)",
+      "type": "BASE TABLE",
+      "engine": "InnoDB",
+      "rows": ""
+    }
+  ],
+  "columns": {
+    "backtest_hengjiyuan_daily": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "判定季节: spring/summer/autumn/winter/chaos",
+        "pos": 4
+      },
+      {
+        "name": "ma20",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 5
+      },
+      {
+        "name": "ma60",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 6
+      },
+      {
+        "name": "ma120",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 7
+      },
+      {
+        "name": "close_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 8
+      },
+      {
+        "name": "ma_trend",
+        "type": "varchar(100)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 9
+      },
+      {
+        "name": "forward_5d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "未来5日收益率",
+        "pos": 10
+      },
+      {
+        "name": "forward_10d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 11
+      },
+      {
+        "name": "forward_20d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 12
+      },
+      {
+        "name": "is_correct",
+        "type": "tinyint",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "判断是否正确(1=春/夏后上涨 or 秋/冬后下跌)",
+        "pos": 13
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 14
+      }
+    ],
+    "backtest_hengjiyuan_summary": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "run_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "回测执行日期",
+        "pos": 2
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "total_days",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "有效判定天数",
+        "pos": 4
+      },
+      {
+        "name": "spring_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 5
+      },
+      {
+        "name": "spring_win",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "春-次数/胜率(平均5日收益)",
+        "pos": 6
+      },
+      {
+        "name": "summer_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 7
+      },
+      {
+        "name": "summer_win",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 8
+      },
+      {
+        "name": "autumn_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 9
+      },
+      {
+        "name": "autumn_win",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 10
+      },
+      {
+        "name": "winter_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 11
+      },
+      {
+        "name": "winter_win",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 12
+      },
+      {
+        "name": "chaos_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 13
+      },
+      {
+        "name": "chaos_win",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 14
+      },
+      {
+        "name": "overall_acc",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "总体准确率",
+        "pos": 15
+      },
+      {
+        "name": "spring_avg20d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "春后20日平均收益",
+        "pos": 16
+      },
+      {
+        "name": "winter_avg20d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "冬后20日平均收益",
+        "pos": 17
+      },
+      {
+        "name": "notes",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 18
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 19
+      }
+    ],
+    "backtest_pool": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "自增主键",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "股票代码（Tushare格式，如 000001.SZ）",
+        "pos": 2
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 3
+      },
+      {
+        "name": "industry",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "所属行业/板块",
+        "pos": 4
+      },
+      {
+        "name": "market",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "市场（SH/SZ/BJ）",
+        "pos": 5
+      },
+      {
+        "name": "status",
+        "type": "enum('ACTIVE','INACTIVE','ARCHIVED')",
+        "nullable": "NO",
+        "default": "ACTIVE",
+        "key": "MUL",
+        "extra": "",
+        "comment": "状态：ACTIVE=启用 INACTIVE=停用 ARCHIVED=归档",
+        "pos": 6
+      },
+      {
+        "name": "notes",
+        "type": "varchar(255)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "备注（如入选原因）",
+        "pos": 7
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 8
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "更新时间",
+        "pos": 9
+      }
+    ],
+    "backtest_score_daily": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "total_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 4
+      },
+      {
+        "name": "trend_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 5
+      },
+      {
+        "name": "momentum_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 6
+      },
+      {
+        "name": "wave_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 7
+      },
+      {
+        "name": "volume_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 8
+      },
+      {
+        "name": "close_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 9
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 10
+      }
+    ],
+    "chanlun_structure": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "分析日期",
+        "pos": 3
+      },
+      {
+        "name": "analysis_level",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "分析级别",
+        "pos": 4
+      },
+      {
+        "name": "top_fractal_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "顶分型数量",
+        "pos": 5
+      },
+      {
+        "name": "bottom_fractal_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "底分型数量",
+        "pos": 6
+      },
+      {
+        "name": "bi_direction",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "笔方向",
+        "pos": 7
+      },
+      {
+        "name": "bi_strength",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "笔力度",
+        "pos": 8
+      },
+      {
+        "name": "zhongshu_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢数量",
+        "pos": 9
+      },
+      {
+        "name": "zhongshu_zd",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢低点(ZD)",
+        "pos": 10
+      },
+      {
+        "name": "zhongshu_zg",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢高点(ZG)",
+        "pos": 11
+      },
+      {
+        "name": "zhongshu_width",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢宽度",
+        "pos": 12
+      },
+      {
+        "name": "zhongshu_stability",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢稳定性",
+        "pos": 13
+      },
+      {
+        "name": "zoushi_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "走势类型",
+        "pos": 14
+      },
+      {
+        "name": "zoushi_stage",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "走势阶段",
+        "pos": 15
+      },
+      {
+        "name": "beichi_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "背驰类型",
+        "pos": 16
+      },
+      {
+        "name": "beichi_strength",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "背驰力度",
+        "pos": 17
+      },
+      {
+        "name": "beichi_validity",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "背驰有效性",
+        "pos": 18
+      },
+      {
+        "name": "macd_area_ratio",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MACD面积比",
+        "pos": 19
+      },
+      {
+        "name": "dif_dea_diverge",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "DIF-DEA背离标志",
+        "pos": 20
+      },
+      {
+        "name": "buy_sell_point",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "买卖点",
+        "pos": 21
+      },
+      {
+        "name": "buy3_confirmed",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "三类买点确认",
+        "pos": 22
+      },
+      {
+        "name": "buy3_failed",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "三类买点失败",
+        "pos": 23
+      },
+      {
+        "name": "autumn_tiger",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎形态标志",
+        "pos": 24
+      },
+      {
+        "name": "tiger_confidence",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎置信度",
+        "pos": 25
+      },
+      {
+        "name": "tiger_reasons",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎判定原因",
+        "pos": 26
+      },
+      {
+        "name": "structure_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "结构评分",
+        "pos": 27
+      },
+      {
+        "name": "is_calculable",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "是否可计算",
+        "pos": 28
+      },
+      {
+        "name": "calc_error",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "计算错误信息",
+        "pos": 29
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 30
+      }
+    ],
+    "cycle_judgment": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "交易日期",
+        "pos": 2
+      },
+      {
+        "name": "scope",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "范围: market/sector/stock",
+        "pos": 3
+      },
+      {
+        "name": "target_code",
+        "type": "varchar(16)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "目标代码(大盘=000001.SH,板块代码,个股=ts_code)",
+        "pos": 4
+      },
+      {
+        "name": "cycle_stage",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "周期: spring/summer/autumn/winter/chaos",
+        "pos": 5
+      },
+      {
+        "name": "cycle_confidence",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "周期置信度 0-100",
+        "pos": 6
+      },
+      {
+        "name": "ice_point_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "冰点计数(近10日)",
+        "pos": 7
+      },
+      {
+        "name": "is_node",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否情绪节点",
+        "pos": 8
+      },
+      {
+        "name": "node_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "节点类型: double_ice/triple_ice/reversal",
+        "pos": 9
+      },
+      {
+        "name": "theme_score",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "六维题材评分 0-6",
+        "pos": 10
+      },
+      {
+        "name": "theme_novelty",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "新颖性 0-1",
+        "pos": 11
+      },
+      {
+        "name": "theme_policy",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "政策支持 0-1",
+        "pos": 12
+      },
+      {
+        "name": "theme_imagine",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "想象力 0-1",
+        "pos": 13
+      },
+      {
+        "name": "theme_capacity",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "容量 0-1",
+        "pos": 14
+      },
+      {
+        "name": "theme_catalyst",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持续性触媒 0-1",
+        "pos": 15
+      },
+      {
+        "name": "theme_falsify",
+        "type": "decimal(3,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "不可证伪性 0-1",
+        "pos": 16
+      },
+      {
+        "name": "capital_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "资金属性: institution/speculator/quant/hybrid",
+        "pos": 17
+      },
+      {
+        "name": "capital_confidence",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "资金分类置信度",
+        "pos": 18
+      },
+      {
+        "name": "base_position",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "悟道篇建议基础仓位%",
+        "pos": 19
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 20
+      }
+    ],
+    "daily_kline": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "股票代码(TS格式)",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "交易日",
+        "pos": 3
+      },
+      {
+        "name": "open",
+        "type": "decimal(12,3)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "开盘价",
+        "pos": 4
+      },
+      {
+        "name": "high",
+        "type": "decimal(12,3)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "最高价",
+        "pos": 5
+      },
+      {
+        "name": "low",
+        "type": "decimal(12,3)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "最低价",
+        "pos": 6
+      },
+      {
+        "name": "close",
+        "type": "decimal(12,3)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "收盘价",
+        "pos": 7
+      },
+      {
+        "name": "pre_close",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "昨收价",
+        "pos": 8
+      },
+      {
+        "name": "change_pct",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "涨跌幅(%)",
+        "pos": 9
+      },
+      {
+        "name": "vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成交量(手)",
+        "pos": 10
+      },
+      {
+        "name": "amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成交额(元)",
+        "pos": 11
+      },
+      {
+        "name": "turnover_rate",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "换手率(%)",
+        "pos": 12
+      },
+      {
+        "name": "volume_ratio",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "量比",
+        "pos": 13
+      },
+      {
+        "name": "pe",
+        "type": "decimal(16,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市盈率",
+        "pos": 14
+      },
+      {
+        "name": "pb",
+        "type": "decimal(16,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市净率",
+        "pos": 15
+      },
+      {
+        "name": "total_mv",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "总市值(万元)",
+        "pos": 16
+      },
+      {
+        "name": "data_source",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "tushare",
+        "key": "MUL",
+        "extra": "",
+        "comment": "数据来源",
+        "pos": 17
+      },
+      {
+        "name": "is_valid",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "数据有效标记(0=异常)",
+        "pos": 18
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 19
+      }
+    ],
+    "daily_kline_qfq": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "open",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 4
+      },
+      {
+        "name": "high",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 5
+      },
+      {
+        "name": "low",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 6
+      },
+      {
+        "name": "close",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 7
+      },
+      {
+        "name": "change_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 8
+      },
+      {
+        "name": "vol",
+        "type": "decimal(16,0)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 9
+      },
+      {
+        "name": "amount",
+        "type": "decimal(20,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 10
+      }
+    ],
+    "daily_market_summary": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "四季节(spring/summer/autumn/winter/chaos)",
+        "pos": 3
+      },
+      {
+        "name": "season_score",
+        "type": "decimal(6,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "四季评分(-10~+10)",
+        "pos": 4
+      },
+      {
+        "name": "season_confidence",
+        "type": "decimal(5,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "四季置信度",
+        "pos": 5
+      },
+      {
+        "name": "season_strategy",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "评分策略(momentum/reversion)",
+        "pos": 6
+      },
+      {
+        "name": "hengjiyuan_level",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元等级",
+        "pos": 7
+      },
+      {
+        "name": "hengjiyuan_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元评分(0-100)",
+        "pos": 8
+      },
+      {
+        "name": "hengjiyuan_confidence",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元置信度",
+        "pos": 9
+      },
+      {
+        "name": "regime",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "三态(bull/bear/range)",
+        "pos": 10
+      },
+      {
+        "name": "hs300_close",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "沪深300收盘",
+        "pos": 11
+      },
+      {
+        "name": "hs300_change_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "沪深300涨跌幅",
+        "pos": 12
+      },
+      {
+        "name": "breadth_up_ratio",
+        "type": "decimal(5,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "涨跌比",
+        "pos": 13
+      },
+      {
+        "name": "total_stocks",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "有数据股票数",
+        "pos": 14
+      },
+      {
+        "name": "buy_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买入信号数",
+        "pos": 15
+      },
+      {
+        "name": "sell_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "卖出信号数",
+        "pos": 16
+      },
+      {
+        "name": "hold_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持有信号数",
+        "pos": 17
+      },
+      {
+        "name": "watch_pool_total",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "监控池总数",
+        "pos": 18
+      },
+      {
+        "name": "watch_pool_buy",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "监控池买入",
+        "pos": 19
+      },
+      {
+        "name": "watch_pool_sell",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "监控池卖出",
+        "pos": 20
+      },
+      {
+        "name": "watch_pool_hold",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "监控池持有",
+        "pos": 21
+      },
+      {
+        "name": "portfolio_total",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓总市值",
+        "pos": 22
+      },
+      {
+        "name": "portfolio_profit",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓总盈亏",
+        "pos": 23
+      },
+      {
+        "name": "portfolio_cash",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "可用资金",
+        "pos": 24
+      },
+      {
+        "name": "position_advice",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "仓位建议",
+        "pos": 25
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 26
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 27
+      }
+    ],
+    "daily_snapshot": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "cycle_stage",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "大盘周期阶段",
+        "pos": 3
+      },
+      {
+        "name": "hengjiyuan_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大盘恒纪元评分",
+        "pos": 4
+      },
+      {
+        "name": "hengjiyuan_level",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大盘恒纪元等级",
+        "pos": 5
+      },
+      {
+        "name": "confidence_mult",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "置信度系数",
+        "pos": 6
+      },
+      {
+        "name": "total_analyzed",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "分析股票总数",
+        "pos": 7
+      },
+      {
+        "name": "calculable_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "可计算股票数",
+        "pos": 8
+      },
+      {
+        "name": "error_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "数据异常股票数(-1标记)",
+        "pos": 9
+      },
+      {
+        "name": "buy_signal_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买入信号数",
+        "pos": 10
+      },
+      {
+        "name": "sell_signal_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "卖出信号数",
+        "pos": 11
+      },
+      {
+        "name": "wait_signal_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "观望信号数",
+        "pos": 12
+      },
+      {
+        "name": "high_conf_buy",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "高置信买入数",
+        "pos": 13
+      },
+      {
+        "name": "autumn_tiger_cnt",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎标记数",
+        "pos": 14
+      },
+      {
+        "name": "top5_buys",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "Top5买入信号(JSON)",
+        "pos": 15
+      },
+      {
+        "name": "top5_sells",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "Top5卖出信号(JSON)",
+        "pos": 16
+      },
+      {
+        "name": "safety_gate",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "安全闸门判定",
+        "pos": 17
+      },
+      {
+        "name": "gate_triggered",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "触发安全闸门",
+        "pos": 18
+      },
+      {
+        "name": "generated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "快照生成时间",
+        "pos": 19
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 20
+      }
+    ],
+    "hengjiyuan_evaluation": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "scope",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "market/sector",
+        "pos": 3
+      },
+      {
+        "name": "target_code",
+        "type": "varchar(16)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "目标代码",
+        "pos": 4
+      },
+      {
+        "name": "multi_level_align",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "多级别方向一致性 0-1",
+        "pos": 5
+      },
+      {
+        "name": "zhongshu_compact",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢紧凑度评分 0-1",
+        "pos": 6
+      },
+      {
+        "name": "zhongshu_stability",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中枢稳定性评分 0-1",
+        "pos": 7
+      },
+      {
+        "name": "beichi_validity",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "背驰有效性评分 0-1",
+        "pos": 8
+      },
+      {
+        "name": "volume_orderliness",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成交量有序度 0-1",
+        "pos": 9
+      },
+      {
+        "name": "volatility_struct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "波动率结构评分 0-1",
+        "pos": 10
+      },
+      {
+        "name": "fractal_reliability",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "分型可靠性评分 0-1",
+        "pos": 11
+      },
+      {
+        "name": "hengjiyuan_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元综合评分 0-100",
+        "pos": 12
+      },
+      {
+        "name": "hengjiyuan_level",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "等级: strong_heng/weak_heng/weak_luan/strong_luan",
+        "pos": 13
+      },
+      {
+        "name": "confidence_mult",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "置信度系数 0-1.0",
+        "pos": 14
+      },
+      {
+        "name": "signal_validity",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号有效性: valid/caution/invalid",
+        "pos": 15
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 16
+      }
+    ],
+    "momentum_daily_index": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "strategy",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 4
+      },
+      {
+        "name": "total_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 5
+      },
+      {
+        "name": "top_quarter_avg_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 6
+      },
+      {
+        "name": "bottom_quarter_avg_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 7
+      },
+      {
+        "name": "top_bottom_spread",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 8
+      },
+      {
+        "name": "buy_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 9
+      },
+      {
+        "name": "sell_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 10
+      },
+      {
+        "name": "neutral_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 11
+      },
+      {
+        "name": "avg_position_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 12
+      },
+      {
+        "name": "momentum_env",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "positive/neutral/negative",
+        "pos": 13
+      },
+      {
+        "name": "avg_roc20",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 14
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 15
+      }
+    ],
+    "money_flow": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "buy_sm_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "小单买入量(手)",
+        "pos": 4
+      },
+      {
+        "name": "buy_sm_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "小单买入额(万元)",
+        "pos": 5
+      },
+      {
+        "name": "sell_sm_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "小单卖出量",
+        "pos": 6
+      },
+      {
+        "name": "sell_sm_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "小单卖出额",
+        "pos": 7
+      },
+      {
+        "name": "buy_md_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中单买入量",
+        "pos": 8
+      },
+      {
+        "name": "buy_md_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中单买入额",
+        "pos": 9
+      },
+      {
+        "name": "sell_md_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中单卖出量",
+        "pos": 10
+      },
+      {
+        "name": "sell_md_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "中单卖出额",
+        "pos": 11
+      },
+      {
+        "name": "buy_lg_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大单买入量",
+        "pos": 12
+      },
+      {
+        "name": "buy_lg_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大单买入额",
+        "pos": 13
+      },
+      {
+        "name": "sell_lg_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大单卖出量",
+        "pos": 14
+      },
+      {
+        "name": "sell_lg_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "大单卖出额",
+        "pos": 15
+      },
+      {
+        "name": "buy_elg_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "特大单买入量",
+        "pos": 16
+      },
+      {
+        "name": "buy_elg_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "特大单买入额",
+        "pos": 17
+      },
+      {
+        "name": "sell_elg_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "特大单卖出量",
+        "pos": 18
+      },
+      {
+        "name": "sell_elg_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "特大单卖出额",
+        "pos": 19
+      },
+      {
+        "name": "net_mf_vol",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "净流入量(手)",
+        "pos": 20
+      },
+      {
+        "name": "net_mf_amount",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "净流入额(万元)",
+        "pos": 21
+      },
+      {
+        "name": "data_source",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "tushare",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 22
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 23
+      }
+    ],
+    "pipeline_exec_log": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "exec_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "执行日期",
+        "pos": 2
+      },
+      {
+        "name": "pipeline_name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "管道名称",
+        "pos": 3
+      },
+      {
+        "name": "step_name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "步骤名称",
+        "pos": 4
+      },
+      {
+        "name": "status",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "状态: running/success/failed/skipped",
+        "pos": 5
+      },
+      {
+        "name": "stock_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "处理股票数",
+        "pos": 6
+      },
+      {
+        "name": "error_count",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "异常数",
+        "pos": 7
+      },
+      {
+        "name": "error_detail",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "异常详情",
+        "pos": 8
+      },
+      {
+        "name": "duration_sec",
+        "type": "decimal(10,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "执行耗时(秒)",
+        "pos": 9
+      },
+      {
+        "name": "started_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "开始时间",
+        "pos": 10
+      },
+      {
+        "name": "finished_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "结束时间",
+        "pos": 11
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 12
+      }
+    ],
+    "portfolio_account": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "user_id",
+        "type": "varchar(32)",
+        "nullable": "YES",
+        "default": "tony",
+        "key": "MUL",
+        "extra": "",
+        "comment": "用户标识",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "total_assets",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "账户总资产",
+        "pos": 4
+      },
+      {
+        "name": "total_market_value",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓总市值",
+        "pos": 5
+      },
+      {
+        "name": "available_cash",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "可用资金",
+        "pos": 6
+      },
+      {
+        "name": "total_profit",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "累计盈亏",
+        "pos": 7
+      },
+      {
+        "name": "total_profit_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "累计盈亏率",
+        "pos": 8
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 9
+      }
+    ],
+    "portfolio_holdings": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "user_id",
+        "type": "varchar(32)",
+        "nullable": "YES",
+        "default": "tony",
+        "key": "MUL",
+        "extra": "",
+        "comment": "用户标识",
+        "pos": 2
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 3
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 4
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "交易日",
+        "pos": 5
+      },
+      {
+        "name": "qty",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "持仓数量(股)",
+        "pos": 6
+      },
+      {
+        "name": "avail_qty",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "可用数量(股)",
+        "pos": 7
+      },
+      {
+        "name": "current_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "现价",
+        "pos": 8
+      },
+      {
+        "name": "cost_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成本价",
+        "pos": 9
+      },
+      {
+        "name": "market_value",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓市值",
+        "pos": 10
+      },
+      {
+        "name": "profit_amount",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "盈亏金额",
+        "pos": 11
+      },
+      {
+        "name": "profit_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "盈亏比例",
+        "pos": 12
+      },
+      {
+        "name": "status",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "HOLDING",
+        "key": "MUL",
+        "extra": "",
+        "comment": "状态: HOLDING/SOLD",
+        "pos": 13
+      },
+      {
+        "name": "closed_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "平仓日期",
+        "pos": 14
+      },
+      {
+        "name": "total_profit",
+        "type": "decimal(16,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "平仓累计盈亏",
+        "pos": 15
+      },
+      {
+        "name": "source",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "OCR",
+        "key": "",
+        "extra": "",
+        "comment": "来源: OCR/MANUAL",
+        "pos": 16
+      },
+      {
+        "name": "advice",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "操作建议",
+        "pos": 17
+      },
+      {
+        "name": "advice_reason",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "建议理由",
+        "pos": 18
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 19
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 20
+      },
+      {
+        "name": "buy_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买入日（锁仓起始日）",
+        "pos": 21
+      },
+      {
+        "name": "lock_until",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "锁仓截止日（该日前不可卖出）",
+        "pos": 22
+      },
+      {
+        "name": "lock_active",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否处于锁仓期（1=锁仓中，0=已解锁）",
+        "pos": 23
+      }
+    ],
+    "realtime_score": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 4
+      },
+      {
+        "name": "query_time",
+        "type": "datetime",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "实时查询时间",
+        "pos": 5
+      },
+      {
+        "name": "rt_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "0.000",
+        "key": "",
+        "extra": "",
+        "comment": "实时价",
+        "pos": 6
+      },
+      {
+        "name": "pre_close",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "0.000",
+        "key": "",
+        "extra": "",
+        "comment": "昨收",
+        "pos": 7
+      },
+      {
+        "name": "change_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "0.000",
+        "key": "",
+        "extra": "",
+        "comment": "实时涨跌幅%",
+        "pos": 8
+      },
+      {
+        "name": "cycle_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "周期评分(L1)",
+        "pos": 9
+      },
+      {
+        "name": "structure_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "结构评分(L2)",
+        "pos": 10
+      },
+      {
+        "name": "emotion_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "情绪评分(L3)",
+        "pos": 11
+      },
+      {
+        "name": "composite_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "综合评分",
+        "pos": 12
+      },
+      {
+        "name": "signal_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号",
+        "pos": 13
+      },
+      {
+        "name": "signal_label",
+        "type": "varchar(30)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号中文",
+        "pos": 14
+      },
+      {
+        "name": "position_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "建议仓位",
+        "pos": 15
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "季节",
+        "pos": 16
+      },
+      {
+        "name": "regime",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "状态",
+        "pos": 17
+      }
+    ],
+    "season_daily_signal": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "交易日期",
+        "pos": 2
+      },
+      {
+        "name": "market_season",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市场季节",
+        "pos": 3
+      },
+      {
+        "name": "market_regime",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市场状态 bull/bear/range",
+        "pos": 4
+      },
+      {
+        "name": "scoring_strategy",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "评分策略 momentum/reversion",
+        "pos": 5
+      },
+      {
+        "name": "raw_score",
+        "type": "decimal(6,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "综合得分",
+        "pos": 6
+      },
+      {
+        "name": "confidence",
+        "type": "decimal(5,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "置信度",
+        "pos": 7
+      },
+      {
+        "name": "position_advice",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "仓位建议",
+        "pos": 8
+      },
+      {
+        "name": "top_picks_json",
+        "type": "json",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "Top推荐标的JSON",
+        "pos": 9
+      },
+      {
+        "name": "full_report",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "完整分析报告",
+        "pos": 10
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 11
+      }
+    ],
+    "season_state": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "",
+        "comment": "自增主键",
+        "pos": 1
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "交易日",
+        "pos": 2
+      },
+      {
+        "name": "index_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "指数代码, MARKET=全市场综合",
+        "pos": 3
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "季节判定",
+        "pos": 4
+      },
+      {
+        "name": "raw_score",
+        "type": "decimal(6,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "原始综合得分",
+        "pos": 5
+      },
+      {
+        "name": "confidence",
+        "type": "decimal(5,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "判定置信度",
+        "pos": 6
+      },
+      {
+        "name": "close_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "收盘价",
+        "pos": 7
+      },
+      {
+        "name": "dimensions_json",
+        "type": "json",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "各维度评分详情JSON",
+        "pos": 8
+      },
+      {
+        "name": "rule_chain",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "可解释规则链",
+        "pos": 9
+      },
+      {
+        "name": "position_advice",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "仓位建议",
+        "pos": 10
+      },
+      {
+        "name": "season_votes",
+        "type": "json",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "各季节投票权重",
+        "pos": 11
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 12
+      },
+      {
+        "name": "regime",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市场状态 bull/bear/range",
+        "pos": 13
+      },
+      {
+        "name": "regime_strength",
+        "type": "decimal(5,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "状态强度",
+        "pos": 14
+      },
+      {
+        "name": "chaos_subtype",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "混沌细分",
+        "pos": 15
+      },
+      {
+        "name": "scoring_strategy",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "评分策略 momentum/reversion",
+        "pos": 16
+      }
+    ],
+    "signal_change_log": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "prev_direction",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "前一信号方向",
+        "pos": 4
+      },
+      {
+        "name": "new_direction",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "新信号方向",
+        "pos": 5
+      },
+      {
+        "name": "prev_position",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "前一仓位%",
+        "pos": 6
+      },
+      {
+        "name": "new_position",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "新仓位%",
+        "pos": 7
+      },
+      {
+        "name": "prev_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "前一评分",
+        "pos": 8
+      },
+      {
+        "name": "new_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "新评分",
+        "pos": 9
+      },
+      {
+        "name": "change_reason",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "变更原因",
+        "pos": 10
+      },
+      {
+        "name": "is_alert",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "MUL",
+        "extra": "",
+        "comment": "是否触发告警",
+        "pos": 11
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 12
+      }
+    ],
+    "stock_basic": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "股票代码(如000001.SZ)",
+        "pos": 2
+      },
+      {
+        "name": "symbol",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "交易代码(如000001)",
+        "pos": 3
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 4
+      },
+      {
+        "name": "area",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "地域",
+        "pos": 5
+      },
+      {
+        "name": "industry",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "行业",
+        "pos": 6
+      },
+      {
+        "name": "market",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "市场(SZ/SH/BJ)",
+        "pos": 7
+      },
+      {
+        "name": "list_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "上市日期",
+        "pos": 8
+      },
+      {
+        "name": "is_hs",
+        "type": "varchar(5)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "沪深港通标的",
+        "pos": 9
+      },
+      {
+        "name": "act_name",
+        "type": "varchar(100)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "实际发行人",
+        "pos": 10
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 11
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 12
+      }
+    ],
+    "stock_notes": [
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 1
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 2
+      },
+      {
+        "name": "note_date",
+        "type": "datetime",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "",
+        "comment": "分析时间（主键）",
+        "pos": 3
+      },
+      {
+        "name": "report_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "AI_ANALYSIS",
+        "key": "",
+        "extra": "",
+        "comment": "报告类型",
+        "pos": 4
+      },
+      {
+        "name": "full_report",
+        "type": "longtext",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "完整AI分析报告",
+        "pos": 5
+      },
+      {
+        "name": "summary",
+        "type": "varchar(500)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "摘要",
+        "pos": 6
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 7
+      }
+    ],
+    "stock_pool": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 2
+      },
+      {
+        "name": "pool_name",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "池名称（core/watch/sector）",
+        "pos": 3
+      },
+      {
+        "name": "status",
+        "type": "enum('ACTIVE','INACTIVE','ARCHIVED')",
+        "nullable": "NO",
+        "default": "ACTIVE",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 4
+      },
+      {
+        "name": "add_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "入池日期",
+        "pos": 5
+      },
+      {
+        "name": "remove_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "出池日期",
+        "pos": 6
+      },
+      {
+        "name": "add_reason",
+        "type": "varchar(255)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "入池原因",
+        "pos": 7
+      },
+      {
+        "name": "remove_reason",
+        "type": "varchar(255)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "出池原因",
+        "pos": 8
+      },
+      {
+        "name": "priority",
+        "type": "int",
+        "nullable": "YES",
+        "default": "5",
+        "key": "",
+        "extra": "",
+        "comment": "优先级(1-10, 1最高)",
+        "pos": 9
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 10
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 11
+      }
+    ],
+    "strategy_config": [
+      {
+        "name": "id",
+        "type": "int",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "name",
+        "type": "varchar(100)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "策略名称",
+        "pos": 2
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "策略描述",
+        "pos": 3
+      },
+      {
+        "name": "strategy_type",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "STEP_LOCK",
+        "key": "",
+        "extra": "",
+        "comment": "策略类型: STEP_LOCK=阶梯锁仓, FIXED_LOCK=固定锁仓, STOP_LOSS=仅止损",
+        "pos": 4
+      },
+      {
+        "name": "buy_min_score",
+        "type": "int",
+        "nullable": "YES",
+        "default": "30",
+        "key": "",
+        "extra": "",
+        "comment": "买入最低评分",
+        "pos": 5
+      },
+      {
+        "name": "p1_score",
+        "type": "int",
+        "nullable": "YES",
+        "default": "10",
+        "key": "",
+        "extra": "",
+        "comment": "10日检查评分阈值",
+        "pos": 6
+      },
+      {
+        "name": "p2_score",
+        "type": "int",
+        "nullable": "YES",
+        "default": "20",
+        "key": "",
+        "extra": "",
+        "comment": "20日检查评分阈值",
+        "pos": 7
+      },
+      {
+        "name": "p3_score",
+        "type": "int",
+        "nullable": "YES",
+        "default": "30",
+        "key": "",
+        "extra": "",
+        "comment": "30日检查评分阈值",
+        "pos": 8
+      },
+      {
+        "name": "stop_loss_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "10.00",
+        "key": "",
+        "extra": "",
+        "comment": "止损百分比",
+        "pos": 9
+      },
+      {
+        "name": "max_hold_days",
+        "type": "int",
+        "nullable": "YES",
+        "default": "60",
+        "key": "",
+        "extra": "",
+        "comment": "最大持有天数",
+        "pos": 10
+      },
+      {
+        "name": "cool_days",
+        "type": "int",
+        "nullable": "YES",
+        "default": "40",
+        "key": "",
+        "extra": "",
+        "comment": "买入冷却期(日)",
+        "pos": 11
+      },
+      {
+        "name": "is_active",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 12
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 13
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 14
+      },
+      {
+        "name": "ck5_score",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "5日评分阈值(0=不启用)",
+        "pos": 15
+      },
+      {
+        "name": "abs_stop_loss",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "绝对止损%(0=不启用)",
+        "pos": 16
+      },
+      {
+        "name": "reduce_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "0.00",
+        "key": "",
+        "extra": "",
+        "comment": "减仓阈值(0=不启用, 亏损超此值触发减半仓)",
+        "pos": 17
+      }
+    ],
+    "strategy_signal": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "cycle_stage",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "周期阶段",
+        "pos": 4
+      },
+      {
+        "name": "hengjiyuan_level",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元等级",
+        "pos": 5
+      },
+      {
+        "name": "composite_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "综合评分 0-100",
+        "pos": 6
+      },
+      {
+        "name": "direction",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "方向: LONG/SHORT/WAIT",
+        "pos": 7
+      },
+      {
+        "name": "position_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "建议仓位%",
+        "pos": 8
+      },
+      {
+        "name": "entry_low",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "入场区间下限",
+        "pos": 9
+      },
+      {
+        "name": "entry_high",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "入场区间上限",
+        "pos": 10
+      },
+      {
+        "name": "stop_loss",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "止损位",
+        "pos": 11
+      },
+      {
+        "name": "reason_chain",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "理由链: 夏+恒纪元+三买确认+机游合力",
+        "pos": 12
+      },
+      {
+        "name": "operation_mode",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "模式: attack/normal/defense/dormant",
+        "pos": 13
+      },
+      {
+        "name": "zoushi_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "走势类型",
+        "pos": 14
+      },
+      {
+        "name": "buy_sell_point",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买卖点",
+        "pos": 15
+      },
+      {
+        "name": "beichi_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "背驰类型",
+        "pos": 16
+      },
+      {
+        "name": "autumn_tiger",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "MUL",
+        "extra": "",
+        "comment": "秋老虎标记",
+        "pos": 17
+      },
+      {
+        "name": "tiger_confidence",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎置信度",
+        "pos": 18
+      },
+      {
+        "name": "capital_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "资金属性",
+        "pos": 19
+      },
+      {
+        "name": "safety_gate",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "安全闸门判定结果",
+        "pos": 20
+      },
+      {
+        "name": "gate_triggered",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否触发安全闸门(触发则为空信号)",
+        "pos": 21
+      },
+      {
+        "name": "signal_confidence",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号置信度: high/medium/low",
+        "pos": 22
+      },
+      {
+        "name": "is_calculable",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "可计算标记",
+        "pos": 23
+      },
+      {
+        "name": "calc_error",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "异常描述(-1标记)",
+        "pos": 24
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 25
+      },
+      {
+        "name": "buy_trade_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买入日（锁仓计算的基准日）",
+        "pos": 26
+      },
+      {
+        "name": "lock_until",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "锁仓截止日（该日前不可SELL，signal被强制HOLD）",
+        "pos": 27
+      }
+    ],
+    "strategy_signal_daily": [
+      {
+        "name": "id",
+        "type": "int",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "评估日期",
+        "pos": 3
+      },
+      {
+        "name": "strategy_id",
+        "type": "int",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "策略ID",
+        "pos": 4
+      },
+      {
+        "name": "buy_score",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "当日综合评分",
+        "pos": 5
+      },
+      {
+        "name": "holding_status",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "NONE",
+        "key": "",
+        "extra": "",
+        "comment": "NONE=未持仓, HOLDING=持仓中, CLOSED=已平仓",
+        "pos": 6
+      },
+      {
+        "name": "hold_days",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "已持有天数",
+        "pos": 7
+      },
+      {
+        "name": "days_to_check",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "距下一个检查点天数(负数=已过检查点)",
+        "pos": 8
+      },
+      {
+        "name": "current_checkpoint",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "当前所在检查点: 0=保护期, 10=10日检查, 20=20日检查, 30=30日检查, 31=30日+",
+        "pos": 9
+      },
+      {
+        "name": "buy_date",
+        "type": "date",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "建仓日期(只对HOLDING有效)",
+        "pos": 10
+      },
+      {
+        "name": "buy_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买入价格",
+        "pos": 11
+      },
+      {
+        "name": "cost_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓成本",
+        "pos": 12
+      },
+      {
+        "name": "current_price_r",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "当前价格(从评分表)",
+        "pos": 13
+      },
+      {
+        "name": "profit_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "盈亏百分比",
+        "pos": 14
+      },
+      {
+        "name": "checkpoint_score_check",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "检查点评分",
+        "pos": 15
+      },
+      {
+        "name": "checkpoint_threshold",
+        "type": "int",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "当前检查点的评分阈值",
+        "pos": 16
+      },
+      {
+        "name": "checkpoint_passed",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "检查点是否通过: 1=通过续持, 0=不通过应平仓",
+        "pos": 17
+      },
+      {
+        "name": "peak_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "持仓期间最高价",
+        "pos": 18
+      },
+      {
+        "name": "drawdown_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "从最高点回撤百分比",
+        "pos": 19
+      },
+      {
+        "name": "stop_loss_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "止损阈值",
+        "pos": 20
+      },
+      {
+        "name": "hit_stop_loss",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否触发止损",
+        "pos": 21
+      },
+      {
+        "name": "action",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "HOLD=持有, SELL=卖出, STOP_LOSS=止损卖出, BUY=买入, WAIT=等待",
+        "pos": 22
+      },
+      {
+        "name": "action_reason",
+        "type": "text",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号理由",
+        "pos": 23
+      },
+      {
+        "name": "reduced",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否已减仓",
+        "pos": 24
+      },
+      {
+        "name": "reduce_flag",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "是否触发减仓信号",
+        "pos": 25
+      },
+      {
+        "name": "price_source",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "daily",
+        "key": "",
+        "extra": "",
+        "comment": "价格来源: daily=日K线, realtime=实时行情",
+        "pos": 26
+      }
+    ],
+    "system_config": [
+      {
+        "name": "id",
+        "type": "int",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "config_key",
+        "type": "varchar(50)",
+        "nullable": "NO",
+        "default": "",
+        "key": "UNI",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "config_value",
+        "type": "text",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "config_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "string",
+        "key": "",
+        "extra": "",
+        "comment": "string/int/float/json",
+        "pos": 4
+      },
+      {
+        "name": "description",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "配置说明",
+        "pos": 5
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "",
+        "pos": 6
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 7
+      }
+    ],
+    "technical_indicator": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "macd_dif",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MACD DIF",
+        "pos": 4
+      },
+      {
+        "name": "macd_dea",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MACD DEA",
+        "pos": 5
+      },
+      {
+        "name": "macd_bar",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MACD 柱",
+        "pos": 6
+      },
+      {
+        "name": "rsi_6",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "RSI 6日",
+        "pos": 7
+      },
+      {
+        "name": "rsi_12",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "RSI 12日",
+        "pos": 8
+      },
+      {
+        "name": "rsi_24",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "RSI 24日",
+        "pos": 9
+      },
+      {
+        "name": "boll_upper",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "布林上轨",
+        "pos": 10
+      },
+      {
+        "name": "boll_mid",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "布林中轨",
+        "pos": 11
+      },
+      {
+        "name": "boll_lower",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "布林下轨",
+        "pos": 12
+      },
+      {
+        "name": "boll_width",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "布林带宽",
+        "pos": 13
+      },
+      {
+        "name": "ma_5",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA5",
+        "pos": 14
+      },
+      {
+        "name": "ma_10",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA10",
+        "pos": 15
+      },
+      {
+        "name": "ma_20",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA20",
+        "pos": 16
+      },
+      {
+        "name": "ma_60",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA60",
+        "pos": 17
+      },
+      {
+        "name": "ma_120",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA120",
+        "pos": 18
+      },
+      {
+        "name": "ma_250",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "MA250",
+        "pos": 19
+      },
+      {
+        "name": "vol_ma_5",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成交量MA5",
+        "pos": 20
+      },
+      {
+        "name": "vol_ma_20",
+        "type": "decimal(20,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "成交量MA20",
+        "pos": 21
+      },
+      {
+        "name": "atr_14",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "ATR 14日",
+        "pos": 22
+      },
+      {
+        "name": "kdj_k",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "KDJ K",
+        "pos": 23
+      },
+      {
+        "name": "kdj_d",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "KDJ D",
+        "pos": 24
+      },
+      {
+        "name": "kdj_j",
+        "type": "decimal(10,4)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "KDJ J",
+        "pos": 25
+      },
+      {
+        "name": "is_calculable",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "是否可计算(0=数据不足)",
+        "pos": 26
+      },
+      {
+        "name": "calc_error",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "计算异常描述",
+        "pos": 27
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 28
+      }
+    ],
+    "trend_score": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "auto_increment",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "",
+        "pos": 3
+      },
+      {
+        "name": "cycle_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "周期评分(30%权重)",
+        "pos": 4
+      },
+      {
+        "name": "structure_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "缠论结构评分(40%权重)",
+        "pos": 5
+      },
+      {
+        "name": "emotion_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "情绪辅助评分(30%权重)",
+        "pos": 6
+      },
+      {
+        "name": "composite_score",
+        "type": "decimal(5,2)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "综合评分=(周期×0.3+结构×0.4+情绪×0.3)×置信度",
+        "pos": 7
+      },
+      {
+        "name": "confidence_mult",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "1.00",
+        "key": "",
+        "extra": "",
+        "comment": "置信度系数(恒纪元调整)",
+        "pos": 8
+      },
+      {
+        "name": "raw_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "原始评分(未乘置信度)",
+        "pos": 9
+      },
+      {
+        "name": "is_calculable",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "可计算标记",
+        "pos": 10
+      },
+      {
+        "name": "calc_error",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "异常描述",
+        "pos": 11
+      },
+      {
+        "name": "close_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "当日收盘价",
+        "pos": 12
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "",
+        "pos": 13
+      }
+    ],
+    "v_daily_comprehensive": [
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "",
+        "pos": 2
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 3
+      },
+      {
+        "name": "industry",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "行业",
+        "pos": 4
+      },
+      {
+        "name": "direction",
+        "type": "varchar(10)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "方向: LONG/SHORT/WAIT",
+        "pos": 5
+      },
+      {
+        "name": "composite_score",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "综合评分 0-100",
+        "pos": 6
+      },
+      {
+        "name": "position_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "建议仓位%",
+        "pos": 7
+      },
+      {
+        "name": "cycle_stage",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "周期阶段",
+        "pos": 8
+      },
+      {
+        "name": "hengjiyuan_level",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "恒纪元等级",
+        "pos": 9
+      },
+      {
+        "name": "buy_sell_point",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "买卖点",
+        "pos": 10
+      },
+      {
+        "name": "operation_mode",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "模式: attack/normal/defense/dormant",
+        "pos": 11
+      },
+      {
+        "name": "reason_chain",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "理由链: 夏+恒纪元+三买确认+机游合力",
+        "pos": 12
+      },
+      {
+        "name": "autumn_tiger",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "秋老虎标记",
+        "pos": 13
+      },
+      {
+        "name": "signal_confidence",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号置信度: high/medium/low",
+        "pos": 14
+      }
+    ],
+    "watch_pool": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "",
+        "comment": "自增主键",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 2
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 3
+      },
+      {
+        "name": "user_id",
+        "type": "varchar(32)",
+        "nullable": "YES",
+        "default": "tony",
+        "key": "MUL",
+        "extra": "",
+        "comment": "所属用户",
+        "pos": 4
+      },
+      {
+        "name": "sort_order",
+        "type": "int",
+        "nullable": "YES",
+        "default": "0",
+        "key": "",
+        "extra": "",
+        "comment": "排序序号",
+        "pos": 5
+      },
+      {
+        "name": "note",
+        "type": "varchar(200)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "备注",
+        "pos": 6
+      },
+      {
+        "name": "is_active",
+        "type": "tinyint(1)",
+        "nullable": "YES",
+        "default": "1",
+        "key": "",
+        "extra": "",
+        "comment": "是否启用",
+        "pos": 7
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 8
+      },
+      {
+        "name": "updated_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+        "comment": "更新时间",
+        "pos": 9
+      }
+    ],
+    "watch_pool_snapshot": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": "NO",
+        "default": "",
+        "key": "PRI",
+        "extra": "",
+        "comment": "自增主键",
+        "pos": 1
+      },
+      {
+        "name": "ts_code",
+        "type": "varchar(16)",
+        "nullable": "NO",
+        "default": "",
+        "key": "MUL",
+        "extra": "",
+        "comment": "股票代码",
+        "pos": 2
+      },
+      {
+        "name": "name",
+        "type": "varchar(50)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "股票名称",
+        "pos": 3
+      },
+      {
+        "name": "trade_date",
+        "type": "date",
+        "nullable": "NO",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "快照日期",
+        "pos": 4
+      },
+      {
+        "name": "close_price",
+        "type": "decimal(12,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "收盘价",
+        "pos": 5
+      },
+      {
+        "name": "change_pct",
+        "type": "decimal(8,3)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "涨跌幅",
+        "pos": 6
+      },
+      {
+        "name": "raw_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "原始得分",
+        "pos": 7
+      },
+      {
+        "name": "v_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "综合评分",
+        "pos": 8
+      },
+      {
+        "name": "trend_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "趋势分",
+        "pos": 9
+      },
+      {
+        "name": "momentum_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "动量分",
+        "pos": 10
+      },
+      {
+        "name": "volatility_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "波动分",
+        "pos": 11
+      },
+      {
+        "name": "volume_score",
+        "type": "decimal(6,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "量能分",
+        "pos": 12
+      },
+      {
+        "name": "signal_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号类型",
+        "pos": 13
+      },
+      {
+        "name": "signal_label",
+        "type": "varchar(30)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "信号标签",
+        "pos": 14
+      },
+      {
+        "name": "position_pct",
+        "type": "decimal(5,1)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "建议仓位",
+        "pos": 15
+      },
+      {
+        "name": "stop_loss_pct",
+        "type": "decimal(5,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "止损阈值",
+        "pos": 16
+      },
+      {
+        "name": "strategy_type",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "策略类型",
+        "pos": 17
+      },
+      {
+        "name": "season",
+        "type": "varchar(20)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "季节判定",
+        "pos": 18
+      },
+      {
+        "name": "regime",
+        "type": "varchar(10)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "市场体制",
+        "pos": 19
+      },
+      {
+        "name": "ret_5d",
+        "type": "decimal(8,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "5日收益率",
+        "pos": 20
+      },
+      {
+        "name": "ret_10d",
+        "type": "decimal(8,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "10日收益率",
+        "pos": 21
+      },
+      {
+        "name": "ret_20d",
+        "type": "decimal(8,2)",
+        "nullable": "YES",
+        "default": "",
+        "key": "",
+        "extra": "",
+        "comment": "20日收益率",
+        "pos": 22
+      },
+      {
+        "name": "created_at",
+        "type": "datetime",
+        "nullable": "YES",
+        "default": "CURRENT_TIMESTAMP",
+        "key": "",
+        "extra": "DEFAULT_GENERATED",
+        "comment": "创建时间",
+        "pos": 23
+      }
+    ]
+  },
+  "indexes": {
+    "backtest_hengjiyuan_daily": {
+      "idx_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "idx_season": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "season"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "backtest_hengjiyuan_summary": {
+      "idx_code": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      }
+    },
+    "backtest_pool": {
+      "idx_industry": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "industry"
+        ]
+      },
+      "idx_market": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "market"
+        ]
+      },
+      "idx_status": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "status"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_ts_code": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code"
+        ]
+      }
+    },
+    "backtest_score_daily": {
+      "idx_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "idx_score": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "total_score"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "chanlun_structure": {
+      "idx_bs_point": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "buy_sell_point"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "idx_zoushi": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "zoushi_type"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_stock_chanlun_date_level": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date",
+          "analysis_level"
+        ]
+      }
+    },
+    "cycle_judgment": {
+      "idx_cycle": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "cycle_stage"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_cycle_date_scope_target": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date",
+          "scope",
+          "target_code"
+        ]
+      }
+    },
+    "daily_kline": {
+      "idx_close": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "close"
+        ]
+      },
+      "idx_data_source": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "data_source"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_stock_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "daily_kline_qfq": {
+      "idx_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "daily_market_summary": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "trade_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      }
+    },
+    "daily_snapshot": {
+      "idx_cycle": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "cycle_stage"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "trade_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      }
+    },
+    "hengjiyuan_evaluation": {
+      "idx_level": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "hengjiyuan_level"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_heng_date_scope_target": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date",
+          "scope",
+          "target_code"
+        ]
+      }
+    },
+    "momentum_daily_index": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "trade_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      }
+    },
+    "money_flow": {
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_stock_mf_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "pipeline_exec_log": {
+      "idx_exec_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "exec_date"
+        ]
+      },
+      "idx_pipeline": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "pipeline_name"
+        ]
+      },
+      "idx_status": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "status"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      }
+    },
+    "portfolio_account": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_user_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "user_id",
+          "trade_date"
+        ]
+      }
+    },
+    "portfolio_holdings": {
+      "idx_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "idx_lock_until": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "lock_until"
+        ]
+      },
+      "idx_status": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "status"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_user_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "user_id",
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "realtime_score": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_realtime_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date",
+          "query_time"
+        ]
+      }
+    },
+    "season_daily_signal": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      }
+    },
+    "season_state": {
+      "idx_code_season": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "index_code",
+          "season"
+        ]
+      },
+      "idx_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "idx_season": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "season"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_date_code": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date",
+          "index_code"
+        ]
+      }
+    },
+    "signal_change_log": {
+      "idx_alert": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "is_alert"
+        ]
+      },
+      "idx_stock_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      }
+    },
+    "stock_basic": {
+      "idx_industry": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "industry"
+        ]
+      },
+      "idx_market": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "market"
+        ]
+      },
+      "idx_symbol": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "symbol"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_ts_code": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code"
+        ]
+      }
+    },
+    "stock_notes": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "note_date"
+        ]
+      }
+    },
+    "stock_pool": {
+      "idx_pool_name": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "pool_name"
+        ]
+      },
+      "idx_status": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "status"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_code_pool": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "pool_name"
+        ]
+      }
+    },
+    "strategy_config": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      }
+    },
+    "strategy_signal": {
+      "idx_composite": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "composite_score"
+        ]
+      },
+      "idx_direction": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "direction"
+        ]
+      },
+      "idx_mode": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "operation_mode"
+        ]
+      },
+      "idx_tiger": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "autumn_tiger"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_signal_stock_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "strategy_signal_daily": {
+      "idx_action": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "strategy_id",
+          "trade_date",
+          "action"
+        ]
+      },
+      "idx_strategy_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "strategy_id",
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_strategy_daily": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date",
+          "strategy_id"
+        ]
+      }
+    },
+    "system_config": {
+      "config_key": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "config_key"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      }
+    },
+    "technical_indicator": {
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_stock_ind_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "trend_score": {
+      "idx_composite": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "composite_score"
+        ]
+      },
+      "idx_cycle": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "cycle_score"
+        ]
+      },
+      "idx_structure": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "structure_score"
+        ]
+      },
+      "idx_trade_date": {
+        "non_unique": 1,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "trade_date"
+        ]
+      },
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_trend_stock_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    },
+    "watch_pool": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_user_code": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "user_id",
+          "ts_code"
+        ]
+      }
+    },
+    "watch_pool_snapshot": {
+      "PRIMARY": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "id"
+        ]
+      },
+      "uk_code_date": {
+        "non_unique": 0,
+        "index_type": "BTREE",
+        "comment": "",
+        "columns": [
+          "ts_code",
+          "trade_date"
+        ]
+      }
+    }
+  },
+  "foreign_keys": [],
+  "relations": [
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "backtest_hengjiyuan_summary",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "backtest_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "backtest_score_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "chanlun_structure",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "daily_kline",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_daily",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "backtest_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "backtest_score_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "chanlun_structure",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "daily_kline",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_hengjiyuan_summary",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "backtest_score_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "chanlun_structure",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "daily_kline",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_pool",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "chanlun_structure",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "daily_kline",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "backtest_score_daily",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "daily_kline",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "chanlun_structure",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "daily_kline_qfq",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "money_flow",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "daily_kline_qfq",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "portfolio_holdings",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "money_flow",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "realtime_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "portfolio_holdings",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "signal_change_log",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "realtime_score",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "stock_basic",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "signal_change_log",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "stock_notes",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_basic",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "stock_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_notes",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "strategy_signal",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "stock_pool",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "strategy_signal_daily",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal_daily",
+      "to": "technical_indicator",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal_daily",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal_daily",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal_daily",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "strategy_signal_daily",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "technical_indicator",
+      "to": "trend_score",
+      "via": "ts_code"
+    },
+    {
+      "from": "technical_indicator",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "technical_indicator",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "technical_indicator",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "trend_score",
+      "to": "v_daily_comprehensive",
+      "via": "ts_code"
+    },
+    {
+      "from": "trend_score",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "trend_score",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "v_daily_comprehensive",
+      "to": "watch_pool",
+      "via": "ts_code"
+    },
+    {
+      "from": "v_daily_comprehensive",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    },
+    {
+      "from": "watch_pool",
+      "to": "watch_pool_snapshot",
+      "via": "ts_code"
+    }
+  ]
+}

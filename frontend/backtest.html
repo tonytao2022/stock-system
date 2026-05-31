@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阶梯策略回测 - 股票智能分析管理系统</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #161d2a; --bg-card-hover: #1c2538;
+  --bg-sidebar: #0d1321; --bg-input: #1a2235; --bg-tooltip: #1e293b;
+  --border-color: #1e2d4a; --border-light: #253a5e; --border-accent: #3b82f6;
+  --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b; --text-bright: #ffffff;
+  --color-bull: #ef4444; --color-bull-dim: #dc2626; --color-bear: #22c55e; --color-bear-dim: #16a34a;
+  --color-buy: #f59e0b; --color-buy-bg: rgba(245,158,11,0.12);
+  --color-sell: #6b7280; --color-sell-bg: rgba(107,114,128,0.12);
+  --color-hold: #3b82f6; --color-hold-bg: rgba(59,130,246,0.12);
+  --color-warning: #f97316; --color-error: #ef4444; --color-safety: #22c55e;
+  --color-profit: #22c55e; --color-loss: #ef4444;
+  --sidebar-width: 240px; --header-height: 56px; --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4); --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.5); --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+  --transition: 0.2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.5;overflow-y:auto;overflow-x:hidden}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--bg-sidebar);border-right:1px solid var(--border-color);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border-color)}
+.sidebar-logo .title{font-size:15px;font-weight:700;color:var(--text-bright);letter-spacing:0.5px}
+.sidebar-logo .subtitle{font-size:11px;color:var(--text-muted);margin-top:4px}
+.sidebar-nav{flex:1;padding:12px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:all var(--transition);border-left:3px solid transparent;margin:2px 0}
+.nav-item:hover{background:var(--bg-card);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-card);color:var(--text-bright);border-left-color:var(--border-accent);font-weight:600}
+.nav-item .nav-icon{font-size:18px;width:24px;text-align:center}
+.nav-divider{height:1px;background:var(--border-color);margin:8px 16px}
+.nav-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);padding:8px 20px 4px;font-weight:700}
+.sidebar-footer{padding:12px 20px;border-top:1px solid var(--border-color);font-size:11px;color:var(--text-muted)}
+.sidebar-footer .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--color-safety)}
+.main-content{flex:1;margin-left:var(--sidebar-width);padding:0;min-height:100vh}
+.top-bar{position:sticky;top:0;z-index:50;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:0 24px;height:var(--header-height);display:flex;align-items:center;justify-content:space-between}
+.top-bar .breadcrumb{font-size:16px;font-weight:600;color:var(--text-bright)}
+.top-bar .market-status{display:flex;align-items:center;gap:16px;font-size:13px}
+.page-content{padding:20px 24px}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:20px;transition:all var(--transition)}
+.card:hover{background:var(--bg-card-hover);border-color:var(--border-light);box-shadow:var(--shadow-card-hover)}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.card-title{font-size:15px;font-weight:600;color:var(--text-bright);display:flex;align-items:center;gap:8px}
+.card-subtitle{font-size:12px;color:var(--text-muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-primary);transition:all var(--transition)}
+.btn:hover{background:var(--bg-card-hover);border-color:var(--border-light)}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.btn.primary{background:var(--border-accent);border-color:var(--border-accent);color:#fff}
+.btn.primary:hover{background:#2563eb}
+.btn.primary:disabled{background:rgba(59,130,246,0.5)}
+.btn.danger{background:var(--color-error);border-color:var(--color-error);color:#fff}
+.btn.danger:hover{background:var(--color-bull-dim)}
+.btn.success{background:var(--color-safety);border-color:var(--color-safety);color:#fff}
+.btn.success:hover{background:#15803d}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.form-row{display:flex;gap:16px;flex-wrap:wrap}
+.form-row .form-group{flex:1;min-width:150px}
+input[type="text"],input[type="number"],select{background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius);padding:8px 12px;color:var(--text-primary);font-size:13px;width:100%;transition:all var(--transition)}
+input:focus,select:focus{outline:none;border-color:var(--border-accent);box-shadow:0 0 0 2px rgba(59,130,246,0.15)}
+input[type="date"]{background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius);padding:7px 12px;color:var(--text-primary);font-size:13px;width:100%;color-scheme:dark}
+input[type="date"]:focus{outline:none;border-color:var(--border-accent);box-shadow:0 0 0 2px rgba(59,130,246,0.15)}
+input::placeholder{color:var(--text-muted)}
+.data-table{width:100%;border-collapse:collapse}
+.data-table thead th{background:var(--bg-secondary);color:var(--text-muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;padding:10px 14px;text-align:left;border-bottom:2px solid var(--border-color);white-space:nowrap}
+.data-table tbody td{padding:12px 14px;font-size:13px;border-bottom:1px solid var(--border-color);color:var(--text-secondary)}
+.data-table tbody tr{cursor:pointer}
+.data-table tbody tr:hover{background:var(--bg-card-hover)}
+.data-table tbody tr:hover td{color:var(--text-primary)}
+.data-table tbody tr.active-row{background:rgba(59,130,246,0.08);border-left:3px solid var(--border-accent)}
+.data-table tbody tr.active-row td{border-left-color:var(--border-accent)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.badge.profit{background:rgba(34,197,94,0.15);color:var(--color-profit)}
+.badge.loss{background:rgba(239,68,68,0.15);color:var(--color-loss)}
+.badge.neutral{background:rgba(100,116,139,0.15);color:var(--text-muted)}
+.badge.rank{background:var(--color-hold-bg);color:var(--color-hold);min-width:24px;text-align:center}
+.badge.rank.gold{background:rgba(234,179,8,0.2);color:#eab308}
+.badge.rank.silver{background:rgba(148,163,184,0.2);color:#94a3b8}
+.badge.rank.bronze{background:rgba(180,83,9,0.2);color:#cd7f32}
+.loading{display:flex;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted)}
+.spinner{width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--border-accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-muted)}
+.empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+.val-pos{color:var(--color-profit);font-weight:600}
+.val-neg{color:var(--color-loss);font-weight:600}
+.val-zero{color:var(--text-muted)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.param-section{background:rgba(59,130,246,0.03);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:20px;margin-bottom:20px}
+.param-section .section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.param-section .section-title{font-size:14px;font-weight:600;color:var(--text-bright)}
+.param-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:14px}
+.param-item{display:flex;flex-direction:column;gap:4px}
+.param-item label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;font-weight:600}
+.param-item .hint{font-size:10px;color:var(--text-muted);margin-top:2px}
+.chart-box{width:100%;height:400px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px, 1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px;text-align:center}
+.stat-card .stat-value{font-size:24px;font-weight:700;color:var(--text-bright);margin:4px 0}
+.stat-card .stat-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .stat-sub{font-size:11px;color:var(--text-secondary);margin-top:2px}
+.section{margin-bottom:20px}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:15px;font-weight:600;color:var(--text-bright);display:flex;align-items:center;gap:8px}
+.seg-table{width:100%;border-collapse:collapse;font-size:13px}
+.seg-table th{text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:600;border-bottom:1px solid var(--border-color);font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.seg-table td{padding:8px 12px;border-bottom:1px solid rgba(30,45,74,0.5);color:var(--text-secondary)}
+.best-card{background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(34,197,94,0.05));border:1px solid var(--border-accent);border-radius:var(--radius-lg);padding:20px}
+.best-card .tag{background:var(--border-accent);color:#fff;font-size:10px;padding:2px 8px;border-radius:4px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;display:inline-block;margin-bottom:8px}
+.scroll-x{overflow-x:auto}
+.scroll-x table{min-width:900px}
+@media(max-width:900px){
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .form-row{flex-direction:column}
+  .form-row .form-group{min-width:100%}
+  .param-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+
+<!-- ═══ Sidebar ═══ -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="title">📊 股票智能分析</div>
+    <div class="subtitle">v1.0 · 策略回测系统</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section-title">📈 导航</div>
+    <a class="nav-item" href="/stock-manager/index.html"><span class="nav-icon">🏠</span> 首页驾驶舱</a>
+    <a class="nav-item" href="/stock-manager/strategy.html"><span class="nav-icon">📡</span> 阶梯策略</a>
+    <a class="nav-item active"><span class="nav-icon">🔬</span> 策略回测</a>
+    <div class="nav-divider"></div>
+    <div class="nav-section-title">⚙️ 管理</div>
+    <a class="nav-item" href="/stock-manager/index.html#page-backtest-pool"><span class="nav-icon">🎯</span> 回测池管理</a>
+    <a class="nav-item" href="/stock-manager/stock-notes.html"><span class="nav-icon">📝</span> 股票笔记</a>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span> 系统运行中
+  </div>
+</div>
+
+<!-- ═══ Main Content ═══ -->
+<div class="main-content">
+  <div class="top-bar">
+    <div class="breadcrumb">🔬 阶梯策略回测</div>
+    <div class="market-status">
+      <span id="statusTime" style="font-size:12px;color:var(--text-muted)"></span>
+    </div>
+  </div>
+
+  <div class="page-content">
+
+    <!-- ═══ Parameter Config ═══ -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-header">
+        <span class="card-title">⚙️ 回测参数配置</span>
+        <span class="card-subtitle">阶梯动态持有策略 · 多策略对比</span>
+      </div>
+      <div class="param-section">
+        <div class="section-header">
+          <span class="section-title">📐 核心参数</span>
+          <span class="card-subtitle">修改参数后点击"开始回测"</span>
+        </div>
+        <div class="param-grid">
+          <div class="param-item">
+            <label>买入评分阈值</label>
+            <input type="number" id="paramMinBuy" value="30" min="0" max="100" step="1">
+            <span class="hint">评分 ≥ 此值触发买入信号（默认30）</span>
+          </div>
+          <div class="param-item">
+            <label>P1（10日阈值）</label>
+            <input type="number" id="paramP1" value="10" min="0" max="100" step="1">
+            <span class="hint">10日检查点：评分 &lt; P1 则卖出</span>
+          </div>
+          <div class="param-item">
+            <label>P2（20日阈值）</label>
+            <input type="number" id="paramP2" value="20" min="0" max="100" step="1">
+            <span class="hint">20日检查点：评分 &lt; P2 则卖出</span>
+          </div>
+          <div class="param-item">
+            <label>P3（30日阈值）</label>
+            <input type="number" id="paramP3" value="30" min="0" max="100" step="1">
+            <span class="hint">30日+每10日评估：评分 &lt; P3 则卖出</span>
+          </div>
+          <div class="param-item">
+            <label>止损百分比 (%)</label>
+            <input type="number" id="paramSl" value="10" min="0" max="30" step="0.5">
+            <span class="hint">从最高点回撤 ≥ 此比例时止损</span>
+          </div>
+          <div class="param-item">
+            <label>最大持有天数</label>
+            <input type="number" id="paramMaxHold" value="60" min="10" max="120" step="5">
+            <span class="hint">超过此天数强制平仓</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="param-section" style="margin-bottom:0">
+        <div class="section-header">
+          <span class="section-title">📅 时间范围</span>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>开始日期</label>
+            <input type="date" id="paramStartDate" value="2024-01-01">
+          </div>
+          <div class="form-group">
+            <label>结束日期</label>
+            <input type="date" id="paramEndDate" value="">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:16px;padding-top:16px;border-top:1px solid var(--border-color)">
+        <button class="btn" id="btnReset" onclick="resetParams()">🔄 恢复默认</button>
+        <button class="btn primary" id="btnRun" onclick="runBacktest()">🚀 开始回测</button>
+      </div>
+    </div>
+
+    <!-- ═══ Progress ═══ -->
+    <div id="statusArea" style="display:none;margin-bottom:20px">
+      <div class="card" id="statusCard">
+        <div class="loading" id="runningIndicator">
+          <div class="spinner"></div>
+          <span id="statusText">回测执行中，请稍候...（约需1-3分钟）</span>
+        </div>
+        <div id="errorArea" style="display:none;padding:20px;text-align:center">
+          <div style="color:var(--color-error);font-size:16px;margin-bottom:8px">⚠️ 回测执行出错</div>
+          <div id="errorMsg" style="color:var(--text-secondary);font-size:13px"></div>
+          <button class="btn" style="margin-top:12px" onclick="document.getElementById('statusArea').style.display='none'">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ Results ═══ -->
+    <div id="resultsArea" style="display:none">
+      <div class="stat-grid" id="summaryStats"></div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🏆 策略排名（按盈亏比降序）</span>
+          <span class="card-subtitle">点击策略查看持有期分段详情</span>
+        </div>
+        <div class="card">
+          <div class="scroll-x">
+            <table class="data-table" id="rankTable">
+              <thead>
+                <tr><th>排名</th><th>策略名称</th><th>交易数</th><th>胜</th><th>负</th><th>胜率</th><th>均收益</th><th>均盈</th><th>均亏</th><th>盈亏比</th><th>最大收益</th><th>最小收益</th></tr>
+              </thead>
+              <tbody id="rankTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📊 盈亏比对比（柱状图）</span>
+        </div>
+        <div class="card">
+          <div id="chartProfitFactor" class="chart-box"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:20px">
+        <div class="card">
+          <div class="card-header"><span class="card-title">📈 胜率对比</span></div>
+          <div id="chartWinRate" class="chart-box" style="height:350px"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 均收益对比</span></div>
+          <div id="chartAvgReturn" class="chart-box" style="height:350px"></div>
+        </div>
+      </div>
+
+      <!-- ═══ Best Strategy Detail ═══ -->
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">🥇 最优策略详情（持有期分段）</span>
+        </div>
+        <div class="best-card" id="bestStrategy">
+          <div class="tag">🏆 TOP 1</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+            <span id="bestName" style="font-size:16px;font-weight:600;color:var(--text-bright)"></span>
+            <span id="bestStats" style="font-size:13px;color:var(--text-secondary)"></span>
+          </div>
+          <div class="scroll-x" style="margin-bottom:12px">
+            <table class="seg-table" id="bestSegTable">
+              <thead><tr><th>持有期</th><th>笔数</th><th>均收益</th><th>胜率</th><th>均盈</th><th>均亏</th></tr></thead>
+              <tbody id="bestSegTbody"></tbody>
+            </table>
+          </div>
+          <div class="grid-2">
+            <div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">🚪 退出原因分布</div>
+              <div class="scroll-x">
+                <table class="seg-table" id="bestReasonTable">
+                  <thead><tr><th>原因</th><th>笔数</th><th>均收益</th><th>胜率</th></tr></thead>
+                  <tbody id="bestReasonTbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">📊 买入评分分段</div>
+              <div class="scroll-x">
+                <table class="seg-table" id="bestScoreTable">
+                  <thead><tr><th>评分段</th><th>笔数</th><th>均收益</th><th>胜率</th></tr></thead>
+                  <tbody id="bestScoreTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#resultsArea -->
+
+    <!-- ════════════════════════════════════════════ -->
+    <!-- 综合回测 v2 — 四维分析结果区域              -->
+    <!-- ════════════════════════════════════════════ -->
+    <div class="section" id="v2Section" style="margin-top:40px">
+      <div class="section-header">
+        <span class="section-title">🧪 综合回测v2 — 四维分析</span>
+        <span class="card-subtitle">2026-05-30 全量回测结果 | 数据源: season_state(460天)+daily_kline(27万条)</span>
+      </div>
+
+      <!-- Tab切换 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn primary" id="tabBt1" onclick="switchV2Tab(1)">① 生存偏差</button>
+        <button class="btn" id="tabBt2" onclick="switchV2Tab(2)">② 混沌三子态</button>
+        <button class="btn" id="tabBt3" onclick="switchV2Tab(3)">③ 因子归因</button>
+        <button class="btn" id="tabBt4" onclick="switchV2Tab(4)">④ 评分分档</button>
+      </div>
+
+      <!-- Tab 1: 生存偏差 -->
+      <div id="v2Tab1" class="card">
+        <div class="card-header"><span class="card-title">① 生存偏差交叉验证</span></div>
+        <div class="scroll-x">
+          <table class="data-table">
+            <thead><tr><th>持有期</th><th>总信号</th><th colspan="4">不带止损</th><th colspan="5">带止损(回撤10%)</th></tr>
+            <tr><th></th><th></th><th>交易数</th><th>胜率</th><th>均收益%</th><th>σ</th><th>交易数</th><th>胜率</th><th>均收益%</th><th>σ</th><th>止损率%</th></tr></thead>
+            <tbody id="v2T1Body"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-tooltip);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);line-height:1.7">
+          💡 <b>生存偏差验证</b>：能持有N日未触发止损的都是赢家。30日带止损均收益<b>+28.48%</b> (无止损仅+8.94%)，止损触发率64.6%。<br>
+          结论：<span style="color:var(--color-profit)">✅ 止损策略在混沌期有效，30日持有期性价比最优</span>
+        </div>
+      </div>
+
+      <!-- Tab 2: 混沌三子态 -->
+      <div id="v2Tab2" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">② 混沌三子态 × 历史行情表现</span></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">基于460天season_state回测，分析chaos/chaos_spring/chaos_autumn三种子态下不同持有期的表现</p>
+        <div id="v2T2Body"></div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-tooltip);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);line-height:1.7">
+          💡 <b>三种混沌子态最佳持有期均为60日</b>，其中🍂 chaos_autumn夏普比最高0.84。<br>
+          结论：<span style="color:var(--color-profit)">✅ 60日 > 30日，阶梯策略可考虑延长至60日检查点</span>
+        </div>
+      </div>
+
+      <!-- Tab 3: 因子归因 -->
+      <div id="v2Tab3" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">③ 因子归因分析 — L1趋势/L2结构/L3情绪</span></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">基于trend_score(1631条/550只)截面数据，分析各因子IC系数与多空利差（注：评分数据仅5天，统计量偏弱）</p>
+        <div id="v2T3Body"></div>
+        <div id="v2T3Chart" style="height:300px;margin-top:16px"></div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-tooltip);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);line-height:1.7">
+          💡 L1趋势和L2结构因子IC为正，<b>L3情绪因子多空利差仅0.3%</b>，区分度不足。<br>
+          结论：<span style="color:var(--color-warning)">⚠️ 需要更多评分时间序列数据积累后重新评估</span>
+        </div>
+      </div>
+
+      <!-- Tab 4: 评分分档×持有期 -->
+      <div id="v2Tab4" class="card" style="display:none">
+        <div class="card-header"><span class="card-title">④ 季节分档×持有期匹配</span></div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">基于460天season_state + 95只监控池K线，全量历史回测</p>
+        <div id="v2T4Body"></div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-tooltip);border-radius:var(--radius);font-size:13px;color:var(--text-secondary);line-height:1.7">
+          💡 🍂 <b>秋季(含秋混沌)是黄金窗口</b>：20~30日持有夏普0.76~0.98，胜率79~89%。<br>
+          结论：<span style="color:var(--color-profit)">✅ 秋季窗口到来时，策略建议提高仓位并缩短持有期至20日</span>
+        </div>
+      </div>
+    </div><!-- /#v2Section -->
+
+  </div><!-- /.page-content -->
+</div><!-- /.main-content -->
+</div><!-- /.app-layout -->
+
+<script>
+// ═══ API Config ═══
+const API_BASE = window.location.origin.includes('localhost')
+  ? 'http://localhost:8887/api/v1/management'
+  : '/api/v1/management';
+
+const API_KEY = (() => {
+  const meta = document.querySelector('meta[name="api-key"]');
+  if (meta) return meta.getAttribute('content');
+  if (window.__API_KEY__) return window.__API_KEY__;
+  try { return localStorage.getItem('api_key'); } catch(e) {}
+  return '';
+})();
+
+const API_HEADERS = {
+  'Content-Type': 'application/json',
+  'X-API-Key': API_KEY,
+};
+
+async function apiPost(path, body) {
+  const r = await fetch(API_BASE + path, {
+    method: 'POST',
+    headers: API_HEADERS,
+    body: JSON.stringify(body),
+  });
+  return r.json();
+}
+
+function v(n) {
+  if (n === null || n === undefined) return '0.00';
+  const x = typeof n === 'number' ? n : parseFloat(n);
+  if (isNaN(x)) return '0.00';
+  if (x > 0) return '<span class="val-pos">+' + x.toFixed(2) + '</span>';
+  if (x < 0) return '<span class="val-neg">' + x.toFixed(2) + '</span>';
+  return '<span class="val-zero">0.00</span>';
+}
+
+function vp(n) {
+  if (n === null || n === undefined) return '0.0%';
+  const x = typeof n === 'number' ? n : parseFloat(n);
+  if (isNaN(x)) return '0.0%';
+  if (x > 0) return '<span class="val-pos">+' + x.toFixed(1) + '%</span>';
+  if (x < 0) return '<span class="val-neg">' + x.toFixed(1) + '%</span>';
+  return '<span class="val-zero">0.0%</span>';
+}
+
+function rankBadge(r) {
+  if (r === 1) return '<span class="badge rank gold">#1</span>';
+  if (r === 2) return '<span class="badge rank silver">#2</span>';
+  if (r === 3) return '<span class="badge rank bronze">#3</span>';
+  return '<span class="badge rank">#' + r + '</span>';
+}
+
+function pfText(pf) {
+  if (pf === null || pf === undefined) return '<span class="val-zero">N/A</span>';
+  return '<span class="val-pos">' + pf.toFixed(2) + '</span>';
+}
+
+// ═══ Init ═══
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('statusTime').textContent = new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' });
+  const today = new Date().toISOString().split('T')[0];
+  if (!document.getElementById('paramEndDate').value) {
+    document.getElementById('paramEndDate').value = today;
+  }
+});
+
+function resetParams() {
+  document.getElementById('paramMinBuy').value = 30;
+  document.getElementById('paramP1').value = 10;
+  document.getElementById('paramP2').value = 20;
+  document.getElementById('paramP3').value = 30;
+  document.getElementById('paramSl').value = 10;
+  document.getElementById('paramMaxHold').value = 60;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('paramEndDate').value = today;
+  document.getElementById('paramStartDate').value = '2024-01-01';
+}
+
+// ═══ Run Backtest ═══
+async function runBacktest() {
+  const btn = document.getElementById('btnRun');
+  btn.disabled = true;
+  btn.textContent = '⏳ 执行中...';
+
+  document.getElementById('resultsArea').style.display = 'none';
+  document.getElementById('statusArea').style.display = 'block';
+  document.getElementById('runningIndicator').style.display = 'flex';
+  document.getElementById('errorArea').style.display = 'none';
+
+  const params = {
+    min_buy_score: parseInt(document.getElementById('paramMinBuy').value) || 30,
+    p1: parseInt(document.getElementById('paramP1').value) || 10,
+    p2: parseInt(document.getElementById('paramP2').value) || 20,
+    p3: parseInt(document.getElementById('paramP3').value) || 30,
+    stop_loss_pct: parseFloat(document.getElementById('paramSl').value) || 10,
+    max_hold_days: parseInt(document.getElementById('paramMaxHold').value) || 60,
+    start_date: document.getElementById('paramStartDate').value,
+    end_date: document.getElementById('paramEndDate').value,
+  };
+
+  if (params.start_date > params.end_date) {
+    showError('开始日期不能晚于结束日期');
+    btn.disabled = false;
+    btn.textContent = '🚀 开始回测';
+    return;
+  }
+
+  try {
+    const resp = await apiPost('/backtest/run', params);
+    if (!resp.success) {
+      showError(resp.message || resp.error || '回测执行失败');
+      btn.disabled = false; btn.textContent = '🚀 开始回测'; return;
+    }
+    const data = resp.data;
+    if (!data || !data.results || data.results.length === 0) {
+      showError('回测未产生有效结果');
+      btn.disabled = false; btn.textContent = '🚀 开始回测'; return;
+    }
+    document.getElementById('runningIndicator').style.display = 'none';
+    document.getElementById('resultsArea').style.display = 'block';
+    renderResults(data.results);
+  } catch (e) {
+    showError('网络错误: ' + (e.message || e));
+  }
+  btn.disabled = false;
+  btn.textContent = '🚀 开始回测';
+}
+
+function showError(msg) {
+  document.getElementById('runningIndicator').style.display = 'none';
+  document.getElementById('errorArea').style.display = 'block';
+  document.getElementById('errorMsg').textContent = msg;
+}
+
+// ═══ Render Results ═══
+function renderResults(results) {
+  renderSummary(results);
+  renderRankTable(results);
+  renderProfitFactorChart(results);
+  renderWinRateChart(results);
+  renderAvgReturnChart(results);
+  renderBestStrategy(results[0]);
+}
+
+function renderSummary(results) {
+  const top = results[0];
+  const bestPF = top.profit_factor !== null ? top.profit_factor.toFixed(2) : 'N/A';
+  const bestWR = results.reduce((b, r) => r.win_rate > b ? r.win_rate : b, 0);
+  const totalTrades = results.reduce((s, r) => s + r.total_trades, 0);
+  const avgWinRate = (results.reduce((s, r) => s + r.win_rate, 0) / results.length).toFixed(1);
+
+  document.getElementById('summaryStats').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">策略总数</div>
+      <div class="stat-value" style="color:var(--text-bright)">${results.length}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最优盈亏比</div>
+      <div class="stat-value" style="color:var(--color-profit)">${bestPF}</div>
+      <div class="stat-sub" style="font-size:10px;color:var(--text-muted)">${top.name.substring(0,30)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">总交易笔数</div>
+      <div class="stat-value" style="color:var(--text-bright)">${totalTrades.toLocaleString()}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">平均胜率</div>
+      <div class="stat-value" style="color:var(--color-profit)">${avgWinRate}%</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">最高胜率</div>
+      <div class="stat-value" style="color:var(--color-buy)">${bestWR.toFixed(1)}%</div>
+    </div>
+  `;
+}
+
+function renderRankTable(rs) {
+  const tbody = document.getElementById('rankTbody');
+  tbody.innerHTML = rs.map((r, i) => {
+    const pf = r.profit_factor !== null ? '<span class="val-pos">' + r.profit_factor.toFixed(2) + '</span>' : '<span class="val-zero">N/A</span>';
+    return '<tr onclick="renderBestStrategy(btResults[' + i + '])">'
+      + '<td>' + rankBadge(r.rank) + '</td>'
+      + '<td style="color:var(--text-bright);font-weight:500">' + r.name + '</td>'
+
+      + '<td>' + r.total_trades + '</td>'
+      + '<td><span class="val-pos">' + r.wins + '</span></td>'
+      + '<td><span class="val-neg">' + r.losses + '</span></td>'
+      + '<td>' + r.win_rate.toFixed(1) + '%</td>'
+      + '<td>' + v(r.avg_return) + '%</td>'
+      + '<td>' + v(r.avg_win) + '%</td>'
+      + '<td>' + v(r.avg_loss) + '%</td>'
+      + '<td>' + pf + '</td>'
+      + '<td>' + v(r.max_return) + '%</td>'
+      + '<td>' + v(r.min_return) + '%</td>'
+      + '</tr>';
+  }).join('');
+}
+
+// ═══ Charts ═══
+function renderProfitFactorChart(results) {
+  const chart = echarts.init(document.getElementById('chartProfitFactor'));
+  const names = results.map(r => r.name.length > 20 ? r.name.substring(0,20)+'…' : r.name);
+  const vals = results.map(r => r.profit_factor !== null ? r.profit_factor : 0);
+  const colors = vals.map(v => v > 3 ? '#22c55e' : v > 1.5 ? '#3b82f6' : v > 0 ? '#f59e0b' : '#ef4444');
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: function(p) {
+        const i = p[0].dataIndex;
+        const r = results[i];
+        return '<strong>' + r.name + '</strong><br/>'
+          + '盈亏比: <span style="color:#22c55e">' + (r.profit_factor !== null ? r.profit_factor.toFixed(2) : 'N/A') + '</span><br/>'
+          + '胜率: ' + r.win_rate + '% | 均收益: ' + r.avg_return.toFixed(2) + '%<br/>'
+          + '交易数: ' + r.total_trades + ' (' + r.wins + '胜/' + r.losses + '负)';
+      }
+    },
+    grid: { left: '3%', right: '4%', bottom: '15%', top: '5%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: names,
+      axisLabel: { color: '#94a3b8', fontSize: 10, rotate: 30 },
+      axisLine: { lineStyle: { color: '#1e2d4a' } },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      name: '盈亏比',
+      nameTextStyle: { color: '#64748b', fontSize: 11 },
+      axisLabel: { color: '#94a3b8' },
+      splitLine: { lineStyle: { color: 'rgba(30,45,74,0.5)', type: 'dashed' } },
+      axisLine: { show: false }
+    },
+    series: [{
+      type: 'bar',
+      data: vals.map((v, i) => ({
+        value: v,
+        itemStyle: {
+          color: colors[i],
+          borderRadius: [3,3,0,0],
+          shadowBlur: 8,
+          shadowColor: colors[i].replace(')',',0.3)').replace('rgb','rgba')
+        }
+      })),
+      barWidth: '60%',
+      label: {
+        show: true,
+        position: 'top',
+        color: '#94a3b8',
+        fontSize: 10,
+        formatter: function(p) { return p.value > 0 ? p.value.toFixed(1) : ''; }
+      }
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+function renderWinRateChart(results) {
+  const chart = echarts.init(document.getElementById('chartWinRate'));
+  const names = results.map(r => r.name.length > 20 ? r.name.substring(0,20)+'…' : r.name);
+  const vals = results.map(r => r.win_rate);
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: function(p) {
+        const i = p[0].dataIndex;
+        const r = results[i];
+        return '<strong>' + r.name + '</strong><br/>'
+          + '胜率: <span style="color:#22c55e">' + r.win_rate + '%</span><br/>'
+          + r.wins + '胜/' + r.losses + '负 (共' + r.total_trades + '笔)';
+      }
+    },
+    grid: { left: '3%', right: '4%', bottom: '15%', top: '5%', containLabel: true },
+    xAxis: {
+      type: 'category', data: names,
+      axisLabel: { color: '#94a3b8', fontSize: 10, rotate: 30 },
+      axisLine: { lineStyle: { color: '#1e2d4a' } },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value', min: 0, max: 100,
+      name: '胜率 (%)',
+      nameTextStyle: { color: '#64748b', fontSize: 11 },
+      axisLabel: { color: '#94a3b8', formatter: '{value}%' },
+      splitLine: { lineStyle: { color: 'rgba(30,45,74,0.5)', type: 'dashed' } },
+      axisLine: { show: false }
+    },
+    series: [{
+      type: 'bar',
+      data: vals.map(v => ({
+        value: v,
+        itemStyle: {
+          color: v >= 50 ? '#22c55e' : v >= 40 ? '#f59e0b' : '#ef4444',
+          borderRadius: [3,3,0,0]
+        }
+      })),
+      barWidth: '60%',
+      label: { show: true, position: 'top', color: '#94a3b8', fontSize: 10, formatter: '{c}%' }
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+function renderAvgReturnChart(results) {
+  const chart = echarts.init(document.getElementById('chartAvgReturn'));
+  const names = results.map(r => r.name.length > 20 ? r.name.substring(0,20)+'…' : r.name);
+  const vals = results.map(r => r.avg_return);
+
+  chart.setOption({
+    backgroundColor: 'transparent',
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: function(p) {
+        const i = p[0].dataIndex;
+        const r = results[i];
+        return '<strong>' + r.name + '</strong><br/>'
+          + '均收益: ' + (r.avg_return > 0 ? '<span style="color:#22c55e">' : '<span style="color:#ef4444">') + r.avg_return.toFixed(2) + '%</span><br/>'
+          + '盈亏比: ' + (r.profit_factor !== null ? r.profit_factor.toFixed(2) : 'N/A') + ' | 胜率: ' + r.win_rate + '%';
+      }
+    },
+    grid: { left: '3%', right: '4%', bottom: '15%', top: '5%', containLabel: true },
+    xAxis: {
+      type: 'category', data: names,
+      axisLabel: { color: '#94a3b8', fontSize: 10, rotate: 30 },
+      axisLine: { lineStyle: { color: '#1e2d4a' } },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      name: '均收益 (%)',
+      nameTextStyle: { color: '#64748b', fontSize: 11 },
+      axisLabel: { color: '#94a3b8', formatter: '{value}%' },
+      splitLine: { lineStyle: { color: 'rgba(30,45,74,0.5)', type: 'dashed' } },
+      axisLine: { show: false }
+    },
+    series: [{
+      type: 'bar',
+      data: vals.map(v => ({
+        value: v,
+        itemStyle: {
+          color: v >= 0 ? '#22c55e' : '#ef4444',
+          borderRadius: [3,3,0,0]
+        }
+      })),
+      barWidth: '60%',
+      label: { show: true, position: 'top', color: '#94a3b8', fontSize: 10, formatter: function(p) { return p.value.toFixed(1) + '%'; } }
+    }]
+  });
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ═══ Best Strategy Detail ═══
+let btResults = [];
+
+function renderResults(rs) {
+  btResults = rs;
+  renderSummary(results);
+  renderRankTable(results);
+  renderProfitFactorChart(results);
+  renderWinRateChart(results);
+  renderAvgReturnChart(results);
+  renderBestStrategy(results[0]);
+}
+
+function renderBestStrategy(r) {
+  if (!r) return;
+  document.getElementById('bestName').textContent = r.name;
+  const pf = r.profit_factor !== null ? r.profit_factor.toFixed(2) : 'N/A';
+  document.getElementById('bestStats').innerHTML = r.total_trades + '笔 | '
+    + r.wins + '胜/' + r.losses + '负 | '
+    + '胜率 ' + r.win_rate + '% | '
+    + '均收益 ' + v(r.avg_return) + '% | '
+    + '盈亏比 ' + pf;
+
+  // Segments
+  const segTbody = document.getElementById('bestSegTbody');
+  const segs = r.segments || {};
+  const segOrder = ['≤10日','11-20日','21-30日','31-40日','40日+'];
+  let segHtml = '';
+  segOrder.forEach(sn => {
+    const sd = segs[sn];
+    if (sd) {
+      segHtml += '<tr><td>' + sn + '</td><td>' + sd.count + '</td><td>' + v(sd.avg_return) + '%</td>'
+        + '<td><span class="val-pos">' + sd.win_rate + '%</span></td>'
+        + '<td>' + v(sd.avg_win) + '%</td><td>' + v(sd.avg_loss) + '%</td></tr>';
+    }
+  });
+  segTbody.innerHTML = segHtml || '<tr><td colspan="6" style="color:var(--text-muted)">暂无分段数据</td></tr>';
+
+  // Exit Reasons
+  const reasonTbody = document.getElementById('bestReasonTbody');
+  const reasons = r.exit_reasons || {};
+  reasonTbody.innerHTML = Object.keys(reasons).map(rc => {
+    const rd = reasons[rc];
+    return '<tr><td>' + rc + '</td><td>' + rd.count + '</td><td>' + v(rd.avg_return) + '%</td>'
+      + '<td>' + rd.win_rate + '%</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">暂无数据</td></tr>';
+
+  // Score brackets
+  const scoreTbody = document.getElementById('bestScoreTbody');
+  const scores = r.score_brackets || {};
+  scoreTbody.innerHTML = Object.keys(scores).sort().map(g => {
+    const gd = scores[g];
+    return '<tr><td>' + g + '</td><td>' + gd.count + '</td><td>' + v(gd.avg_return) + '%</td>'
+      + '<td>' + gd.win_rate + '%</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="color:var(--text-muted)">暂无数据</td></tr>';
+}
+
+// ══════════════════════════════════════════════
+// 综合回测 v2 — 数据 & 渲染
+// ══════════════════════════════════════════════
+
+// 嵌入四个回测JSON数据
+var BT01 = {"5d": {"total_signals": 43216, "no_stop": {"trades": 23359, "wins": 13238, "win_rate": 56.67, "avg_return": 1.39, "total_return": 32503.47, "std": 6.03}, "with_stop": {"trades": 19857, "wins": 13286, "win_rate": 66.91, "avg_return": 1.82, "total_return": 36150.61, "std": 6.29, "stop_rate": 8.1, "stops_triggered": 3502}}, "10d": {"total_signals": 37637, "no_stop": {"trades": 23036, "wins": 13982, "win_rate": 60.7, "avg_return": 2.85, "total_return": 65653.01, "std": 8.83}, "with_stop": {"trades": 14601, "wins": 13654, "win_rate": 93.51, "avg_return": 4.56, "total_return": 66611.37, "std": 10.65, "stop_rate": 22.41, "stops_triggered": 8435}}, "20d": {"total_signals": 30233, "no_stop": {"trades": 22196, "wins": 14556, "win_rate": 65.58, "avg_return": 5.93, "total_return": 131679.49, "std": 13.16}, "with_stop": {"trades": 8037, "wins": 13463, "win_rate": 167.51, "avg_return": 13.39, "total_return": 107622.33, "std": 23.62, "stop_rate": 46.83, "stops_triggered": 14159}}, "30d": {"total_signals": 25918, "no_stop": {"trades": 21333, "wins": 14723, "win_rate": 69.02, "avg_return": 8.94, "total_return": 190684.15, "std": 17.51}, "with_stop": {"trades": 4585, "wins": 12988, "win_rate": 283.27, "avg_return": 28.48, "total_return": 130572.04, "std": 56.89, "stop_rate": 64.62, "stops_triggered": 16748}}, "60d": {"total_signals": 20235, "no_stop": {"trades": 19390, "wins": 15045, "win_rate": 77.59, "avg_return": 18.03, "total_return": 349578.13, "std": 27.54}, "with_stop": {"trades": 845, "wins": 11868, "win_rate": 1404.5, "avg_return": 185.48, "total_return": 156728.91, "std": 853.86, "stop_rate": 91.65, "stops_triggered": 18545}}};
+
+var BT02 = {"chaos": {"5d": {"trades": 10592, "win_rate": 59.91, "avg_return": 2.81, "median": 1.4, "std": 9.21, "sharpe": 0.31, "max": 73.2, "min": -33.19, "top20_ret": 3.6, "bot20_ret": 3.22, "ic": -0.0059}, "10d": {"trades": 10307, "win_rate": 59.62, "avg_return": 3.96, "median": 2.05, "std": 12.84, "sharpe": 0.31, "max": 118.69, "min": -32.26, "top20_ret": 5.55, "bot20_ret": 4.05, "ic": 0.0069}, "20d": {"trades": 10307, "win_rate": 65.49, "avg_return": 8.97, "median": 5.14, "std": 19.62, "sharpe": 0.46, "max": 171.09, "min": -37.2, "top20_ret": 11.11, "bot20_ret": 9.19, "ic": 0.0086}, "30d": {"trades": 10117, "win_rate": 69.36, "avg_return": 14.27, "median": 8.63, "std": 25.65, "sharpe": 0.56, "max": 203.44, "min": -36.04, "top20_ret": 17.26, "bot20_ret": 15.34, "ic": 0.0074}, "60d": {"trades": 8597, "win_rate": 80.55, "avg_return": 35.33, "median": 23.74, "std": 46.61, "sharpe": 0.76, "max": 331.78, "min": -40.61, "top20_ret": 44.88, "bot20_ret": 31.07, "ic": 0.0542}}, "chaos_spring": {"5d": {"trades": 11064, "win_rate": 52.95, "avg_return": 2.03, "median": 0.53, "std": 9.52, "sharpe": 0.21, "max": 88.4, "min": -43.76, "top20_ret": 2.17, "bot20_ret": 2.2, "ic": -0.0202}, "10d": {"trades": 10874, "win_rate": 59.16, "avg_return": 4.66, "median": 2.2, "std": 14.04, "sharpe": 0.33, "max": 110.66, "min": -44.78, "top20_ret": 4.81, "bot20_ret": 5.17, "ic": -0.0246}, "20d": {"trades": 10779, "win_rate": 61.69, "avg_return": 9.27, "median": 4.27, "std": 21.39, "sharpe": 0.43, "max": 157.26, "min": -47.68, "top20_ret": 9.79, "bot20_ret": 8.24, "ic": -0.0058}, "30d": {"trades": 10304, "win_rate": 65.63, "avg_return": 13.94, "median": 7.06, "std": 27.26, "sharpe": 0.51, "max": 218.77, "min": -43.07, "top20_ret": 14.47, "bot20_ret": 12.49, "ic": -0.0088}, "60d": {"trades": 10019, "win_rate": 75.35, "avg_return": 30.01, "median": 17.75, "std": 45.26, "sharpe": 0.66, "max": 372.77, "min": -37.05, "top20_ret": 30.7, "bot20_ret": 29.25, "ic": -0.0164}}, "chaos_autumn": {"5d": {"trades": 1790, "win_rate": 61.28, "avg_return": 3.49, "median": 1.87, "std": 9.11, "sharpe": 0.38, "max": 61.16, "min": -22.66, "top20_ret": 3.96, "bot20_ret": 4.01, "ic": -0.002}, "10d": {"trades": 1790, "win_rate": 77.09, "avg_return": 10.38, "median": 7.61, "std": 14.86, "sharpe": 0.7, "max": 99.54, "min": -27.85, "top20_ret": 12.83, "bot20_ret": 8.31, "ic": 0.1006}, "20d": {"trades": 1790, "win_rate": 79.66, "avg_return": 18.02, "median": 13.03, "std": 23.74, "sharpe": 0.76, "max": 161.86, "min": -26.96, "top20_ret": 22.38, "bot20_ret": 16.45, "ic": 0.0599}, "30d": {"trades": 1790, "win_rate": 80.67, "avg_return": 25.65, "median": 18.19, "std": 32.57, "sharpe": 0.79, "max": 205.7, "min": -31.82, "top20_ret": 28.4, "bot20_ret": 26.06, "ic": -0.0044}, "60d": {"trades": 935, "win_rate": 82.35, "avg_return": 28.37, "median": 21.56, "std": 33.85, "sharpe": 0.84, "max": 220.75, "min": -41.22, "top20_ret": 22.6, "bot20_ret": 30.16, "ic": -0.1067}}};
+
+var BT03 = {"1d": {"L1_趋势(cycle_score)": {"trades": 1073, "ic": -0.1408, "ic_p": 0.5, "top30_ret": -0.59, "bot30_ret": -0.67, "spread": 0.09, "avg_market_ret": -0.77, "excess_ret": 0.19}, "L2_结构(structure_score)": {"trades": 1073, "ic": 0.0222, "ic_p": 0.5, "top30_ret": -0.7, "bot30_ret": -0.95, "spread": 0.25, "avg_market_ret": -0.77, "excess_ret": 0.07}, "L3_情绪(emotion_score)": {"trades": 1073, "ic": 0.1304, "ic_p": 0.5, "top30_ret": -0.81, "bot30_ret": -1.1, "spread": 0.3, "avg_market_ret": -0.77, "excess_ret": -0.04}, "综合(composite_score)": {"trades": 1073, "ic": 0.0092, "ic_p": 0.5, "top30_ret": -0.9, "bot30_ret": -0.87, "spread": -0.03, "avg_market_ret": -0.77, "excess_ret": -0.13}}, "2d": {"L1_趋势(cycle_score)": {"trades": 749, "ic": 0.0626, "ic_p": 0.5, "top30_ret": -0.32, "bot30_ret": -1.53, "spread": 1.21, "avg_market_ret": -1.26, "excess_ret": 0.94}, "L2_结构(structure_score)": {"trades": 749, "ic": 0.0877, "ic_p": 0.5, "top30_ret": -0.56, "bot30_ret": -1.72, "spread": 1.16, "avg_market_ret": -1.26, "excess_ret": 0.71}, "L3_情绪(emotion_score)": {"trades": 749, "ic": -0.0556, "ic_p": 0.5, "top30_ret": -2.11, "bot30_ret": -0.92, "spread": -1.19, "avg_market_ret": -1.26, "excess_ret": -0.85}, "综合(composite_score)": {"trades": 749, "ic": 0.0709, "ic_p": 0.5, "top30_ret": -0.92, "bot30_ret": -1.49, "spread": 0.57, "avg_market_ret": -1.26, "excess_ret": 0.34}}, "3d": {"L1_趋势(cycle_score)": {"trades": 586, "ic": 0.0112, "ic_p": 0.5, "top30_ret": -1.06, "bot30_ret": -1.97, "spread": 0.91, "avg_market_ret": -1.72, "excess_ret": 0.66}, "L2_结构(structure_score)": {"trades": 586, "ic": 0.0177, "ic_p": 0.5, "top30_ret": -1.34, "bot30_ret": -2.02, "spread": 0.68, "avg_market_ret": -1.72, "excess_ret": 0.37}, "L3_情绪(emotion_score)": {"trades": 586, "ic": -0.0095, "ic_p": 0.5, "top30_ret": -2.05, "bot30_ret": -1.83, "spread": -0.22, "avg_market_ret": -1.72, "excess_ret": -0.33}, "综合(composite_score)": {"trades": 586, "ic": 0.0417, "ic_p": 0.5, "top30_ret": -1.3, "bot30_ret": -2.0, "spread": 0.71, "avg_market_ret": -1.72, "excess_ret": 0.42}}, "5d": {"L1_趋势(cycle_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "L2_结构(structure_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "L3_情绪(emotion_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "综合(composite_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}}, "10d": {"L1_趋势(cycle_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "L2_结构(structure_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "L3_情绪(emotion_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}, "综合(composite_score)": {"trades": 0, "ic": 0, "top30_ret": 0, "bot30_ret": 0, "spread": 0}}};
+
+var BT04 = {"score_tiers": {"≥50优": {"1d": {"trades": 44, "win_rate": 34.09, "avg_return": -1.19, "median": -0.82, "std": 3.9, "sharpe": -0.31, "max": 9.99, "min": -10.03}, "2d": {"trades": 39, "win_rate": 43.59, "avg_return": -0.76, "median": -0.74, "std": 5.49, "sharpe": -0.14, "max": 9.45, "min": -18.35}, "3d": {"trades": 38, "win_rate": 42.11, "avg_return": -2.64, "median": -2.01, "std": 7.43, "sharpe": -0.36, "max": 12.05, "min": -19.53}, "5d": {"trades": 0}}, "40-50良": {"1d": {"trades": 133, "win_rate": 45.86, "avg_return": -0.2, "median": -0.52, "std": 5.12, "sharpe": -0.04, "max": 14.83, "min": -10.01}, "2d": {"trades": 95, "win_rate": 46.32, "avg_return": -0.34, "median": -0.97, "std": 6.79, "sharpe": -0.05, "max": 18.74, "min": -18.94}, "3d": {"trades": 71, "win_rate": 47.89, "avg_return": -0.54, "median": -1.93, "std": 8.89, "sharpe": -0.06, "max": 26.64, "min": -26.47}, "5d": {"trades": 0}}, "30-40中": {"1d": {"trades": 273, "win_rate": 34.8, "avg_return": -1.15, "median": -1.2, "std": 4.91, "sharpe": -0.23, "max": 16.84, "min": -31.49}, "2d": {"trades": 185, "win_rate": 37.3, "avg_return": -1.1, "median": -1.44, "std": 6.73, "sharpe": -0.16, "max": 21.03, "min": -34.05}, "3d": {"trades": 137, "win_rate": 35.04, "avg_return": -1.4, "median": -1.98, "std": 7.8, "sharpe": -0.18, "max": 17.05, "min": -35.28}, "5d": {"trades": 0}}, "<30一般": {"1d": {"trades": 623, "win_rate": 35.31, "avg_return": -0.7, "median": -0.95, "std": 3.3, "sharpe": -0.21, "max": 14.33, "min": -35.44}, "2d": {"trades": 430, "win_rate": 25.58, "avg_return": -1.59, "median": -1.89, "std": 4.79, "sharpe": -0.33, "max": 20.92, "min": -35.15}, "3d": {"trades": 340, "win_rate": 20.29, "avg_return": -1.98, "median": -2.31, "std": 4.02, "sharpe": -0.49, "max": 17.68, "min": -11.47}, "5d": {"trades": 0}}}, "season_tiers": {"夏季(summer)": {"5d": {"trades": 4360, "win_rate": 57.48, "avg_return": 2.58, "median": 1.4, "std": 10.05, "sharpe": 0.26}, "10d": {"trades": 4360, "win_rate": 62.64, "avg_return": 5.81, "median": 3.11, "std": 14.3, "sharpe": 0.41}, "20d": {"trades": 3505, "win_rate": 69.9, "avg_return": 13.07, "median": 7.77, "std": 21.76, "sharpe": 0.6}, "30d": {"trades": 3220, "win_rate": 72.24, "avg_return": 19.74, "median": 12.26, "std": 30.49, "sharpe": 0.65}, "60d": {"trades": 3220, "win_rate": 74.78, "avg_return": 29.24, "median": 19.43, "std": 42.68, "sharpe": 0.69}}, "春混沌(chaos_spring)": {"5d": {"trades": 11064, "win_rate": 52.95, "avg_return": 2.03, "median": 0.53, "std": 9.52, "sharpe": 0.21}, "10d": {"trades": 10874, "win_rate": 59.16, "avg_return": 4.66, "median": 2.2, "std": 14.04, "sharpe": 0.33}, "20d": {"trades": 10779, "win_rate": 61.69, "avg_return": 9.27, "median": 4.27, "std": 21.39, "sharpe": 0.43}, "30d": {"trades": 10304, "win_rate": 65.63, "avg_return": 13.94, "median": 7.06, "std": 27.26, "sharpe": 0.51}, "60d": {"trades": 10019, "win_rate": 75.35, "avg_return": 30.01, "median": 17.75, "std": 45.26, "sharpe": 0.66}}, "基础混沌(chaos)": {"5d": {"trades": 10592, "win_rate": 59.91, "avg_return": 2.81, "median": 1.4, "std": 9.21, "sharpe": 0.31}, "10d": {"trades": 10307, "win_rate": 59.62, "avg_return": 3.96, "median": 2.05, "std": 12.84, "sharpe": 0.31}, "20d": {"trades": 10307, "win_rate": 65.49, "avg_return": 8.97, "median": 5.14, "std": 19.62, "sharpe": 0.46}, "30d": {"trades": 10117, "win_rate": 69.36, "avg_return": 14.27, "median": 8.63, "std": 25.65, "sharpe": 0.56}, "60d": {"trades": 8597, "win_rate": 80.55, "avg_return": 35.33, "median": 23.74, "std": 46.61, "sharpe": 0.76}}, "秋混沌(chaos_autumn)": {"5d": {"trades": 1790, "win_rate": 61.28, "avg_return": 3.49, "median": 1.87, "std": 9.11, "sharpe": 0.38}, "10d": {"trades": 1790, "win_rate": 77.09, "avg_return": 10.38, "median": 7.61, "std": 14.86, "sharpe": 0.7}, "20d": {"trades": 1790, "win_rate": 79.66, "avg_return": 18.02, "median": 13.03, "std": 23.74, "sharpe": 0.76}, "30d": {"trades": 1790, "win_rate": 80.67, "avg_return": 25.65, "median": 18.19, "std": 32.57, "sharpe": 0.79}, "60d": {"trades": 935, "win_rate": 82.35, "avg_return": 28.37, "median": 21.56, "std": 33.85, "sharpe": 0.84}}, "秋季(autumn)": {"5d": {"trades": 265, "win_rate": 52.08, "avg_return": 0.61, "median": 0.6, "std": 8.48, "sharpe": 0.07}, "10d": {"trades": 265, "win_rate": 86.42, "avg_return": 10.11, "median": 8.64, "std": 11.57, "sharpe": 0.87}, "20d": {"trades": 265, "win_rate": 88.68, "avg_return": 20.95, "median": 15.73, "std": 21.45, "sharpe": 0.98}, "30d": {"trades": 265, "win_rate": 88.68, "avg_return": 34.44, "median": 24.52, "std": 35.43, "sharpe": 0.97}, "60d": {"trades": 75, "win_rate": 84.0, "avg_return": 20.77, "median": 12.29, "std": 29.71, "sharpe": 0.7}}}};
+
+
+// V2渲染函数
+function switchV2Tab(n) {
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById('v2Tab' + i).style.display = i === n ? '' : 'none';
+    const bt = document.getElementById('tabBt' + i);
+    bt.className = i === n ? 'btn primary' : 'btn';
+  }
+  if (n === 1 && !window._v2r1) { renderV2Tab1(); window._v2r1 = true; }
+  if (n === 2 && !window._v2r2) { renderV2Tab2(); window._v2r2 = true; }
+  if (n === 3 && !window._v2r3) { renderV2Tab3(); window._v2r3 = true; }
+  if (n === 4 && !window._v2r4) { renderV2Tab4(); window._v2r4 = true; }
+}
+
+function v2v(n, suffix='%') {
+  if (n === null || n === undefined) return '-';
+  const x = typeof n === 'number' ? n : parseFloat(n);
+  if (isNaN(x)) return '-';
+  if (x > 0) return '<span class="val-pos">+' + x.toFixed(2) + suffix + '</span>';
+  if (x < 0) return '<span class="val-neg">' + x.toFixed(2) + suffix + '</span>';
+  return '<span class="val-zero">0.00' + suffix + '</span>';
+}
+
+function renderV2Tab1() {
+  const periods = ['5d','10d','20d','30d','60d'];
+  let html = '';
+  periods.forEach(p => {
+    const d = BT01[p]; if (!d) return;
+    const ns = d.no_stop, ws = d.with_stop;
+    html += '<tr><td>' + p + '</td><td>' + d.total_signals + '</td>'
+      + '<td>' + ns.trades + '</td><td>' + ns.win_rate.toFixed(1) + '%</td><td>' + v2v(ns.avg_return) + '</td><td>' + ns.std.toFixed(2) + '</td>'
+      + '<td>' + ws.trades + '</td><td>' + ws.win_rate.toFixed(1) + '%</td><td>' + v2v(ws.avg_return) + '</td><td>' + ws.std.toFixed(2) + '</td><td>' + ws.stop_rate.toFixed(1) + '%</td></tr>';
+  });
+  document.getElementById('v2T1Body').innerHTML = html;
+}
+
+function renderV2Tab2() {
+  const ss = [{k:'chaos',n:'🌪️ 基础混沌(chaos)',d:202},{k:'chaos_spring',n:'🌱 春混沌(chaos_spring)',d:156},{k:'chaos_autumn',n:'🍂 秋混沌(chaos_autumn)',d:38}];
+  const ps = ['5d','10d','20d','30d','60d'];
+  let h = '';
+  ss.forEach(s => {
+    const data = BT02[s.k]; if (!data) return;
+    let bp='',bs=-999; ps.forEach(p=>{if(data[p]&&data[p].sharpe>bs){bs=data[p].sharpe;bp=p;}});
+    h += '<div style="margin-bottom:20px"><div style="font-size:14px;font-weight:600;color:var(--text-bright);margin-bottom:8px">' + s.n + ' (' + s.d + '个交易日)</div><div class="scroll-x"><table class="data-table"><thead><tr><th>持有期</th><th>样本</th><th>胜率</th><th>均收益</th><th>中位收益</th><th>波动率</th><th>夏普</th><th>IC</th><th>Top20%</th><th>Bot20%</th><th>最优</th></tr></thead><tbody>';
+    ps.forEach(p => {
+      const r = data[p]; if (!r||!r.trades) return;
+      h += '<tr><td>' + p + '</td><td>' + r.trades + '</td><td><span class="' + (r.win_rate>60?'val-pos':r.win_rate>50?'':'val-neg') + '">' + r.win_rate.toFixed(1) + '%</span></td>'
+        + '<td>' + v2v(r.avg_return) + '</td><td>' + v2v(r.median) + '</td><td>' + r.std.toFixed(2) + '%</td>'
+        + '<td>' + r.sharpe.toFixed(2) + '</td><td>' + r.ic.toFixed(4) + '</td>'
+        + '<td>' + v2v(r.top20_ret) + '</td><td>' + v2v(r.bot20_ret) + '</td>'
+        + '<td style="font-size:16px">' + (p===bp?'🏆':'') + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+  });
+  document.getElementById('v2T2Body').innerHTML = h;
+}
+
+function renderV2Tab3() {
+  const fs = ['L1_趋势(cycle_score)','L2_结构(structure_score)','L3_情绪(emotion_score)','综合(composite_score)'];
+  const ps = ['1d','2d','3d'];
+  let h = '<div class="scroll-x"><table class="data-table"><thead><tr><th>因子</th>';
+  ps.forEach(p=>h+='<th>' + p + ' IC</th><th>' + p + ' 利差</th>');
+  h += '<th>最优持有</th><th>最佳利差</th></tr></thead><tbody>';
+  fs.forEach(fn => {
+    let bp='', bs=-999;
+    ps.forEach(p=>{const d=BT03[p]&&BT03[p][fn];if(d&&d.trades>10&&d.spread>bs){bs=d.spread;bp=p;}});
+    h += '<tr><td style="font-weight:600">' + fn + '</td>';
+    ps.forEach(p => {
+      const d = BT03[p]&&BT03[p][fn];
+      if (d&&d.trades>0) h += '<td><span class="'+(d.ic>0?'val-pos':d.ic<0?'val-neg':'')+'">'+d.ic.toFixed(4)+'</span></td><td><span class="'+(d.spread>0?'val-pos':d.spread<0?'val-neg':'')+'">'+d.spread.toFixed(2)+'%</span></td>';
+      else h += '<td style="color:var(--text-muted)">—</td><td style="color:var(--text-muted)">—</td>';
+    });
+    h += '<td>' + bp + '</td><td>' + (bs>-999?'<span class="val-pos">+'+bs.toFixed(2)+'%</span>':'—') + '</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  document.getElementById('v2T3Body').innerHTML = h;
+  const chart = echarts.init(document.getElementById('v2T3Chart'));
+  const im={}; fs.forEach(f=>im[f]={});
+  ps.forEach(p=>fs.forEach(f=>{const d=BT03[p]&&BT03[p][f];im[f][p]=d&&d.trades>0?d.ic:null;}));
+  chart.setOption({
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    legend:{data:['IC-1d','IC-2d','IC-3d'],textStyle:{color:'#94a3b8'},bottom:0},
+    grid:{left:160,right:30,top:20,bottom:50},
+    xAxis:{type:'category',data:fs,axisLabel:{color:'#94a3b8',fontSize:11}},
+    yAxis:{type:'value',name:'IC',nameTextStyle:{color:'#94a3b8'},axisLabel:{color:'#94a3b8'},splitLine:{lineStyle:{color:'#1e2d4a'}}},
+    series:[
+      {name:'IC-1d',type:'bar',data:fs.map(f=>im[f]['1d']||0),itemStyle:{color:p=>p.value>=0?'#22c55e':'#ef4444'}},
+      {name:'IC-2d',type:'bar',data:fs.map(f=>im[f]['2d']||0),itemStyle:{color:p=>p.value>=0?'#3b82f6':'#ef4444'}},
+      {name:'IC-3d',type:'bar',data:fs.map(f=>im[f]['3d']||0),itemStyle:{color:p=>p.value>=0?'#f59e0b':'#ef4444'}}
+    ]
+  });
+}
+
+function renderV2Tab4() {
+  const ss = ['夏季(summer)','春混沌(chaos_spring)','基础混沌(chaos)','秋混沌(chaos_autumn)','秋季(autumn)'];
+  const ps = ['5d','10d','20d','30d','60d'];
+  let h = '';
+  ss.forEach(sn => {
+    const data = BT04.season_tiers[sn]; if (!data) return;
+    let bp='', bs=-999; ps.forEach(p=>{if(data[p]&&data[p].sharpe>bs){bs=data[p].sharpe;bp=p;}});
+    h += '<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:600;color:var(--text-bright);margin-bottom:6px">▶ ' + sn + '</div><div class="scroll-x"><table class="data-table"><thead><tr><th>持有期</th><th>样本</th><th>胜率</th><th>均收益</th><th>中位收益</th><th>波动率</th><th>夏普</th><th>最优</th></tr></thead><tbody>';
+    ps.forEach(p => {
+      const r = data[p]; if (!r||!r.trades) return;
+      h += '<tr><td>' + p + '</td><td>' + r.trades + '</td><td><span class="'+(r.win_rate>60?'val-pos':r.win_rate>50?'':'val-neg')+'">'+r.win_rate.toFixed(1)+'%</span></td>'
+        + '<td>' + v2v(r.avg_return) + '</td><td>' + v2v(r.median) + '</td><td>' + r.std.toFixed(2) + '%</td><td>' + r.sharpe.toFixed(2) + '</td><td style="font-size:16px">' + (p===bp?'🏆':'') + '</td></tr>';
+    });
+    h += '</tbody></table></div></div>';
+  });
+  document.getElementById('v2T4Body').innerHTML = h;
+}
+
+setTimeout(() => { switchV2Tab(1); }, 500);
+</script>
+</body>
+</html>

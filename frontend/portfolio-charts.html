@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>持仓盈亏分析图表</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #161d2a; --bg-card-hover: #1c2538;
+  --bg-sidebar: #0d1321; --bg-input: #1a2235;
+  --border-color: #1e2d4a; --border-light: #253a5e; --border-accent: #3b82f6;
+  --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b; --text-bright: #ffffff;
+  --color-bull: #22c55e; --color-bear: #ef4444; --color-hold: #3b82f6; --color-warn: #f59e0b;
+  --color-buy: #f59e0b; --color-sell: #6b7280; --color-stop: #ef4444;
+  --color-safety: #22c55e; --color-error: #ef4444;
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4); --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.5);
+  --sidebar-width: 240px; --header-height: 56px;
+  --transition: 0.2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.5;overflow-y:auto;overflow-x:hidden}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:var(--sidebar-width);min-width:var(--sidebar-width);background:var(--bg-sidebar);border-right:1px solid var(--border-color);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border-color)}
+.sidebar-logo .title{font-size:15px;font-weight:700;color:var(--text-bright);letter-spacing:0.5px}
+.sidebar-logo .subtitle{font-size:11px;color:var(--text-muted);margin-top:4px}
+.sidebar-nav{flex:1;padding:12px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;color:var(--text-secondary);font-size:14px;transition:all var(--transition);border-left:3px solid transparent;margin:2px 0}
+.nav-item:hover{background:var(--bg-card);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-card);color:var(--text-bright);border-left-color:var(--border-accent);font-weight:600}
+.nav-item .nav-icon{font-size:18px;width:24px;text-align:center}
+.nav-divider{height:1px;background:var(--border-color);margin:8px 16px}
+.nav-section-title{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text-muted);padding:8px 20px 4px;font-weight:700}
+.sidebar-footer{padding:12px 20px;border-top:1px solid var(--border-color);font-size:11px;color:var(--text-muted)}
+.sidebar-footer .status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--color-safety)}
+.main-content{flex:1;margin-left:var(--sidebar-width);padding:0;min-height:100vh}
+.top-bar{position:sticky;top:0;z-index:50;background:var(--bg-secondary);border-bottom:1px solid var(--border-color);padding:0 24px;height:var(--header-height);display:flex;align-items:center;justify-content:space-between}
+.top-bar .breadcrumb{font-size:16px;font-weight:600;color:var(--text-bright)}
+.page-content{padding:20px 24px}
+
+/* Summary cards */
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.summary-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius);padding:16px 20px;text-align:center}
+.summary-card .sc-label{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.summary-card .sc-value{font-size:26px;font-weight:700;color:var(--text-bright)}
+.summary-card .sc-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.summary-card .sc-value.up{color:var(--color-bull)}
+.summary-card .sc-value.down{color:var(--color-bear)}
+
+/* Chart grid */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.chart-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;transition:all var(--transition)}
+.chart-card:hover{border-color:var(--border-light);box-shadow:var(--shadow-card-hover)}
+.chart-card.full-width{grid-column:1 / -1}
+.chart-card .chart-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.chart-card .chart-title{font-size:14px;font-weight:600;color:var(--text-bright);display:flex;align-items:center;gap:8px}
+.chart-card .chart-subtitle{font-size:11px;color:var(--text-muted)}
+.chart-container{width:100%;height:400px}
+.chart-container.tall{height:500px}
+
+.loading{display:flex;align-items:center;justify-content:center;padding:60px 20px;color:var(--text-muted)}
+.spinner{width:24px;height:24px;border:3px solid var(--border-color);border-top-color:var(--border-accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-msg{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius);padding:16px;text-align:center;color:var(--color-error);font-size:14px;margin-bottom:20px}
+.hidden{display:none}
+
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg-primary)}
+::-webkit-scrollbar-thumb{background:var(--border-color);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-light)}
+
+@media(max-width:1000px){
+  .chart-grid{grid-template-columns:1fr}
+  .summary-row{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  .summary-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="app-layout">
+
+  <!-- ═══ 侧边栏 ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="title">📈 股票智能分析</div>
+      <div class="subtitle">悟道篇 × 缠论 × 恒纪元</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">📊 核心看板</div>
+      <div class="nav-item" onclick="window.open('/stock-manager/','_self')"><span class="nav-icon">🏠</span> 数据驾驶舱</div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-title">📋 数据视图</div>
+      <div class="nav-item" onclick="window.open('/stock-manager/','_self')"><span class="nav-icon">📄</span> 投资组合监控</div>
+      <div class="nav-item" onclick="window.open('/stock-manager/','_self')"><span class="nav-icon">🧰</span> 阶梯策略</div>
+      <div class="nav-item" onclick="window.open('/stock-manager/ai-analysis.html','_blank')"><span class="nav-icon">🧠</span> AI分析</div>
+      <div class="nav-item" onclick="window.open('/stock-manager/stock-notes.html','_blank')"><span class="nav-icon">📋</span> 分析备注</div>
+      <div class="nav-item active"><span class="nav-icon">📊</span> 持仓图表</div>
+      <div class="nav-item" onclick="window.open('https://52etf.site','_blank')"><span class="nav-icon">🌍</span> 大盘云图</div>
+      <div class="nav-item" onclick="window.open('https://piao.topyou.vip','_blank')"><span class="nav-icon">🎯</span> 打板分类统计</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="margin-bottom:6px"><span class="status-dot"></span>系统运行中 | v1.0</div>
+      <div style="font-size:10px">持仓盈亏分析图表</div>
+    </div>
+  </aside>
+
+  <!-- ═══ 主内容区 ═══ -->
+  <div class="main-content">
+    <div class="top-bar">
+      <div class="breadcrumb">📊 持仓盈亏分析图表</div>
+      <div style="display:flex;align-items:center;gap:12px;font-size:13px">
+        <span style="color:var(--text-muted)">评估日期</span>
+        <span style="color:var(--text-bright);font-weight:600" id="evalDate">-</span>
+        <span style="color:var(--text-muted)" id="dataStatus">-</span>
+        <button onclick="loadData()" style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-color);padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;">🔄 刷新</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <!-- 错误信息 -->
+      <div id="errorMsg" class="error-msg hidden"></div>
+
+      <!-- 概要统计 -->
+      <div class="summary-row" id="summaryRow">
+        <div class="summary-card">
+          <div class="sc-label">📄 持仓数</div>
+          <div class="sc-value" id="sHoldings">-</div>
+          <div class="sc-sub">只</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">💰 持仓总市值</div>
+          <div class="sc-value" id="sTotalValue">-</div>
+          <div class="sc-sub">元</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">📈 总盈亏</div>
+          <div class="sc-value" id="sTotalPL">-</div>
+          <div class="sc-sub" id="sTotalPLPct">-</div>
+        </div>
+        <div class="summary-card">
+          <div class="sc-label">📊 均评分</div>
+          <div class="sc-value" id="sAvgScore">-</div>
+          <div class="sc-sub">分</div>
+        </div>
+      </div>
+
+      <!-- 图表区域 -->
+      <div class="chart-grid" id="chartArea">
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">📈 各股盈亏贡献占比</div>
+            <div class="chart-subtitle">占持仓总盈亏比例</div>
+          </div>
+          <div id="pieChart" class="chart-container"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">📊 各股盈亏金额</div>
+            <div class="chart-subtitle">按盈亏金额排序</div>
+          </div>
+          <div id="barChart" class="chart-container"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+        </div>
+        <div class="chart-card full-width">
+          <div class="chart-header">
+            <div class="chart-title">🌐 行业分布</div>
+            <div class="chart-subtitle">按持仓市值占比（玫瑰图）</div>
+          </div>
+          <div id="industryChart" class="chart-container tall"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+        </div>
+        <div class="chart-card full-width">
+          <div class="chart-header">
+            <div class="chart-title">⭐ 持仓评分排行</div>
+            <div class="chart-subtitle">评分从高到低</div>
+          </div>
+          <div id="scoreChart" class="chart-container tall"><div class="loading"><div class="spinner"></div>加载中...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API_BASE = '/api/v1/management/strategy';
+
+function api(path) {
+  const sep = path.includes('?') ? '&' : '?';
+  return fetch(API_BASE + path + sep + '_t=' + Date.now(), { headers: {} })
+    .then(r => r.json())
+    .then(d => d.code === 0 ? d.data : Promise.reject(d.error || d.message));
+}
+
+// ─── ECharts 深色主题 ───
+const chartTheme = {
+  backgroundColor: 'transparent',
+  textStyle: { color: '#94a3b8' },
+  legend: { textStyle: { color: '#94a3b8' }, pageTextStyle: { color: '#94a3b8' } },
+  tooltip: {
+    backgroundColor: '#1e293b',
+    borderColor: '#1e2d4a',
+    textStyle: { color: '#e2e8f0', fontSize: 13 }
+  },
+  color: [
+    '#3b82f6', '#22c55e', '#f59e0b', '#ef4444',
+    '#8b5cf6', '#06b6d4', '#f97316', '#84cc16',
+    '#6366f1', '#14b8a6', '#e11d48', '#d946ef'
+  ]
+};
+
+function fmtMoney(n) {
+  if (n === undefined || n === null) return '¥0';
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 100000000) s = (n/100000000).toFixed(2) + '亿';
+  else if (abs >= 10000) s = (n/10000).toFixed(2) + '万';
+  else s = n.toFixed(2);
+  return '¥' + s;
+}
+
+function fmtMoneyShort(n) {
+  if (n === undefined || n === null) return '0';
+  const abs = Math.abs(n);
+  if (abs >= 10000) return (n/10000).toFixed(2) + '万';
+  return n.toFixed(2);
+}
+
+// ─── 行业分类（基于关键词） ───
+function guessIndustry(name) {
+  const kw = name;
+  if (/半导体|芯片|集成电路|华天|存储|佰维/.test(kw)) return '半导体/芯片';
+  if (/通信|光迅|光通信|中兴|烽火|中天|鼎通|天孚|仕佳/.test(kw)) return '通信设备';
+  if (/鼎泰|东山|沪电|景旺|深南|鹏鼎|方正|胜宏/.test(kw)) return 'PCB/电子制造';
+  if (/光伏|阳光电源|固德威|锦浪|协鑫/.test(kw)) return '光伏';
+  if (/锂电|亿纬|宁德|圣阳|诺德|沪电/.test(kw)) return '锂电池/新能源';
+  if (/数据港|光环|网宿|奥飞|科华|润泽/.test(kw)) return '数据中心/云计算';
+  if (/机器人|工业富联|麦格米特|四方|汇川/.test(kw)) return '智能制造/机器人';
+  if (/军工|航天|中航|高铁|中材|光威/.test(kw)) return '军工/新材料';
+  if (/消费电子|立讯|歌尔|领益|闻泰/.test(kw)) return '消费电子';
+  if (/化工|万华|石化|华峰|国际复材/.test(kw)) return '化工材料';
+  if (/电力|国电|中国西电|许继|特锐德|上能|永贵|四方|应流/.test(kw)) return '电力设备';
+  if (/汽车|比亚迪|中车|均胜|拓普|伊戈尔/.test(kw)) return '汽车零部件';
+  if (/医疗|迈瑞|联影|华大|药明/.test(kw)) return '医疗/生物';
+  if (/黄金|紫金|赤峰|中金/.test(kw)) return '有色金属';
+  if (/家电|美的|格力|海尔/.test(kw)) return '家电';
+  if (/兆易|美团|百度/.test(kw)) return '互联网/软件';
+  if (/新易盛|光库|源杰/.test(kw)) return '光器件';
+  if (/光迅/.test(kw)) return '光通信';
+  if (/弘信/.test(kw)) return '计算机设备';
+  if (/诺德|沃尔/.test(kw)) return '新材料';
+  return '科技';
+}
+
+// ─── 核心数据加载 ───
+async function loadData() {
+  document.getElementById('evalDate').textContent = '加载中...';
+  document.getElementById('dataStatus').textContent = '⏳';
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.classList.add('hidden');
+
+  try {
+    const data = await api('/holdings-actions');
+    document.getElementById('evalDate').textContent = data.trade_date || '-';
+    document.getElementById('dataStatus').textContent = '✅ 正常';
+
+    const allSignals = data.signals || [];
+    const holdings = allSignals.filter(s => s.holding_status === 'HOLDING');
+
+    if (holdings.length === 0) {
+      renderNoHoldings(allSignals);
+      return;
+    }
+
+    // 计算各股数据
+    const stockData = holdings.map(s => {
+      const costTotal = (s.cost_price || 0) * (s.qty || 0);
+      const currentTotal = s.current_price * (s.qty || 0);
+      const profitAmount = currentTotal - costTotal;
+      return {
+        name: s.stock_name,
+        code: s.ts_code,
+        costTotal, currentTotal, profitAmount,
+        profitPct: s.profit_pct || 0,
+        score: s.buy_score || 0,
+        qty: s.qty || 0,
+        costPrice: s.cost_price || 0,
+        currentPrice: s.current_price,
+        drawdownPct: s.drawdown_pct || 0,
+        action: s.action,
+        holdDays: s.hold_days || 0,
+        reduceFlag: s.reduce_flag || false
+      };
+    });
+
+    // 总计
+    const totalCost = stockData.reduce((a, b) => a + b.costTotal, 0);
+    const totalValue = stockData.reduce((a, b) => a + b.currentTotal, 0);
+    const totalPL = stockData.reduce((a, b) => a + b.profitAmount, 0);
+    const totalPLPct = totalCost > 0 ? (totalPL / totalCost) * 100 : 0;
+    const avgScore = stockData.reduce((a, b) => a + b.score, 0) / stockData.length;
+
+    // 更新概要
+    document.getElementById('sHoldings').textContent = holdings.length;
+    document.getElementById('sTotalValue').textContent = fmtMoney(totalValue);
+    const plEl = document.getElementById('sTotalPL');
+    plEl.textContent = (totalPL >= 0 ? '+' : '') + fmtMoney(totalPL);
+    plEl.className = 'sc-value ' + (totalPL >= 0 ? 'up' : 'down');
+    document.getElementById('sTotalPLPct').textContent = (totalPLPct >= 0 ? '+' : '') + totalPLPct.toFixed(2) + '%';
+    document.getElementById('sAvgScore').textContent = avgScore.toFixed(1);
+
+    // 渲染图表
+    renderPLPieChart(stockData, totalPL);
+    renderPLBarChart(stockData);
+    renderIndustryChart(stockData);
+    renderScoreChart(stockData);
+
+  } catch (e) {
+    console.error('load error:', e);
+    document.getElementById('dataStatus').textContent = '❌ 异常';
+    errorEl.textContent = '❌ 数据加载失败: ' + e.message;
+    errorEl.classList.remove('hidden');
+  }
+}
+
+function renderNoHoldings(allSignals) {
+  document.getElementById('sHoldings').textContent = '0';
+  document.getElementById('sTotalValue').textContent = '¥0';
+  document.getElementById('sTotalPL').textContent = '¥0';
+  document.getElementById('sTotalPLPct').textContent = '0%';
+  document.getElementById('sAvgScore').textContent = '-';
+
+  ['pieChart','barChart','industryChart'].forEach(id => {
+    document.getElementById(id).innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:14px;">暂无持仓数据</div>`;
+  });
+
+  // 评分图展示全部信号
+  const sorted = allSignals.slice().sort((a, b) => (b.buy_score||0) - (a.buy_score||0)).slice(0, 30);
+  const scoreData = sorted.map(s => ({ name: s.stock_name, code: s.ts_code, score: s.buy_score || 0 }));
+  if (scoreData.length > 0) {
+    const dom = document.getElementById('scoreChart');
+    dom.innerHTML = '';
+    const chart = echarts.init(dom, chartTheme);
+    chart.setOption(makeScoreOpt(scoreData, '全量股票评分排行（Top 30）'));
+    window.addEventListener('resize', () => chart.resize());
+  }
+}
+
+// ─── 饼图：各股盈亏贡献 ───
+function renderPLPieChart(stockData, totalPL) {
+  const dom = document.getElementById('pieChart');
+  dom.innerHTML = '';
+  const chart = echarts.init(dom, chartTheme);
+
+  const sorted = stockData.slice().sort((a, b) => b.profitAmount - a.profitAmount);
+
+  const seriesData = sorted.map(s => {
+    const pct = totalPL !== 0 ? (s.profitAmount / totalPL) * 100 : 0;
+    return {
+      value: Math.abs(s.profitAmount),
+      name: s.name,
+      itemStyle: s.profitAmount < 0 ? { color: {
+        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+        colorStops: [{ offset: 0, color: '#f87171' }, { offset: 1, color: '#b91c1c' }]
+      } } : undefined,
+      _profit: s.profitAmount,
+      _pct: pct
+    };
+  });
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(p) {
+        const item = sorted.find(s => s.name === p.name);
+        if (!item) return p.name;
+        return `<strong>${item.name}</strong><br/>
+          <span style="font-weight:600;color:${item.profitAmount >= 0 ? '#22c55e' : '#ef4444'}">
+            盈亏：${item.profitAmount >= 0 ? '+' : ''}${fmtMoney(item.profitAmount)}
+          </span><br/>
+          盈亏率：${item.profitPct >= 0 ? '+' : ''}${item.profitPct.toFixed(2)}%<br/>
+          持仓：${item.qty}股 | 现价：¥${item.currentPrice.toFixed(2)}<br/>
+          成本价：¥${item.costPrice.toFixed(2)} | 持有：${item.holdDays}日`;
+      }
+    },
+    legend: {
+      orient: 'vertical',
+      right: '5%',
+      top: 'middle',
+      textStyle: { fontSize: 12 }
+    },
+    series: [{
+      type: 'pie',
+      radius: ['28%', '58%'],
+      center: ['35%', '50%'],
+      avoidLabelOverlap: true,
+      padAngle: 2,
+      itemStyle: { borderRadius: 6, borderColor: '#0a0e17', borderWidth: 2 },
+      label: {
+        show: true,
+        position: 'outside',
+        formatter: function(p) {
+          const item = sorted.find(s => s.name === p.name);
+          const sign = item && item.profitAmount >= 0 ? '+' : '';
+          return p.name + '\n' + sign + (p.percent).toFixed(1) + '%';
+        },
+        fontSize: 11,
+        color: '#94a3b8',
+        lineHeight: 16
+      },
+      labelLine: { length: 10, length2: 6, smooth: true },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } },
+      data: seriesData
+    }]
+  };
+
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ─── 柱状图：各股盈亏金额 ───
+function renderPLBarChart(stockData) {
+  const dom = document.getElementById('barChart');
+  dom.innerHTML = '';
+  const chart = echarts.init(dom, chartTheme);
+
+  const sorted = stockData.slice().sort((a, b) => b.profitAmount - a.profitAmount);
+  const names = sorted.map(s => s.name);
+  const values = sorted.map(s => parseFloat(s.profitAmount.toFixed(2)));
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: function(params) {
+        const idx = params[0].dataIndex;
+        const s = sorted[idx];
+        return `<strong>${s.name}</strong><br/>
+          <span style="font-weight:600;color:${s.profitAmount >= 0 ? '#22c55e' : '#ef4444'}">
+            盈亏：${s.profitAmount >= 0 ? '+' : ''}${fmtMoney(s.profitAmount)}
+          </span><br/>
+          盈亏率：${s.profitPct >= 0 ? '+' : ''}${s.profitPct.toFixed(2)}%<br/>
+          持仓：${s.qty}股 | 成本：${fmtMoney(s.costTotal)}<br/>
+          现价：¥${s.currentPrice.toFixed(2)} | 持有：${s.holdDays}日`;
+      }
+    },
+    grid: { left: '3%', right: '8%', bottom: '18%', top: '5%', containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: names,
+      axisLabel: { color: '#64748b', fontSize: 11, rotate: 25, interval: 0 },
+      axisLine: { lineStyle: { color: '#1e2d4a' } },
+      axisTick: { show: false }
+    },
+    yAxis: {
+      type: 'value',
+      axisLabel: { color: '#64748b', fontSize: 11, formatter: function(v) { return fmtMoneyShort(v); } },
+      splitLine: { lineStyle: { color: '#1a2235', type: 'dashed' } },
+      axisLine: { show: false }
+    },
+    series: [{
+      type: 'bar',
+      barWidth: '55%',
+      data: values.map((v) => ({
+        value: v,
+        itemStyle: {
+          color: v >= 0 ? {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: '#4ade80' },
+              { offset: 1, color: '#15803d' }
+            ]
+          } : {
+            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+            colorStops: [
+              { offset: 0, color: '#f87171' },
+              { offset: 1, color: '#b91c1c' }
+            ]
+          },
+          borderRadius: [4, 4, 0, 0]
+        }
+      })),
+      label: {
+        show: true,
+        position: 'top',
+        formatter: function(p) {
+          const s = sorted[p.dataIndex];
+          return (s.profitAmount >= 0 ? '+' : '') + fmtMoneyShort(s.profitAmount);
+        },
+        fontSize: 11,
+        color: '#94a3b8'
+      }
+    }]
+  };
+
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ─── 行业分布玫瑰图 ───
+function renderIndustryChart(stockData) {
+  const dom = document.getElementById('industryChart');
+  dom.innerHTML = '';
+  const chart = echarts.init(dom, chartTheme);
+
+  const indMap = {};
+  for (const s of stockData) {
+    const ind = guessIndustry(s.name);
+    if (!indMap[ind]) indMap[ind] = { value: 0, count: 0, stocks: [] };
+    indMap[ind].value += s.currentTotal;
+    indMap[ind].count += 1;
+    indMap[ind].stocks.push(s.name);
+  }
+
+  const sorted = Object.entries(indMap).sort((a, b) => b[1].value - a[1].value);
+  const seriesData = sorted.map(([name, d]) => ({
+    value: parseFloat(d.value.toFixed(2)),
+    name: name,
+    count: d.count,
+    stocks: d.stocks.join('、')
+  }));
+
+  const option = {
+    tooltip: {
+      trigger: 'item',
+      formatter: function(p) {
+        const item = seriesData.find(d => d.name === p.name);
+        if (!item) return p.name;
+        return `<strong>${item.name}</strong><br/>
+          市值：${fmtMoney(item.value)} (${p.percent})<br/>
+          股票：${item.count}只<br/>
+          <span style="font-size:11px;color:#94a3b8">${item.stocks}</span>`;
+      }
+    },
+    legend: {
+      orient: 'vertical',
+      right: '5%',
+      top: 'middle',
+      textStyle: { fontSize: 12 },
+      pageIconSize: 10
+    },
+    series: [{
+      type: 'pie',
+      radius: ['20%', '60%'],
+      center: ['35%', '50%'],
+      roseType: 'area',
+      padAngle: 1,
+      itemStyle: { borderRadius: 4, borderColor: '#0a0e17', borderWidth: 2 },
+      label: {
+        show: true,
+        formatter: function(p) {
+          return p.name + '\n' + (p.percent).toFixed(0) + '%';
+        },
+        fontSize: 11,
+        color: '#94a3b8',
+        lineHeight: 15
+      },
+      labelLine: { length: 8, length2: 4 },
+      emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.5)' } },
+      data: seriesData
+    }]
+  };
+
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ─── 评分条形图 ───
+function makeScoreOpt(scoreData, titleText) {
+  const sorted = scoreData.slice().sort((a, b) => b.score - a.score);
+  return {
+    title: titleText ? {
+      text: titleText,
+      textStyle: { color: '#e2e8f0', fontSize: 13, fontWeight: 600 },
+      left: 'center', top: 0
+    } : undefined,
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: { type: 'shadow' },
+      formatter: function(params) {
+        const p = params[0];
+        return `${p.name}<br/>评分：<span style="font-weight:600;color:#3b82f6">${p.value.toFixed(1)}</span>`;
+      }
+    },
+    grid: { left: '3%', right: '6%', bottom: '10%', top: titleText ? '8%' : '3%', containLabel: true },
+    xAxis: {
+      type: 'value',
+      min: 0,
+      max: 100,
+      axisLabel: { color: '#64748b', fontSize: 11, formatter: '{value}分' },
+      splitLine: { lineStyle: { color: '#1a2235', type: 'dashed' } },
+      axisLine: { show: false }
+    },
+    yAxis: {
+      type: 'category',
+      data: sorted.map(s => s.name),
+      axisLabel: { color: '#94a3b8', fontSize: 12 },
+      axisLine: { lineStyle: { color: '#1e2d4a' } },
+      axisTick: { show: false }
+    },
+    series: [{
+      type: 'bar',
+      barWidth: 18,
+      data: sorted.map(s => ({
+        value: s.score,
+        itemStyle: {
+          color: {
+            type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
+            colorStops: [
+              { offset: 0, color: '#3b82f6' },
+              { offset: 1, color: '#8b5cf6' }
+            ]
+          },
+          borderRadius: [0, 4, 4, 0]
+        }
+      })),
+      label: {
+        show: true,
+        position: 'right',
+        formatter: function(p) { return p.value.toFixed(1); },
+        fontSize: 12,
+        color: '#e2e8f0',
+        fontWeight: 600
+      }
+    }]
+  };
+}
+
+function renderScoreChart(stockData) {
+  const dom = document.getElementById('scoreChart');
+  dom.innerHTML = '';
+  const chart = echarts.init(dom, chartTheme);
+
+  const sorted = stockData.slice().sort((a, b) => b.score - a.score);
+  const scoreData = sorted.map(s => ({ name: s.name, code: s.code, score: s.score }));
+
+  const option = makeScoreOpt(scoreData);
+  chart.setOption(option);
+  window.addEventListener('resize', () => chart.resize());
+}
+
+// ═══ 启动 ═══
+loadData();
+</script>
+</body>
+</html>

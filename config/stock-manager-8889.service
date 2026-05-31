@@ -1,0 +1,17 @@
+[Unit]
+Description=Stock Manager - Signal API (Port 8889)
+After=network.target mysql.service stock-manager-8887.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现
+ExecStart=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现/venv/bin/python signal_server.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/tmp/stock_manager_8889.log
+StandardError=append:/tmp/stock_manager_8889.log
+
+[Install]
+WantedBy=multi-user.target

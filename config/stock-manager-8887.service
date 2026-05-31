@@ -1,0 +1,17 @@
+[Unit]
+Description=Stock Manager - Management API (Port 8887)
+After=network.target mysql.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现
+ExecStart=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现/venv/bin/python manager_server.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/tmp/stock_manager_8887.log
+StandardError=append:/tmp/stock_manager_8887.log
+
+[Install]
+WantedBy=multi-user.target

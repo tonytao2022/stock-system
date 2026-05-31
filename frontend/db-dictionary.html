@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据字典 - 股票智能分析管理系统</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --bg-primary: #0a0e17; --bg-secondary: #111827; --bg-card: #161d2a; --bg-card-hover: #1c2538;
+  --bg-sidebar: #0d1321; --bg-input: #1a2235; --bg-tooltip: #1e293b;
+  --border-color: #1e2d4a; --border-light: #253a5e; --border-accent: #3b82f6;
+  --text-primary: #e2e8f0; --text-secondary: #94a3b8; --text-muted: #64748b; --text-bright: #ffffff;
+  --color-bull: #ef4444; --color-bear: #22c55e; --color-buy: #f59e0b;
+  --color-hold: #3b82f6; --color-sell: #6b7280; --color-warning: #f97316; --color-error: #ef4444;
+  --radius: 8px; --radius-sm: 4px; --radius-lg: 12px;
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.4);
+  --transition: 0.2s ease;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Helvetica Neue',Arial,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.5}
+.app-layout{display:flex;min-height:100vh}
+.sidebar{width:240px;min-width:240px;background:var(--bg-sidebar);border-right:1px solid var(--border-color);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--border-color)}
+.sidebar-logo .title{font-size:15px;font-weight:700;color:var(--text-bright)}
+.sidebar-logo .subtitle{font-size:11px;color:var(--text-muted);margin-top:4px}
+.sidebar-nav{padding:12px 0;flex:1}
+.nav-item{display:flex;align-items:center;padding:10px 20px;color:var(--text-secondary);font-size:13px;text-decoration:none;cursor:pointer;transition:var(--transition);border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg-card);color:var(--text-primary)}
+.nav-item.active{background:rgba(59,130,246,0.1);color:var(--color-hold);border-left-color:var(--color-hold)}
+.main-content{flex:1;margin-left:240px;padding:24px 32px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h1{font-size:22px;font-weight:700;color:var(--text-bright)}
+.header .stats{font-size:12px;color:var(--text-muted)}
+.section{margin-bottom:32px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.section-title{font-size:16px;font-weight:600;color:var(--text-bright)}
+.card-subtitle{font-size:12px;color:var(--text-muted)}
+.card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);overflow:hidden}
+.card-header{padding:12px 16px;border-bottom:1px solid var(--border-color);font-weight:600;font-size:14px;color:var(--text-bright)}
+.card-body{padding:16px}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.tab-btn{padding:8px 16px;background:transparent;border:1px solid var(--border-color);border-radius:var(--radius);color:var(--text-secondary);cursor:pointer;font-size:13px;transition:var(--transition)}
+.tab-btn:hover{background:var(--bg-card-hover);color:var(--text-primary)}
+.tab-btn.active{background:var(--color-hold);border-color:var(--color-hold);color:#fff}
+.scroll-x{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--border-color);color:var(--text-muted);font-weight:600;font-size:12px;white-space:nowrap;position:sticky;top:0;background:var(--bg-card);z-index:1}
+td{padding:7px 10px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);white-space:nowrap}
+tr:hover td{background:var(--bg-card-hover)}
+.val-pos{color:var(--color-bull)}
+.val-neg{color:var(--color-bear)}
+.val-zero{color:var(--text-muted)}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-pk{background:rgba(245,158,11,0.15);color:#f59e0b}
+.badge-idx{background:rgba(59,130,246,0.15);color:#3b82f6}
+.badge-fk{background:rgba(34,197,94,0.15);color:#22c55e}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;margin:1px}
+.tag-primary{border:1px solid var(--border-accent);color:var(--color-hold)}
+.tag-secondary{border:1px solid var(--border-color);color:var(--text-secondary)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:16px;text-align:center}
+.stat-card .num{font-size:28px;font-weight:700;color:var(--text-bright)}
+.stat-card .label{font-size:12px;color:var(--text-muted);margin-top:4px}
+.stat-card.subtle .num{font-size:22px;color:var(--text-secondary)}
+.graph-container{width:100%;height:600px;background:var(--bg-primary);border-radius:var(--radius-lg)}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--text-muted);font-size:14px}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border-color)}
+.sidebar-footer button:hover{opacity:0.85}
+.form-control{background:var(--bg-input);border:1px solid var(--border-color);color:var(--text-primary);padding:8px 12px;border-radius:var(--radius);font-size:13px;outline:none}
+.form-control:focus{border-color:var(--border-accent);outline:none}
+.search-box{display:flex;gap:8px;margin-bottom:16px}
+.search-box input{flex:1;max-width:300px}
+@media(max-width:768px){.sidebar{display:none}.main-content{margin-left:0;padding:16px}.stat-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="title">📚 数据字典</div>
+      <div class="subtitle">股票智能分析系统 · 数据库架构</div>
+    </div>
+    <nav class="sidebar-nav" id="navList"></nav>
+    <div class="sidebar-footer">
+      <div style="padding:4px 8px;display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="backupDatabase()" style="flex:1;padding:8px 12px;background:var(--color-hold);color:#fff;border:none;border-radius:var(--radius);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:opacity 0.2s" id="backupBtn">💾 备份数据库</button>
+        <span id="backupStatus" style="font-size:11px;color:var(--text-muted);text-align:center;width:100%;padding:2px 0"></span>
+      </div>
+    </div>
+  </aside>
+  <main class="main-content">
+    <div class="header">
+      <div>
+        <h1>📚 数据字典</h1>
+        <div class="stats" id="headerStats">加载中...</div>
+      </div>
+      <div>
+        <button class="tab-btn" onclick="switchMainTab('schema')" id="mainTabSchema">📊 关系图</button>
+        <button class="tab-btn active" onclick="switchMainTab('tables')" id="mainTabTables">📋 表列表</button>
+        <button class="tab-btn" onclick="switchMainTab('search')" id="mainTabSearch">🔍 搜索</button>
+      </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="stat-grid" id="statCards"></div>
+
+    <!-- 关系图 Tab -->
+    <div id="schemaTab" class="section" style="display:none">
+      <div class="section-header">
+        <span class="section-title">📊 数据表关系图</span>
+        <span class="card-subtitle">ts_code关联关系 · 节点大小=字段数</span>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <div id="schemaGraph" class="graph-container"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 表列表 Tab -->
+    <div id="tablesTab">
+      <div class="search-box">
+        <input class="form-control" id="tableSearch" placeholder="🔍 搜索表名或注释..." oninput="filterTables()">
+        <select class="form-control" id="typeFilter" onchange="filterTables()">
+          <option value="all">全部类型</option>
+          <option value="BASE TABLE">数据表</option>
+          <option value="VIEW">视图</option>
+        </select>
+      </div>
+      <div id="tableList"></div>
+    </div>
+
+    <!-- 搜索 Tab -->
+    <div id="searchTab" style="display:none">
+      <div class="search-box">
+        <input class="form-control" id="fullSearch" placeholder="🔍 搜索字段名、表名或注释..." style="max-width:400px" oninput="fullTextSearch()">
+      </div>
+      <div id="searchResults"></div>
+    </div>
+  </main>
+</div>
+
+<script src="/stock-manager/db_schema_data.js"></script>
+<script>
+// ═══ 数据加载 ═══
+let SCHEMA = null;
+
+function loadData() {
+  if (window.DB_SCHEMA) {
+    SCHEMA = window.DB_SCHEMA;
+    initPage();
+  } else {
+    // Fallback: fetch JSON
+    fetch('/stock-manager/db_schema_data.json').then(r=>r.json()).then(d=>{
+      SCHEMA = d; initPage();
+    }).catch(e=>{
+      document.getElementById('headerStats').textContent = '❌ 加载失败: ' + e.message;
+    });
+  }
+}
+
+function initPage() {
+  const { tables, columns, indexes, foreign_keys } = SCHEMA;
+  const totalTables = tables.length;
+  const totalCols = Object.values(columns).flat().length;
+  const totalIdx = Object.values(indexes).flat().length;
+  const viewCount = tables.filter(t=>t.type==='VIEW').length;
+  
+  document.getElementById('headerStats').textContent = 
+    `${totalTables}张表 (含${viewCount}视图) · ${totalCols}个字段 · ${totalIdx}个索引`;
+  
+  document.getElementById('statCards').innerHTML = `
+    <div class="stat-card"><div class="num">${totalTables}</div><div class="label">📋 数据表</div></div>
+    <div class="stat-card subtle"><div class="num">${viewCount}</div><div class="label">👁️ 视图</div></div>
+    <div class="stat-card"><div class="num">${totalCols}</div><div class="label">📝 字段总数</div></div>
+    <div class="stat-card subtle"><div class="num">${totalIdx}</div><div class="label">🔑 索引总数</div></div>
+    <div class="stat-card"><div class="num">${foreign_keys.length}</div><div class="label">🔗 外键关联</div></div>
+    <div class="stat-card subtle"><div class="num">${SCHEMA.relations.length}</div><div class="label">🔗 ts_code关联</div></div>
+  `;
+  
+  renderNav();
+  renderTableList();
+  renderSchemaGraph();
+}
+
+// ═══ 导航栏 ═══
+function renderNav() {
+  const nav = document.getElementById('navList');
+  nav.innerHTML = SCHEMA.tables.map(t => {
+    const icon = t.type === 'VIEW' ? '👁️' : '📋';
+    const name = t.comment || t.name;
+    return `<div class="nav-item" onclick="scrollToTable('${t.name}')">
+      <span style="margin-right:8px">${icon}</span>
+      <span>${t.name}</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">${t.comment ? t.comment.slice(0,15) : ''}</span>
+    </div>`;
+  }).join('');
+}
+
+function scrollToTable(name) {
+  const el = document.getElementById('table-' + name);
+  if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ═══ 主Tab切换 ═══
+function switchMainTab(tab) {
+  document.getElementById('schemaTab').style.display = tab === 'schema' ? '' : 'none';
+  document.getElementById('tablesTab').style.display = tab === 'tables' ? '' : 'none';
+  document.getElementById('searchTab').style.display = tab === 'search' ? '' : 'none';
+  document.querySelectorAll('[id^=mainTab]').forEach(b=>b.className='tab-btn');
+  document.getElementById('mainTab' + tab.charAt(0).toUpperCase() + tab.slice(1)).className = 'tab-btn active';
+  if (tab === 'schema' && window._graphTimer) clearTimeout(window._graphTimer);
+  if (tab === 'schema') setTimeout(() => renderSchemaGraph(), 100);
+}
+
+// ═══ 表列表渲染 ═══
+function renderTableList(filter) {
+  const container = document.getElementById('tableList');
+  const { tables, columns, indexes } = SCHEMA;
+  
+  let filtered = tables;
+  if (filter) {
+    const f = filter.toLowerCase();
+    filtered = tables.filter(t => 
+      t.name.toLowerCase().includes(f) || 
+      (t.comment || '').toLowerCase().includes(f)
+    );
+  }
+  
+  const typeFilter = document.getElementById('typeFilter').value;
+  if (typeFilter !== 'all') {
+    filtered = filtered.filter(t => t.type === typeFilter);
+  }
+  
+  if (!filtered.length) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">没有匹配的表</div>';
+    return;
+  }
+  
+  container.innerHTML = filtered.map(t => {
+    const cols = columns[t.name] || [];
+    const idx = indexes[t.name] || {};
+    const idxCount = Object.keys(idx).length;
+    const pkCols = cols.filter(c => c.key === 'PRI').map(c => c.name).join(', ');
+    const hasTsCode = cols.some(c => c.name === 'ts_code');
+    
+    return `<div class="card section" id="table-${t.name}" style="margin-bottom:16px">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+        <span>
+          ${t.type === 'VIEW' ? '👁️' : '📋'} 
+          <span style="color:var(--color-hold)">${t.name}</span>
+          ${t.comment ? `<span style="color:var(--text-muted);font-weight:400;font-size:12px;margin-left:8px">— ${t.comment}</span>` : ''}
+        </span>
+        <span style="display:flex;gap:6px;align-items:center">
+          <span class="badge badge-pk">${pkCols || '无主键'}</span>
+          <span class="badge badge-idx">${idxCount}索引</span>
+          ${hasTsCode ? '<span class="badge badge-fk">ts_code</span>' : ''}
+          ${t.type === 'VIEW' ? '<span class="badge badge-idx">VIEW</span>' : ''}
+          <span style="font-size:11px;color:var(--text-muted)">${cols.length}字段</span>
+        </span>
+      </div>
+      <div class="scroll-x">
+        <table>
+          <thead><tr>
+            <th>#</th><th>字段名</th><th>类型</th><th>空</th><th>默认值</th><th>键</th><th>额外</th><th>注释</th>
+          </tr></thead>
+          <tbody>
+            ${cols.map(c => `<tr>
+              <td style="color:var(--text-muted);font-size:11px">${c.pos}</td>
+              <td><strong>${c.name}</strong></td>
+              <td style="font-size:12px;color:var(--color-buy)">${c.type}</td>
+              <td>${c.nullable === 'YES' ? '✅' : '❌'}</td>
+              <td style="font-size:12px;color:var(--text-muted)">${c.default || '-'}</td>
+              <td>
+                ${c.key === 'PRI' ? '<span class="badge badge-pk">PK</span>' : ''}
+                ${c.key === 'MUL' ? '<span class="tag tag-primary">MUL</span>' : ''}
+                ${c.key === 'UNI' ? '<span class="tag tag-secondary">UNI</span>' : ''}
+              </td>
+              <td style="font-size:11px;color:var(--text-muted)">${c.extra || ''}</td>
+              <td style="color:var(--text-secondary)">${c.comment || '-'}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterTables() {
+  const q = document.getElementById('tableSearch').value;
+  renderTableList(q);
+}
+
+// ═══ 关系图 ═══
+function renderSchemaGraph() {
+  const el = document.getElementById('schemaGraph');
+  if (!el || el.offsetWidth === 0) return;
+  
+  const chart = echarts.init(el);
+  const { tables, columns, relations } = SCHEMA;
+  
+  // 节点: 每张表
+  const nodes = tables.map((t, i) => {
+    const cols = columns[t.name] || [];
+    const fieldCount = cols.length;
+    const nodeSize = Math.max(30, Math.min(80, fieldCount * 2));
+    return {
+      id: t.name,
+      name: t.name + '\n' + (t.comment || '').slice(0, 12),
+      value: fieldCount,
+      symbolSize: nodeSize,
+      category: t.type === 'VIEW' ? 1 : 0,
+      label: { show: true, fontSize: 10, color: '#e2e8f0' },
+      itemStyle: {
+        color: t.type === 'VIEW' ? '#64748b' : '#3b82f6',
+        borderColor: t.name === 'watch_pool_snapshot' ? '#f59e0b' : 
+                     t.name === 'daily_kline' ? '#22c55e' : 
+                     t.name === 'trend_score' ? '#8b5cf6' : '#1e2d4a',
+        borderWidth: t.name === 'watch_pool_snapshot' || t.name === 'trend_score' || t.name === 'daily_kline' ? 3 : 1
+      }
+    };
+  });
+  
+  // 边: 基于ts_code关联
+  const edges = [];
+  const seen = new Set();
+  const uniqueRels = {};
+  relations.forEach(r => {
+    const key = [r.from, r.to].sort().join('-');
+    if (!uniqueRels[key]) uniqueRels[key] = { from: r.from, to: r.to, count: 0 };
+    uniqueRels[key].count++;
+  });
+  Object.values(uniqueRels).forEach(r => {
+    edges.push({
+      source: r.from,
+      target: r.to,
+      label: { show: false },
+      lineStyle: { 
+        color: '#1e2d4a', 
+        width: Math.min(4, 1 + r.count / 10),
+        curveness: 0.2,
+        opacity: 0.6
+      }
+    });
+  });
+  
+  // 核心表高亮
+  const coreTables = ['daily_kline', 'daily_kline_qfq', 'trend_score', 'strategy_signal', 
+                      'watch_pool', 'watch_pool_snapshot', 'portfolio_holdings', 'chanlun_structure',
+                      'technical_indicator', 'money_flow', 'season_state', 'stock_basic'];
+  
+  chart.setOption({
+    title: { show: false },
+    tooltip: {
+      formatter: p => {
+        if (p.dataType === 'node') {
+          const t = tables.find(t => t.name === p.data.id);
+          const cols = (columns[p.data.id] || []).length;
+          return `<strong>${p.data.id}</strong><br/>
+            ${t && t.comment || ''}<br/>
+            ${cols}个字段 · ${p.data.value}字段<br/>
+            ${(indexes[p.data.id] ? Object.keys(indexes[p.data.id]).length : 0)}个索引`;
+        }
+        return `${p.data.source} ↔ ${p.data.target}`;
+      },
+      backgroundColor: '#1e293b',
+      borderColor: '#1e2d4a',
+      textStyle: { color: '#e2e8f0', fontSize: 12 }
+    },
+    series: [{
+      type: 'graph',
+      layout: 'force',
+      force: {
+        repulsion: 1200,
+        edgeLength: [200, 500],
+        layoutAnimation: true,
+        friction: 0.1
+      },
+      roam: true,
+      draggable: true,
+      data: nodes,
+      edges: edges,
+      categories: [{ name: '数据表', itemStyle: { color: '#3b82f6' } }, { name: '视图', itemStyle: { color: '#64748b' } }],
+      label: { show: true, position: 'bottom', fontSize: 11, color: '#94a3b8' },
+      edgeSymbol: ['none', 'arrow'],
+      edgeSymbolSize: [0, 8],
+      lineStyle: { color: '#1e2d4a', opacity: 0.4, width: 1.5, curveness: 0.2 },
+      emphasis: {
+        focus: 'adjacency',
+        lineStyle: { width: 3, opacity: 0.8 }
+      }
+    }]
+  });
+}
+
+// ═══ 全文搜索 ═══
+function fullTextSearch() {
+  const q = document.getElementById('fullSearch').value.toLowerCase().trim();
+  const container = document.getElementById('searchResults');
+  if (!q || q.length < 1) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">输入关键词搜索字段名、表名或注释</div>';
+    return;
+  }
+  
+  const { tables, columns } = SCHEMA;
+  const results = [];
+  
+  tables.forEach(t => {
+    if (t.name.toLowerCase().includes(q) || (t.comment || '').toLowerCase().includes(q)) {
+      results.push({ type: 'table', table: t.name, comment: t.comment, match: t.name + (t.comment ? ' — ' + t.comment : '') });
+    }
+    (columns[t.name] || []).forEach(c => {
+      if (c.name.toLowerCase().includes(q) || (c.comment || '').toLowerCase().includes(q)) {
+        results.push({ type: 'column', table: t.name, column: c.name, comment: c.comment });
+      }
+    });
+  });
+  
+  if (!results.length) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-muted)">没有匹配的结果</div>';
+    return;
+  }
+  
+  container.innerHTML = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">找到 ${results.length} 个匹配</div>
+    <div class="scroll-x"><table><thead><tr><th>类型</th><th>表名</th><th>字段名</th><th>注释</th></tr></thead><tbody>
+    ${results.map(r => `<tr onclick="scrollToTable('${r.table}')" style="cursor:pointer">
+      <td>${r.type === 'table' ? '📋 表' : '📝 字段'}</td>
+      <td style="color:var(--color-hold)">${r.table}</td>
+      <td><strong>${r.column || '-'}</strong></td>
+      <td>${r.comment || '-'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>`;
+}
+
+// ═══ 数据库备份 ═══
+let backupRunning = false;
+
+function backupDatabase() {
+  if (backupRunning) return;
+  backupRunning = true;
+  const btn = document.getElementById('backupBtn');
+  const status = document.getElementById('backupStatus');
+  btn.innerHTML = '⏳ 备份中...';
+  btn.style.opacity = '0.6';
+  status.textContent = '正在导出数据库(约30秒)...';
+  status.style.color = 'var(--color-buy)';
+
+  const API_BASE = window.location.origin.includes('localhost')
+    ? 'http://localhost:8887/api/v1/management'
+    : '/api/v1/management';
+  const apiKey = localStorage.getItem('api_key') || '';
+
+  fetch(API_BASE + '/system/backup', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey }
+  })
+    .then(r => r.json())
+    .then(d => {
+      if (d.code === 0) {
+        const data = d.data || {};
+        status.innerHTML = '✅ ' + (data.message || '备份成功') + '<br><span style="font-size:10px">' + (data.size || '') + '</span>';
+        status.style.color = 'var(--color-profit)';
+        btn.innerHTML = '💾 备份完成 ✓';
+        setTimeout(() => {
+          btn.innerHTML = '💾 备份数据库';
+          status.innerHTML = data.time || '';
+          status.style.color = 'var(--text-muted)';
+        }, 6000);
+      } else {
+        status.textContent = '❌ ' + (d.error || d.message || '备份失败');
+        status.style.color = 'var(--color-error)';
+        btn.innerHTML = '💾 重试备份';
+      }
+    })
+    .catch(e => {
+      status.textContent = '❌ 请求失败: ' + e.message;
+      status.style.color = 'var(--color-error)';
+      btn.innerHTML = '💾 重试备份';
+    })
+    .finally(() => { backupRunning = false; btn.style.opacity = '1'; });
+}
+
+// ═══ 初始化 ═══
+loadData();
+</script>
+</body>
+</html>

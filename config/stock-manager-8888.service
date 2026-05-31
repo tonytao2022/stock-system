@@ -1,0 +1,17 @@
+[Unit]
+Description=Stock Manager - Trend Score API (Port 8888)
+After=network.target mysql.service stock-manager-8887.service
+Wants=mysql.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现
+ExecStart=/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现/venv/bin/python app.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/tmp/stock_manager_8888.log
+StandardError=append:/tmp/stock_manager_8888.log
+
+[Install]
+WantedBy=multi-user.target
