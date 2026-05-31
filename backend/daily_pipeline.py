@@ -219,6 +219,21 @@ def step_backtest():
         return None
 
 
+def step_regime_switcher():
+    """市场状态识别与动态调参"""
+    import subprocess
+    try:
+        r = subprocess.run(["python3", os.path.join(os.path.dirname(__file__), "regime_switcher.py")],
+            capture_output=True, text=True, timeout=30)
+        logger.info(f"市场状态识别: {r.stdout.strip()}")
+        if r.returncode != 0 and r.stderr:
+            logger.warning(f"regime_switcher stderr: {r.stderr.strip()}")
+        return r.stdout.strip()
+    except Exception as e:
+        logger.error(f"regime_switcher error: {e}")
+        return None
+
+
 def main():
     ap = argparse.ArgumentParser(description='每日数据管道调度器')
     ap.add_argument('--step', type=str, choices=['kline','chanlun','season','score','snapshot','backtest','all'],
@@ -239,6 +254,8 @@ def main():
         run_step('5/5 监控池快照', step_snapshot)
     if args.step in ('all', 'backtest'):
         run_step('6/6 多周期回测', step_backtest)
+    if args.step == 'all':
+        run_step('7/7 市场状态识别', step_regime_switcher)
 
     elapsed = time.time() - total_t0
     logger.info(f"{'='*50}")
