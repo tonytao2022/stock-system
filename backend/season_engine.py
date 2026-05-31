@@ -918,15 +918,29 @@ class SeasonJudge:
         """
         评分策略: momentum(追强) / reversion(买跌)
         
-        reversion仅启用条件:
-          1. 真秋/冬 (autumn/winter)
-          2. 熊市混沌 (bear + chaos)
-        弱秋(chaos_autumn) → momentum (牛市中的弱秋是抄底机会，追强仍有效)
+        P6 分季评分双轨制 — MAY方案定版 (2026-06-01):
+        --------------------------------------------------
+        | 季节 | 混沌子态 | regime | 轨道 |
+        |------|---------|--------|------|
+        | autumn/winter | 任意 | 任意 | reversion |
+        | chaos | chaos_bearish | 任意 | reversion |
+        | chaos | chaos_neutral | bear | reversion |
+        | chaos | chaos_bullish | 任意 | momentum |
+        | chaos | chaos_neutral | bull/range | momentum |
+        | spring/summer | 任意 | 任意 | momentum |
+        --------------------------------------------------
+        设计者: MAY
         """
+        # 真秋/冬 → 无条件回归
         if season in ('autumn', 'winter'):
             return 'reversion'
-        if season == 'chaos' and regime == 'bear':
+        # 偏空混沌 → 回归 (散点空头占优, 均值回归因子捕获超跌)
+        if season == 'chaos' and chaos_subtype == 'chaos_bearish':
             return 'reversion'
+        # 中性混沌 × 熊市 → 回归 (熊市不赌方向)
+        if season == 'chaos' and chaos_subtype == 'chaos_neutral' and regime == 'bear':
+            return 'reversion'
+        # 其余(偏多混沌、中性混沌+非熊市、春/夏) → 动量
         return 'momentum'
 
     @staticmethod
