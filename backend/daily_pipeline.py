@@ -58,16 +58,14 @@ def step_kline():
         import os
         tk = os.environ.get('TUSHARE_TOKEN', '')
         if tk: return tk
-        c2 = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-            password=get_mysql_pass(),database='openclaw_config',charset='utf8mb4')
+        c2 = get_connection()
         cu2 = c2.cursor()
         cu2.execute("SELECT api_key FROM api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
         r2 = cu2.fetchone()
         cu2.close(); c2.close()
         return r2[0] if r2 else ''
     
-    conn = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-        password=get_mysql_pass(),database='stock_db',charset='utf8mb4')
+    conn = get_connection()
     cur = conn.cursor(pymysql.cursors.DictCursor)
     
     # 获取股票列表
@@ -173,8 +171,7 @@ def step_snapshot():
     import pymysql
     try:
         # 读数据库中的api_key
-        conn = pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-            password=get_mysql_pass(),database='stock_db')
+        conn = get_connection()
         cur = conn.cursor()
         cur.execute("SELECT config_value FROM system_config WHERE config_key='api_key' LIMIT 1")
         row = cur.fetchone()

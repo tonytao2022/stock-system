@@ -1,3 +1,4 @@
+from db_config import get_connection
 #!/usr/bin/env python3
 """
 四季趋势投资模型 v3.0 — AI 投资顾问版
@@ -39,8 +40,6 @@ def _mysql_pass():
                     return line.strip().split('=')[-1].strip().strip('"').strip("'")
     except: pass
     return os.environ.get('MYSQL_PASSWORD', '')
-
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':_mysql_pass(),'database':'stock_db','charset':'utf8mb4'}
 
 IDX = {
     '000300.SH':{'name':'沪深300','w':0.40},

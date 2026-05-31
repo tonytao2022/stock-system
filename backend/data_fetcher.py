@@ -9,7 +9,7 @@
   4. Token 从 MySQL openclaw_config 读取
 """
 import os, sys, time, pymysql, tushare as ts, logging
-from db_config import db_cursor, get_connection
+from db_config import get_connection
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Tuple
 
@@ -29,8 +29,6 @@ def _mysql_pass():
     return os.environ.get('MYSQL_PASSWORD', '')
 
 PWD = _mysql_pass()
-DB_CFG = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db','charset':'utf8mb4'}
-CFG_CFG = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'openclaw_config','charset':'utf8mb4'}
 
 DATA_ERROR_MARKER = -1
 MAX_RETRIES = 3
@@ -39,13 +37,12 @@ RETRY_WAIT = 15  # seconds
 # ═══════════════ Token ═══════════════
 def get_tushare_token() -> Optional[str]:
     """从 MySQL 读取 Tushare Token"""
-    conn = pymysql.connect(**CFG_CFG)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT api_key FROM api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
     row = cur.fetchone()
     cur.close(); conn.close()
     return row[0] if row else None
-
 
 # ═══════════════ 重试 + -1标记 ═══════════════
 def retry_call(func, *args, name="api_call", **kwargs):
@@ -73,7 +70,6 @@ def retry_call(func, *args, name="api_call", **kwargs):
                 logger.error(f"❌ {name} 全部{MAX_RETRIES+1}次失败 → 返回-1")
     return (DATA_ERROR_MARKER, False)
 
-
 # ═══════════════ 主类 ═══════════════
 class DataFetcherV2:
     """数据管道 v2.0: Tushare Pro → MySQL"""
@@ -87,7 +83,7 @@ class DataFetcherV2:
     
     def _db_connect(self):
         if self.conn is None or not self.conn.open:
-            self.conn = pymysql.connect(**DB_CFG)
+            self.conn = get_connection()
     
     def close(self):
         if self.conn and self.conn.open:
@@ -312,7 +308,6 @@ class DataFetcherV2:
             time.sleep(0.3)  # Tushare rate limit
         
         return results
-
 
 # ═══ CLI ═══
 if __name__ == '__main__':

@@ -15,21 +15,12 @@
 """
 
 import sys, os, math, pymysql
+from db_config import get_connection
 from datetime import date, datetime
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-def _mysql_pass():
-    try:
-        with open('/etc/mysql/debian.cnf') as f:
-            for line in f:
-                if 'password' in line: return line.strip().split('=')[-1].strip().strip('"').strip("'")
-    except: pass
-    return os.environ.get('MYSQL_PASSWORD', '')
-
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':_mysql_pass(),'database':'stock_db','charset':'utf8mb4'}
 
 # ═══ 指标 ═══
 def sma(d,p):
@@ -97,7 +88,6 @@ def score_cycle_enhanced(season, regime, market_score, industry, closes):
 
     return {'score':round(base,1),'strategy':strategy,'sector_boost':sector_boost}
 
-
 # ═══ 优化2: 缠论维度补回 ═══
 def score_chanlun_enhanced(rows, season, industry, ts_code=None):
     """
@@ -108,7 +98,7 @@ def score_chanlun_enhanced(rows, season, industry, ts_code=None):
     # ── 从chanlun_structure表读取真实缠论数据 ──
     if ts_code:
         try:
-            cur=__import__('pymysql').connect(**DB).cursor()
+            cur=get_connection().cursor()
             cur.execute(
                 "SELECT buy_sell_point, structure_score, beichi_type, beichi_strength, "
                 "zoushi_type, zoushi_stage, autumn_tiger, tiger_confidence, "
@@ -308,7 +298,6 @@ def score_chanlun_enhanced(rows, season, industry, ts_code=None):
         'chanlun_signal':chanlun_signal
     }
 
-
 # ═══ 优化3: 板块特化权重 ═══
 BLOCK_WEIGHTS = {
     # 科技/AI类: 趋势+缠论权重大
@@ -339,7 +328,6 @@ def get_block_weights(industry):
     if not industry: return {'trend':0.35,'momentum':0.30,'volatility':0.20,'volume':0.15}
     return BLOCK_WEIGHTS.get(industry, {'trend':0.35,'momentum':0.30,'volatility':0.20,'volume':0.15})
 
-
 # ═══ 优化4: ATR动态止损 ═══
 def calc_stop_loss(closes, highs, lows, position_pct, strategy):
     """基于ATR的动态止损线"""
@@ -366,28 +354,25 @@ def calc_stop_loss(closes, highs, lows, position_pct, strategy):
 
     return round(stop,4)
 
-
 # ═══ L3: 情绪辅助 ═══
 # score_sentiment 已迁移至 engine/sentiment_scorer.py v2.0（资金流向+技术指标增强）
 from engine.sentiment_scorer import score_sentiment, SentimentResult
-
 
 # ═══ V型 ═══
 def vmap_score(raw, center=25):
     dist=abs(raw-center)
     return round(min(100,max(0,dist*(100/(100-center)))),1)
 
-
 # ═══ v4.0 主引擎 ═══
 class ScoreEngineV4:
     def __init__(self, db=None):
-        self.db=db or DB
+        self.db=db or None
         self.conn=None
         self._industry_cache={}
 
     def _connect(self):
         if self.conn is None or not self.conn.open:
-            self.conn=pymysql.connect(**self.db)
+            self.conn=get_connection()
 
     def close(self):
         if self.conn and self.conn.open: self.conn.close()
@@ -486,7 +471,7 @@ class ScoreEngineV4:
         mf_net=None; mf_lg=None; mf_elg=None
         tc_macd=None; tc_boll=None; tc_kdj=None
         try:
-            _cur=__import__('pymysql').connect(**DB).cursor(pymysql.cursors.DictCursor)
+            _cur=get_connection().cursor(pymysql.cursors.DictCursor)
             _cur.execute("SELECT net_mf_amount, buy_lg_amount-sell_lg_amount as lg_net, buy_elg_amount-sell_elg_amount as elg_net FROM money_flow WHERE ts_code=%s ORDER BY trade_date DESC LIMIT 1",(ts_code,))
             _r=_cur.fetchone()
             if _r:
@@ -713,7 +698,7 @@ class ScoreEngineV4:
                         tiger_conf_val = 0.0
                         tiger_reasons_str = None
                         try:
-                            _ct_cur = __import__('pymysql').connect(**DB).cursor(pymysql.cursors.DictCursor)
+                            _ct_cur = get_connection().cursor(pymysql.cursors.DictCursor)
                             _ct_cur.execute(
                                 "SELECT autumn_tiger, tiger_confidence, tiger_reasons FROM chanlun_structure WHERE ts_code=%s ORDER BY trade_date DESC LIMIT 1",
                                 (r['ts_code'],)
@@ -848,7 +833,6 @@ class ScoreEngineV4:
             print(f"  💾 已入库 {saved_ts} 条到 trend_score + {saved_ss} 条到 strategy_signal (trade_date={results[0]['trade_date']})")
         results.sort(key=lambda x: x['v_score'], reverse=True)
         return results[:limit] if limit else results
-
 
 # ═══ CLI ═══
 def main():

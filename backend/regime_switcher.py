@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys, pymysql
-conn = pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password='iXve1rVBXfdA4tL9', database='stock_db')
+from db_config import get_connection
+conn = get_connection()
 cur = conn.cursor()
 cur.execute("SELECT trade_date, close FROM daily_kline WHERE ts_code='000300.SH' ORDER BY trade_date DESC LIMIT 120")
 rows = cur.fetchall()

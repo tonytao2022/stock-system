@@ -4,6 +4,7 @@
 """
 import os, sys, pymysql
 from datetime import date, datetime
+from db_config import get_connection
 
 password = ''
 with open('/etc/mysql/debian.cnf') as f:
@@ -12,7 +13,7 @@ with open('/etc/mysql/debian.cnf') as f:
             password = l.split('=')[1].strip()
             break
 
-conn = pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password='iXve1rVBXfdA4tL9', database='stock_db')
+conn = get_connection()
 cur = conn.cursor()
 
 log = []

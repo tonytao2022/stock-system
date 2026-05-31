@@ -11,7 +11,7 @@
   4. 最有效的因子组合是什么?
 """
 import os, sys, time, pymysql, json
-from db_config import db_cursor, get_connection
+from db_config import get_connection
 from datetime import datetime
 from collections import defaultdict
 
@@ -23,11 +23,10 @@ def get_pass():
     except: pass
     return ''
 
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':get_pass(),
-      'database':'stock_db','charset':'utf8mb4'}
+
 
 def main():
-    conn = pymysql.connect(**DB)
+    conn = get_connection()
     cur = conn.cursor(pymysql.cursors.DictCursor)
 
     # 从 chanlun_structure 读取所有历史缠论信号

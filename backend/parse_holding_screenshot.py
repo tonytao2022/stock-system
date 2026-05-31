@@ -10,7 +10,7 @@
   5. 给出操作建议(结合评分引擎信号)
 """
 import pytesseract, re, json, sys, os
-from db_config import db_cursor, get_connection
+from db_config import get_connection
 from PIL import Image
 from datetime import date, datetime
 from collections import defaultdict
@@ -26,7 +26,6 @@ STOCK_DATA = [
     (2088, '002185.SZ', '华天科技'),
     (2315, '002050.SZ', '三花智控'),
 ]
-
 
 def parse_screenshot(image_path: str) -> Dict:
     """
@@ -155,7 +154,6 @@ def parse_screenshot(image_path: str) -> Dict:
         'holdings': holdings,
     }
 
-
 def sync_to_db(result: Dict, db: 'pymysql.connection') -> Dict:
     """
     同步截图数据到数据库, 并返回增量变更
@@ -270,7 +268,6 @@ def sync_to_db(result: Dict, db: 'pymysql.connection') -> Dict:
     cur.close()
     return changes
 
-
 def get_advice(holdings: List[Dict], db) -> List[Dict]:
     """结合评分引擎给出每只持仓的操作建议"""
     try:
@@ -281,8 +278,7 @@ def get_advice(holdings: List[Dict], db) -> List[Dict]:
         from engine.sentiment_scorer import score_sentiment
         from engine.block_weights import get_block_weights, apply_block_weights
         
-        cfg = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':_mysql_pass(),'database':'stock_db','charset':'utf8mb4'}
-        conn2 = pymysql.connect(**cfg)
+        conn2 = get_connection()
         cur2 = conn2.cursor(pymysql.cursors.DictCursor)
         
         advices = []
@@ -303,19 +299,9 @@ def get_advice(holdings: List[Dict], db) -> List[Dict]:
         return []  # 评分引擎不可用时不报错
     return []
 
-
-def _mysql_pass():
-    with open('/etc/mysql/debian.cnf') as f:
-        for line in f:
-            if 'password' in line: return line.strip().split('=')[-1].strip().strip('"').strip("'")
-    return os.environ.get('MYSQL_PASSWORD', '')
-
-
 def main(image_path: str):
     import pymysql
-    pwd = _mysql_pass()
-    cfg = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':pwd,'database':'stock_db','charset':'utf8mb4'}
-    conn = pymysql.connect(**cfg)
+    conn = get_connection()
     
     print(f"📷 解析截图: {image_path}")
     result = parse_screenshot(image_path)
@@ -358,7 +344,6 @@ def main(image_path: str):
         print(f"    {t['action']} {t['name']} {t['diff']}股")
     
     conn.close()
-
 
 if __name__ == '__main__':
     import sys

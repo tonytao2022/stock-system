@@ -5,6 +5,7 @@
 每个请求间隔0.2秒，总耗时控制在60秒内
 """
 import pymysql, os, time, sys, json
+from db_config import get_connection
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock
@@ -22,22 +23,11 @@ session.mount('https://', HTTPAdapter(pool_maxsize=20))
 session.mount('http://', HTTPAdapter(pool_maxsize=20))
 _ts._adapter = session
 
-# ─── 密码 ───
-def get_pwd():
-    with open('/etc/mysql/debian.cnf') as f:
-        for l in f:
-            if 'password' in l:
-                return l.split('=')[-1].strip().strip('"').strip("'")
-    return 'root'
-
-PWD = get_pwd()
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db','charset':'utf8mb4'}
-
 # ─── 最新交易日动态获取 ───
 def get_token():
     tk = os.environ.get('TUSHARE_TOKEN', '')
     if tk: return tk
-    c = pymysql.connect(**DB)
+    c = get_connection()
     cu = c.cursor()
     cu.execute("SELECT api_key FROM openclaw_config.api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1 LIMIT 1")
     r = cu.fetchone()
@@ -65,7 +55,7 @@ def get_latest_trade_day():
 LATEST_TRADE_DAY = get_latest_trade_day()
 
 def get_missing_stocks():
-    conn = pymysql.connect(**DB)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute(f"""
         SELECT bp.ts_code
@@ -93,7 +83,7 @@ def fetch_one(code):
         pro = _ts.pro_api()
         df = pro.daily(ts_code=code, start_date=start, end_date=f'{LATEST_TRADE_DAY}')
         if df is not None and len(df) > 0:
-            conn = pymysql.connect(**DB)
+            conn = get_connection()
             cur = conn.cursor()
             for _, r2 in df.iterrows():
                 cur.execute("""
@@ -157,7 +147,7 @@ def main():
     print(f"   成功: {ok_count}  失败: {fail_count}  总耗时: {elapsed:.0f}秒")
     
     # 验证
-    conn = pymysql.connect(**DB)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT MAX(trade_date) as d FROM daily_kline_qfq")
     r = cur.fetchone()

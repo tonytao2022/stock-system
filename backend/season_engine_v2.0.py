@@ -24,31 +24,9 @@ from collections import defaultdict
 import warnings
 warnings.filterwarnings("ignore")
 
-
 # ═══════════════════════════════════════════════════════════════
 # 配置
 # ═══════════════════════════════════════════════════════════════
-
-def _get_mysql_password() -> str:
-    """从Debian系统配置读取MySQL密码"""
-    try:
-        with open('/etc/mysql/debian.cnf') as f:
-            for line in f:
-                if 'password' in line:
-                    return line.strip().split('=')[-1].strip().strip('"').strip("'")
-    except Exception:
-        pass
-    return os.environ.get('MYSQL_PASSWORD', '')
-
-
-DB_CONFIG = {
-    'host': '127.0.0.1',
-    'port': 3306,
-    'user': 'debian-sys-maint',
-    'password': _get_mysql_password(),
-    'database': 'stock_db',
-    'charset': 'utf8mb4',
-}
 
 # 五指数配置
 INDEX_CONFIG = {
@@ -77,7 +55,6 @@ DIMENSION_WEIGHTS = {
     'market_breadth': 0.15,
     'trend_persistence': 0.05,
 }
-
 
 # ═══════════════════════════════════════════════════════════════
 # 数据加载层
@@ -112,12 +89,11 @@ class KLineBar:
             amount=float(row.get('amount', 0) or 0),
         )
 
-
 class DataLoader:
     """数据库数据加载器"""
 
     def __init__(self):
-        self.conn = pymysql.connect(**DB_CONFIG)
+        self.conn = get_connection()
 
     def close(self):
         if self.conn:
@@ -189,7 +165,6 @@ class DataLoader:
         for r in rows:
             result[r['ts_code']].append(KLineBar.from_row(r))
         return dict(result)
-
 
 # ═══════════════════════════════════════════════════════════════
 # 技术指标工具箱
@@ -328,7 +303,6 @@ class TechIndicators:
                 break
         return count * direction
 
-
 # ═══════════════════════════════════════════════════════════════
 # 六维度因子打分引擎
 # ═══════════════════════════════════════════════════════════════
@@ -340,7 +314,6 @@ class DimensionResult:
     score: float  # -10 to +10
     weight: float
     details: List[str] = field(default_factory=list)
-
 
 class SeasonJudge:
     """四季判定核心逻辑"""
@@ -820,7 +793,6 @@ class SeasonJudge:
             parts.append(f"  [{d.name}]({d.weight:.0%})得分={d.score:+.1f}: {'; '.join(d.details)}")
         return "\n".join(parts)
 
-
 # ═══════════════════════════════════════════════════════════════
 # 市场宽度计算器 (从个股数据聚合)
 # ═══════════════════════════════════════════════════════════════
@@ -829,7 +801,7 @@ class MarketBreadthCalculator:
     """从个股数据计算市场宽度指标"""
 
     def __init__(self, db_config: dict = None):
-        self.db_config = db_config or DB_CONFIG
+        self.db_config = db_config or None
 
     def compute_above_ma20_pct(self, stock_data: Dict[str, List[KLineBar]],
                                 target_date: date) -> Optional[float]:
@@ -897,7 +869,6 @@ class MarketBreadthCalculator:
 
         return result
 
-
 # ═══════════════════════════════════════════════════════════════
 # 多指数综合判定引擎
 # ═══════════════════════════════════════════════════════════════
@@ -913,7 +884,7 @@ class SeasonEngine:
     """
 
     def __init__(self, db_config: dict = None, use_market_breadth: bool = True):
-        self.db_config = db_config or DB_CONFIG
+        self.db_config = db_config or None
         self.use_market_breadth = use_market_breadth
         self.loader = DataLoader()
         self._prev_seasons: Dict[str, str] = {}  # 上一季的记忆(用于防横跳)
@@ -1209,7 +1180,6 @@ class SeasonEngine:
         else:
             return f"观望期 → 仓位≤30%, 等待方向 (置信度{confidence:.0%})"
 
-
 # ═══════════════════════════════════════════════════════════════
 # 数据库持久化
 # ═══════════════════════════════════════════════════════════════
@@ -1235,10 +1205,9 @@ CREATE TABLE IF NOT EXISTS season_state (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='恒纪元四季判定结果表';
 """
 
-
 def create_table_if_not_exists(db_config: dict = None):
     """创建season_state表"""
-    cfg = db_config or DB_CONFIG
+    cfg = db_config or None
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
     cur.execute(CREATE_TABLE_SQL)
@@ -1247,10 +1216,9 @@ def create_table_if_not_exists(db_config: dict = None):
     conn.close()
     print("✅ season_state 表已就绪")
 
-
 def save_result_to_db(result: Dict, db_config: dict = None):
     """保存单次判定结果到数据库"""
-    cfg = db_config or DB_CONFIG
+    cfg = db_config or None
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
 
@@ -1301,7 +1269,6 @@ def save_result_to_db(result: Dict, db_config: dict = None):
     cur.close()
     conn.close()
     print(f"✅ 判定结果已写入数据库 ({result['trade_date']})")
-
 
 # ═══════════════════════════════════════════════════════════════
 # CLI 入口
@@ -1365,8 +1332,8 @@ def main():
                 total = len(results)
                 for i, r in enumerate(results):
                     # 简化版保存（仅市场综合）
-                    from pymysql import connect
-                    conn = connect(**DB_CONFIG)
+                    from db_config import get_connection
+                    conn = get_connection()
                     cur = conn.cursor()
                     d = r['trade_date']
                     cur.execute("""
@@ -1386,7 +1353,6 @@ def main():
 
     finally:
         engine.close()
-
 
 if __name__ == '__main__':
     main()

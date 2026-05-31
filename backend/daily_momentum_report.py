@@ -1,3 +1,4 @@
+from db_config import get_connection
 #!/usr/bin/env python3
 """
 每日动量分层报告 v2.0
@@ -8,19 +9,8 @@
 import pymysql, statistics
 from datetime import date
 
-def _get_pass():
-    try:
-        with open('/etc/mysql/debian.cnf') as f:
-            for l in f:
-                if 'password' in l: return l.split('=')[-1].strip().strip('"').strip("'")
-    except: pass
-    return 'root'
-
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':_get_pass(),
-      'database':'stock_db','charset':'utf8mb4'}
-
 def main():
-    conn = pymysql.connect(**DB)
+    conn = get_connection()
     cur = conn.cursor(pymysql.cursors.DictCursor)
 
     cur.execute("""

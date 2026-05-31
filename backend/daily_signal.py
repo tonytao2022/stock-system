@@ -20,7 +20,8 @@ import sys, os, json, pymysql
 from datetime import datetime, date
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from season_engine import SeasonEngine, DB_CONFIG
+from season_engine import SeasonEngine
+from db_config import get_connection
 from score_engine import ScoreEngine
 
 CREATE_SIGNAL_TABLE = """
@@ -42,7 +43,7 @@ CREATE TABLE IF NOT EXISTS season_daily_signal (
 
 
 def init_db():
-    conn = pymysql.connect(**DB_CONFIG)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute(CREATE_SIGNAL_TABLE)
     conn.commit()
@@ -84,7 +85,7 @@ def generate_signal(target_date: date = None, top_n: int = 5):
         scores = score_engine.score_stocks_batch(stock_codes, target_date)
 
         # 3. 加载股票名称
-        conn = pymysql.connect(**DB_CONFIG)
+        conn = get_connection()
         cur = conn.cursor(pymysql.cursors.DictCursor)
         placeholders = ','.join(['%s'] * len(stock_codes))
         cur.execute(f"SELECT ts_code, name FROM stock_basic WHERE ts_code IN ({placeholders})", stock_codes)
@@ -132,7 +133,7 @@ def generate_signal(target_date: date = None, top_n: int = 5):
 
 def save_signal(signal: dict):
     """保存信号到数据库"""
-    conn = pymysql.connect(**DB_CONFIG)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
         INSERT INTO season_daily_signal 
@@ -171,7 +172,7 @@ def _extract_date(market: dict) -> str:
     if td and str(td) != 'None':
         return str(td)
     # fallback: 查数据库最新交易日
-    conn = pymysql.connect(**DB_CONFIG)
+    conn = get_connection()
     cur = conn.cursor()
     cur.execute("SELECT MAX(trade_date) FROM daily_kline WHERE ts_code='000300.SH'")
     row = cur.fetchone()

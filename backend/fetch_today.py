@@ -1,17 +1,11 @@
+from db_config import get_connection
 #!/usr/bin/env python3
 """拉取今日收盘数据"""
 import sys, os, time, pymysql, tushare as _ts
 
-pwd = ''
-with open('/etc/mysql/debian.cnf') as f:
-    for l in f:
-        if 'password' in l: pwd = l.split('=')[-1].strip().strip('"').strip("'"); break
-
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':pwd,'database':'stock_db','charset':'utf8mb4'}
-
 tk = os.environ.get('TUSHARE_TOKEN', '')
 if not tk:
-    c = pymysql.connect(**DB)
+    c = get_connection()
     cu = c.cursor()
     cu.execute("SELECT api_key FROM openclaw_config.api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
     r = cu.fetchone()
@@ -29,7 +23,7 @@ else:
     print('今天不是交易日或数据未就绪')
     sys.exit(0)
 
-conn = pymysql.connect(**DB)
+conn = get_connection()
 cur = conn.cursor()
 cur.execute("SELECT ts_code FROM backtest_pool WHERE status='ACTIVE' AND market!='指数'")
 codes = [r[0] for r in cur.fetchall()]
