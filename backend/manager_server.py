@@ -1206,7 +1206,7 @@ def signal_cards():
                 SELECT ts.ts_code, sb.name, ts.composite_score, ts.raw_score, ts.cycle_score,
                        ts.structure_score, ts.emotion_score, ts.close_price,
                        ss.direction, ss.position_pct, ss.reason_chain,
-                       ss.operation_mode
+                       ss.operation_mode, ss.track, ss.calibrated_score, ss.scoring_strategy
                 FROM trend_score ts
                 JOIN backtest_pool bp ON ts.ts_code = bp.ts_code AND bp.status='ACTIVE' AND bp.market!='指数'
                 LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
@@ -1249,6 +1249,9 @@ def signal_cards():
                 'risk_flags': [],
                 'season': mkt_season,
                 'season_emoji': emoji_map.get(mkt_season, '❓'),
+                'track': r.get('track') or '',
+                'calibrated_score': float(r['calibrated_score']) if r.get('calibrated_score') else 0,
+                'p6_star': 1 if ts_code in ('000021.SZ','000977.SZ','002463.SZ','300274.SZ','601869.SH') else 0,
             })
         
         cards.sort(key=lambda x: x['v_score'], reverse=True)
