@@ -17,7 +17,7 @@ v2.1 升级:
 """
 
 import os
-from db_config import get_connection, db_cursor, DB_CONFIG
+from db_config import get_connection, db_cursor, _get_password
 import sys
 import math
 import json
@@ -33,6 +33,37 @@ warnings.filterwarnings("ignore")
 # ═══════════════════════════════════════════════════════════════
 # 配置
 # ═══════════════════════════════════════════════════════════════
+
+INDEX_CONFIG = {
+    '000300.SH': {'name': '沪深300', 'weight': 0.35, 'role': '主力资金'},
+    '000001.SH': {'name': '上证综指', 'weight': 0.25, 'role': '全市场基准'},
+    '399006.SZ': {'name': '创业板指', 'weight': 0.20, 'role': '成长活跃度'},
+    '399001.SZ': {'name': '深证成指', 'weight': 0.15, 'role': '深圳综合'},
+    '000688.SH': {'name': '科创50',   'weight': 0.05, 'role': '科技风向'},
+}
+
+# 季节分数映射
+SEASON_MAP = {
+    'spring': '🌸 春(进攻)',
+    'summer': '☀️ 夏(持有)',
+    'autumn': '🍂 秋(防守)',
+    'winter': '❄️ 冬(休眠)',
+    'chaos': '🌪️ 混沌(观望)',
+    'chaos_spring': '🌤️ 弱春(偏多)',
+    'chaos_autumn': '🌥️ 弱秋(偏空)',
+}
+
+# 维度权重
+DIMENSION_WEIGHTS = {
+    'ma_structure': 0.20,
+    'momentum': 0.25,
+    'volume_energy': 0.20,
+    'volatility': 0.15,
+    'market_breadth': 0.15,
+    'trend_persistence': 0.05,
+}
+
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -979,7 +1010,7 @@ class MarketBreadthCalculator:
     """从个股数据计算市场宽度指标"""
 
     def __init__(self, db_config: dict = None):
-        self.db_config = db_config or DB_CONFIG
+        self.db_config = db_config
 
     def compute_above_ma20_pct(self, stock_data: Dict[str, List[KLineBar]],
                                 target_date: date) -> Optional[float]:
@@ -1063,7 +1094,11 @@ class SeasonEngine:
     """
 
     def __init__(self, db_config: dict = None, use_market_breadth: bool = True):
-        self.db_config = db_config or DB_CONFIG
+        import os
+        pwd = os.environ.get('MYSQL_PASS', '')
+        if not pwd:
+            pwd = 'iXve1rVBXfdA4tL9'
+        self.db_config = db_config if db_config else {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':pwd,'database':'stock_db'}
         self.use_market_breadth = use_market_breadth
         self.loader = DataLoader()
         self._prev_seasons: Dict[str, str] = {}  # 上一季的记忆(用于防横跳)
@@ -1402,7 +1437,7 @@ CREATE TABLE IF NOT EXISTS season_state (
 
 def create_table_if_not_exists(db_config: dict = None):
     """创建season_state表"""
-    cfg = db_config or DB_CONFIG
+    cfg = db_config or {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint'}
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
     cur.execute(CREATE_TABLE_SQL)
@@ -1414,7 +1449,7 @@ def create_table_if_not_exists(db_config: dict = None):
 
 def save_result_to_db(result: Dict, db_config: dict = None):
     """保存单次判定结果到数据库"""
-    cfg = db_config or DB_CONFIG
+    cfg = db_config or {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint'}
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
 

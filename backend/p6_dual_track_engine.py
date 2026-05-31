@@ -86,13 +86,15 @@ def track_momentum(ts_code: str, ctx: MarketContext) -> Dict:
         
         # 获取最新K线
         cur.execute("""
-            SELECT close, high, low, vol, amount, trade_date, 
-                   ma5, ma10, ma20, ma60, ma120, ma250,
-                   rsi_14, macd_dif, macd_dea, macd_hist,
-                   volume_ratio, turnover_rate, amplitude
-            FROM daily_kline 
-            WHERE ts_code=%s AND trade_date <= %s
-            ORDER BY trade_date DESC LIMIT 120
+            SELECT d.close, d.high, d.low, d.vol, d.amount, d.trade_date,
+                   d.volume_ratio, d.turnover_rate,
+                   t.ma_5, t.ma_10, t.ma_20, t.ma_60, t.ma_120, t.ma_250,
+                   t.rsi_12 as rsi_14, t.macd_dif, t.macd_dea, t.atr_14,
+                   t.boll_upper, t.boll_mid, t.boll_lower
+            FROM daily_kline d
+            LEFT JOIN technical_indicator t ON d.ts_code=t.ts_code AND d.trade_date=t.trade_date
+            WHERE d.ts_code=%s AND d.trade_date <= %s
+            ORDER BY d.trade_date DESC LIMIT 120
         """, (ts_code, ctx.trade_date))
         rows = cur.fetchall()
         
@@ -216,15 +218,17 @@ def track_reversion(ts_code: str, ctx: MarketContext) -> Dict:
         cur = conn.cursor()
         
         # 获取K线数据
+        # 获取K线数据
         cur.execute("""
-            SELECT close, high, low, vol, amount, trade_date,
-                   ma5, ma10, ma20, ma60, ma120, ma250,
-                   rsi_14, macd_dif, macd_dea, macd_hist,
-                   volume_ratio, turnover_rate, amplitude,
-                   high_52w, low_52w
-            FROM daily_kline 
-            WHERE ts_code=%s AND trade_date <= %s
-            ORDER BY trade_date DESC LIMIT 250
+            SELECT d.close, d.high, d.low, d.vol, d.amount, d.trade_date,
+                   d.volume_ratio, d.turnover_rate,
+                   t.ma_5, t.ma_10, t.ma_20, t.ma_60, t.ma_120, t.ma_250,
+                   t.rsi_12 as rsi_14, t.atr_14,
+                   t.boll_upper, t.boll_mid, t.boll_lower
+            FROM daily_kline d
+            LEFT JOIN technical_indicator t ON d.ts_code=t.ts_code AND d.trade_date=t.trade_date
+            WHERE d.ts_code=%s AND d.trade_date <= %s
+            ORDER BY d.trade_date DESC LIMIT 250
         """, (ts_code, ctx.trade_date))
         rows = cur.fetchall()
         
