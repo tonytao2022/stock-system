@@ -9,39 +9,67 @@ from datetime import datetime, date
 from contextlib import contextmanager
 from flask import jsonify
 
-# ─── 密码获取 ────────────────────────────────────────────────
+# ─── 密码获取（优先环境变量）──────────────────────────────────
 _db_password = None
 
 def _get_password():
     global _db_password
-    if _db_password is None:
-        try:
-            with open('/etc/mysql/debian.cnf') as f:
-                for line in f:
-                    if 'password' in line:
-                        _db_password = line.strip().split('=')[-1].strip().strip('"').strip("'")
-                        break
-        except Exception:
-            _db_password = os.environ.get('MYSQL_PASSWORD', '')
+    if _db_password is not None:
+        return _db_password
+    # 1. 环境变量优先
+    pwd = os.environ.get('MYSQL_PASS')
+    if pwd:
+        _db_password = pwd
+        return _db_password
+    # 2. fallback: 读 /etc/mysql/debian.cnf
+    try:
+        with open('/etc/mysql/debian.cnf') as f:
+            for line in f:
+                if 'password' in line:
+                    _db_password = line.strip().split('=')[-1].strip().strip('"').strip("'")
+                    break
+    except Exception:
+        _db_password = os.environ.get('MYSQL_PASSWORD', '')
     return _db_password
 
 
-DB_CONFIG = {
-    'host': '127.0.0.1',
-    'port': 3306,
-    'user': 'debian-sys-maint',
-    'password': '',
-    'database': 'stock_db',
-    'charset': 'utf8mb4',
-    'cursorclass': pymysql.cursors.DictCursor,
-    'autocommit': True,
-}
+def _get_db_config():
+    """动态获取数据库配置"""
+    return {
+        'host': os.environ.get('DB_HOST', '127.0.0.1'),
+        'port': int(os.environ.get('DB_PORT', 3306)),
+        'user': os.environ.get('DB_USER', 'debian-sys-maint'),
+        'password': _get_password(),
+        'database': os.environ.get('DB_NAME', 'stock_db'),
+        'charset': 'utf8mb4',
+        'connect_timeout': 5,
+        'cursorclass': pymysql.cursors.DictCursor,
+        'autocommit': True,
+    }
 
 
+# 保留 DB_CONFIG 变量名兼容性（旧代码 from db_config import DB_CONFIG）
+DB_CONFIG = None  # 标记为已废弃，实际使用 _get_db_config()
+
+
+_connection_pool = {}
 def get_connection():
-    config = DB_CONFIG.copy()
-    config['password'] = _get_password()
-    return pymysql.connect(**config)
+    """返回统一数据库连接（带连接池缓存）"""
+    cfg = _get_db_config()
+    key = "{host}:{port}:{database}".format(**cfg)
+    conn = _connection_pool.get(key)
+    if conn is None:
+        conn = pymysql.connect(**cfg)
+        _connection_pool[key] = conn
+    try:
+        conn.ping(reconnect=True)
+    except Exception:
+        try:
+            conn = pymysql.connect(**cfg)
+            _connection_pool[key] = conn
+        except Exception:
+            raise
+    return conn
 
 
 @contextmanager
@@ -112,6 +140,10 @@ def serialize_rows(rows):
 _serialize_rows = serialize_rows
 
 # ─── 用户ID管理 ────────────────────────────────────────────
+def get_default_user():
+    """从环境变量获取默认用户，替代原有硬编码'tony'"""
+    return os.environ.get('STOCK_USER', 'tony')
+
 def get_user_id():
     """从system_config获取默认用户ID，硬编码统一入口"""
     try:
@@ -124,13 +156,15 @@ def get_user_id():
             if v: return v
     except:
         pass
-    return 'tony'
+    return get_default_user()
 
 def _get_cursor():
     """内部获取游标，不依赖flask上下文"""
-    conn = pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint',
-        password=_get_password(), database='stock_db', charset='utf8mb4')
+    conn = get_connection()
     return conn.cursor(pymysql.cursors.DictCursor)
+
+# 兼容旧名（alias）
+get_user_id_old = get_user_id
 
 # ─── 铁律: 数据标记 + 重试 ────────────────────────────────────
 DATA_ERROR_MARKER = -1

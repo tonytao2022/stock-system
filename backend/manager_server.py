@@ -15,12 +15,16 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from db_config import db_cursor, api_success, api_error, api_not_found, serialize_rows, DATA_ERROR_MARKER
 
+# ─── 全局配置 ───────────────────────────────────────────────
+BASE_DIR = os.environ.get('STOCK_BASE_DIR', '/root/stock-system/backend')
+API_BASE_8887 = os.environ.get('API_BASE_8887', 'http://localhost:8887')
+
 app = Flask(__name__)
 logger = logging.getLogger('manager_8887')
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 
 # ═══ API 认证 ═══
-_DEFAULT_USER = "tony"  # 默认用户ID，可通过system_config配置
+_DEFAULT_USER = os.environ.get('STOCK_USER', 'tony')  # 默认用户ID（环境变量化）
 def _get_user_id():
     try:
         with db_cursor(commit=False) as _u_cur:
@@ -30,7 +34,8 @@ def _get_user_id():
                 v = _u_r["config_value"] if isinstance(_u_r, dict) else _u_r[0]
                 if v: return v
     except: pass
-    return _DEFAULT_USER
+    from db_config import get_default_user
+    return get_default_user()
 _API_KEY_CACHE = {'key': None}
 def _get_api_key():
     if _API_KEY_CACHE['key']:
@@ -89,7 +94,7 @@ def health():
 def backup_database():
     """数据库备份 — 调用 backup_db.sh"""
     import subprocess, time
-    script = '/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现/backup_db.sh'
+    script = os.path.join(BASE_DIR, 'backup_db.sh')
     if not os.path.exists(script):
         return api_error('备份脚本不存在')
     
@@ -700,7 +705,7 @@ def refresh_all():
         # Step 3: 监控池快照
         try:
             import requests as _req
-            r2 = _req.post('http://localhost:8887/api/v1/management/watch-pool/refresh', timeout=120)
+            r2 = _req.post(API_BASE_8887 + '/api/v1/management/watch-pool/refresh', timeout=120)
             log.append(f'快照: {"ok" if r2.status_code==200 else "fail"}')
         except Exception as e:
             log.append(f'快照: error-{e}')
@@ -772,8 +777,8 @@ def refresh_realtime():
             import os
             tk = os.environ.get('TUSHARE_TOKEN', '')
             if tk: return tk
-            _c2 = _pymysql2.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-                password=_get_mysql_pass(), database='stock_db', charset='utf8mb4')
+            from db_config import get_connection as _gc2
+            _c2 = _gc2()
             _cu2 = _c2.cursor()
             _cu2.execute("SELECT api_key FROM openclaw_config.api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
             _r2 = _cu2.fetchone()
@@ -796,9 +801,9 @@ def refresh_realtime():
                         _pwd = _pl.split('=')[-1].strip().strip('"').strip("'")
                         break
         except: pass
-        _conn = _pymysql2.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-            password=_pwd, database='stock_db', charset='utf8mb4')
-        cur = _conn.cursor(_pymysql2.cursors.DictCursor)
+        from db_config import get_connection as _get_db_conn
+        _conn = _get_db_conn()
+        cur = _conn.cursor()
         uid = _get_user_id()
         cur.execute("SELECT ts_code FROM watch_pool WHERE is_active=1 AND user_id=%s", (uid,))
         watch_codes = [r['ts_code'] for r in cur.fetchall()]
@@ -1387,8 +1392,8 @@ def portfolio_holdings():
             _token = os.environ.get('TUSHARE_TOKEN', '')
             if not _token:
                 import pymysql
-                _c2 = _pymysql2.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-                    password=_get_mysql_pass(),database='openclaw_config',charset='utf8mb4')
+                from db_config import get_connection as _getdb_c2
+                _c2 = _getdb_c2()
                 _cu2 = _c2.cursor()
                 _cu2.execute("SELECT api_key FROM openclaw_config.api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
                 _r2 = _cu2.fetchone()
@@ -1575,8 +1580,8 @@ def portfolio_recalc():
                 import tushare as _ts
                 _token = _ts._token_  # 已初始化的token
                 if not _token:
-                    _c2 = _pymysql2.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',
-                        password=_get_mysql_pass(),database='openclaw_config',charset='utf8mb4')
+                    from db_config import get_connection as _getdb_c2
+                    _c2 = _getdb_c2()
                     _cu2 = _c2.cursor()
                     _cu2.execute("SELECT api_key FROM openclaw_config.api_credentials WHERE name='TUSHARE_TOKEN' AND is_active=1")
                     _r2 = _cu2.fetchone()
@@ -2455,10 +2460,10 @@ def _run_strategy_eval(trade_date_str=None):
 @app.route('/api/v1/management/strategy/config', methods=['GET'])
 def strategy_config():
     """获取策略配置"""
-    _p = _get_mysql_pass()
+    from db_config import get_connection as _getgc
     try:
-        _c = _pymysql2.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=_p, database='stock_db', charset='utf8mb4')
-        _cc = _c.cursor(_pymysql2.cursors.DictCursor)
+        _c = _getgc()
+        _cc = _c.cursor()
         _cc.execute("SELECT * FROM strategy_config WHERE is_active=1 ORDER BY id")
         cfgs = _cc.fetchall()
         _cc.close(); _c.close()
@@ -2481,10 +2486,10 @@ def strategy_signals():
     _td = request.args.get('trade_date', str(date.today()))
     _sid = int(request.args.get('strategy_id', 1))
     
-    _p = _get_mysql_pass()
+    from db_config import get_connection as _getgc
     try:
-        _c = _pymysql2.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=_p, database='stock_db', charset='utf8mb4')
-        _cc = _c.cursor(_pymysql2.cursors.DictCursor)
+        _c = _getgc()
+        _cc = _c.cursor()
         _cc.execute("""
             SELECT ssd.*, sb.name as stock_name
             FROM strategy_signal_daily ssd
@@ -2603,9 +2608,9 @@ def get_stock_notes():
         limit = int(request.args.get('limit', 50))
         page = int(request.args.get('page', 1))
         
-        _p = _get_mysql_pass()
-        _conn = _pymysql2.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=_p, database='stock_db', charset='utf8mb4')
-        _cur = _conn.cursor(_pymysql2.cursors.DictCursor)
+        from db_config import get_connection as _getgc
+        _conn = _getgc()
+        _cur = _conn.cursor()
         
         wheres = []
         params = []
@@ -2654,17 +2659,14 @@ def get_stock_notes():
 @app.route('/api/v1/management/strategy/holdings-actions', methods=['GET'])
 def strategy_holdings_actions():
     """获取持仓买卖建议（前端主页面调用，自动同步建仓时间）"""
-    _p = _get_mysql_pass()
+    from db_config import get_connection as _getgc, db_cursor as _dbc
     try:
         # 先同步持仓建仓时间
-        _sync_c = _pymysql2.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=_p, database='stock_db', charset='utf8mb4')
-        _sync_cur = _sync_c.cursor()
-        _sync_cur.execute("UPDATE portfolio_holdings SET buy_date = trade_date WHERE status='HOLDING' AND buy_date IS NULL")
-        _sync_c.commit()
-        _sync_cur.close(); _sync_c.close()
+        with _dbc() as _sync_cur:
+            _sync_cur.execute("UPDATE portfolio_holdings SET buy_date = trade_date WHERE status='HOLDING' AND buy_date IS NULL")
         
-        _c = _pymysql2.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=_p, database='stock_db', charset='utf8mb4')
-        _cc = _c.cursor(_pymysql2.cursors.DictCursor)
+        _c = _getgc()
+        _cc = _c.cursor()
         _cc.execute("""
             SELECT MAX(trade_date) as latest FROM strategy_signal_daily WHERE strategy_id=1
         """)
@@ -3106,13 +3108,12 @@ def toggle_api_key():
 
 # ═══ 数据库密码获取 ═══
 def _get_mysql_pass():
-    try:
-        with open('/etc/mysql/debian.cnf') as _f:
-            for _l in _f:
-                if 'password' in _l:
-                    return _l.strip().split('=')[-1].strip().strip('"').strip("'")
-    except: pass
-    return 'root'
+    """获取数据库密码（统一入口：优先环境变量，fallback debian.cnf）"""
+    from db_config import _get_password as _db_pwd
+    pwd = os.environ.get('MYSQL_PASS')
+    if pwd:
+        return pwd
+    return _db_pwd()
 
 # ─── POST /api/v1/management/portfolio/holding/add ──────────
 @app.route('/api/v1/management/portfolio/holding/add', methods=['POST'])
@@ -3272,6 +3273,7 @@ def xiyi_alerts():
 
 # ─── 启动 ───────────────────────────────────────────────────
 if __name__ == "__main__":
-    logger.info("Starting management API server on port 8887...")
-    app.run(host="0.0.0.0", port=8887, debug=False)
+    port_8887 = int(os.environ.get('STOCK_PORT_8887', 8887))
+    logger.info(f"Starting management API server on port {port_8887}...")
+    app.run(host="0.0.0.0", port=port_8887, debug=False)
 

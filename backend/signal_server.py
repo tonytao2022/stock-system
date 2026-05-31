@@ -336,5 +336,6 @@ def safe_gate():
 
 # ─── 启动 ───────────────────────────────────────────────────
 if __name__ == '__main__':
-    logger.info("Starting strategy_signal API server on port 8889...")
-    app.run(host='0.0.0.0', port=8889, debug=False)
+    port_8889 = int(os.environ.get('STOCK_PORT_8889', 8889))
+    logger.info(f"Starting strategy_signal API server on port {port_8889}...")
+    app.run(host='0.0.0.0', port=port_8889, debug=False)

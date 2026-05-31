@@ -182,7 +182,8 @@ def step_snapshot():
         cur.close(); conn.close()
         
         headers = {'X-API-Key': api_key}
-        r = requests.post('http://localhost:8887/api/v1/management/watch-pool/refresh',
+        _api_base_8887 = os.environ.get('API_BASE_8887', 'http://localhost:8887')
+        r = requests.post(f'{_api_base_8887}/api/v1/management/watch-pool/refresh',
                           headers=headers, timeout=120)
         if r.status_code == 200:
             data = r.json()
