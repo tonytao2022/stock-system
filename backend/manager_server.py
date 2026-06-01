@@ -1467,7 +1467,6 @@ def update_position_date():
     try:
         data = request.get_json()
         ts_code = data.get('ts_code', '')
-        # 自动补全交易所后缀
         if ts_code and '.' not in ts_code:
             ts_code = ts_code + '.SZ' if ts_code[0] in '30' else ts_code + '.SH'
         new_date = data.get('trade_date', '')
@@ -1475,6 +1474,16 @@ def update_position_date():
         if not ts_code or not new_date:
             return api_error('参数不足')
         with db_cursor() as cur:
+            # 先检查目标日期是否已被占用（其他记录的唯一键冲突）
+            cur.execute("""SELECT id FROM portfolio_holdings 
+                WHERE user_id=%s AND ts_code=%s AND trade_date=%s
+            """, (user_id, ts_code, new_date))
+            conflict = cur.fetchone()
+            if conflict:
+                # 有冲突记录, 先把冲突记录的trade_date改成NULL或更早日期
+                cur.execute("""UPDATE portfolio_holdings SET trade_date='2000-01-01' 
+                    WHERE id=%s""", (conflict['id'],))
+            # 更新持仓记录的建仓日期
             cur.execute("""
                 UPDATE portfolio_holdings SET trade_date=%s, updated_at=NOW()
                 WHERE user_id=%s AND ts_code=%s AND status='HOLDING'
