@@ -157,14 +157,41 @@ def step_season():
     return 'ok'
 
 def step_score():
-    """Step 4: 全量评分入库"""
-    from score_engine import ScoreEngineV4, main as score_main
-    import argparse
-    # 模拟 --top 100 参数 (默认自动入库)
-    sys.argv = ['score_engine.py', '--top', '100']
-    score_main()
+    """Step 4: P6 全量评分入库（默认切换为P6双轨引擎）"""
+    from p6_dual_track_engine import daily_pipeline as p6_pipeline
+    from season_engine import SeasonEngine
+    from p6_dual_track_engine import MarketContext
+    from db_config import get_connection
+    
+    # === P6 双轨评分（主引擎）===
+    logger.info("🚀 P6双轨评分引擎启动...")
+    results = p6_pipeline(mode='watch_pool')
+    logger.info(f"✅ P6双轨评分完成: {len(results)}只")
+    
+    # === 同步 P6 校准分到 trend_score（兼容旧前端）===
+    try:
+        engine = SeasonEngine()
+        ctx = MarketContext(engine.judge_market_season())
+        conn = get_connection()
+        cur = conn.cursor()
+        synced = 0
+        for r in results:
+            cur.execute("""
+                UPDATE trend_score 
+                SET composite_score = %s,
+                    calibrated_score = %s
+                WHERE ts_code = %s 
+                  AND trade_date = (SELECT MAX(trade_date) FROM trend_score WHERE ts_code = %s)
+            """, (r['score'], r.get('calibrated_score', r['score']), r['ts_code'], r['ts_code']))
+            if cur.rowcount > 0:
+                synced += 1
+        conn.commit()
+        cur.close(); conn.close()
+        logger.info(f"🔄 P6校准分同步到trend_score: {synced}只")
+    except Exception as e:
+        logger.warning(f"⚠️ P6→trend_score同步失败(非致命): {e}")
+    
     return 'ok'
-
 def step_snapshot():
     """Step 5: 监控池快照 (通过API触发)"""
     import requests
