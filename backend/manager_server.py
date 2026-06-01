@@ -1165,16 +1165,23 @@ def signal_cards():
             mkt_score = float(mr['raw_score'] or 0) if mr else 0
             
             cur.execute("""
-                SELECT ts.ts_code, sb.name, ts.composite_score, ts.raw_score, ts.cycle_score,
-                       ts.structure_score, ts.emotion_score, ts.close_price,
-                       ss.direction, ss.position_pct, ss.reason_chain,
-                       ss.operation_mode, ss.track, ss.calibrated_score, ss.scoring_strategy
-                FROM trend_score ts
-                JOIN backtest_pool bp ON ts.ts_code = bp.ts_code AND bp.status='ACTIVE' AND bp.market!='指数'
-                LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
-                LEFT JOIN strategy_signal ss ON ts.ts_code = ss.ts_code AND ss.trade_date = ts.trade_date
-                WHERE ts.trade_date = (SELECT MAX(trade_date) FROM trend_score)
-                ORDER BY ts.composite_score DESC
+                SELECT ss.ts_code, sb.name, ss.calibrated_score as composite_score,
+                       ss.composite_score as raw_score, ss.calibrated_score as cycle_score,
+                       ss.calibrated_score as structure_score, 0 as emotion_score,
+                       dk.close as close_price,
+                       CASE WHEN ss.calibrated_score >= 60 THEN 'STRONG_BUY'
+                            WHEN ss.calibrated_score >= 45 THEN 'BUY'
+                            WHEN ss.calibrated_score >= 35 THEN 'CAUTIOUS_BUY'
+                            WHEN ss.calibrated_score >= 20 THEN 'HOLD'
+                            ELSE 'SELL' END as direction,
+                       ss.calibrated_score as position_pct, '' as reason_chain,
+                       ss.track as operation_mode, ss.track, ss.calibrated_score, ss.scoring_strategy
+                FROM strategy_signal ss
+                JOIN watch_pool wp ON ss.ts_code = wp.ts_code AND wp.is_active=1
+                LEFT JOIN stock_basic sb ON ss.ts_code = sb.ts_code
+                LEFT JOIN daily_kline dk ON ss.ts_code = dk.ts_code AND dk.trade_date = ss.trade_date
+                WHERE ss.direction='dual_track_v1' AND ss.trade_date = (SELECT MAX(trade_date) FROM strategy_signal WHERE direction='dual_track_v1')
+                ORDER BY ss.calibrated_score DESC
             """)
             rows = cur.fetchall()
             
@@ -2447,9 +2454,12 @@ def strategy_signals():
         _c = _getgc()
         _cc = _c.cursor()
         _cc.execute("""
-            SELECT ssd.*, sb.name as stock_name
+            SELECT ssd.*, sb.name as stock_name,
+                   COALESCE(p6.calibrated_score, ssd.buy_score, 0) as p6_buy_score,
+                   p6.track as p6_track
             FROM strategy_signal_daily ssd
             LEFT JOIN stock_basic sb ON ssd.ts_code = sb.ts_code
+            LEFT JOIN strategy_signal p6 ON ssd.ts_code = p6.ts_code AND p6.direction='dual_track_v1' AND p6.trade_date=%s
             WHERE ssd.trade_date=%s AND ssd.strategy_id=%s
             ORDER BY 
               CASE ssd.action 
@@ -2457,7 +2467,7 @@ def strategy_signals():
                 WHEN 'BUY' THEN 2 WHEN 'HOLD' THEN 3 ELSE 4
               END,
               COALESCE(ssd.buy_score, 0) DESC
-        """, (_td, _sid))
+        """, (_td, _td, _sid))
         rows = _cc.fetchall()
         
         # 统计
@@ -2478,7 +2488,9 @@ def strategy_signals():
                 'hold_days': r['hold_days'],
                 'current_checkpoint': r['current_checkpoint'],
                 'days_to_check': r['days_to_check'],
-                'buy_score': float(r['buy_score']) if r['buy_score'] else 0,
+                'buy_score': float(r['p6_buy_score']) if r.get('p6_buy_score') else (float(r['buy_score']) if r['buy_score'] else 0),
+                'p6_score': float(r['p6_buy_score']) if r.get('p6_buy_score') else 0,
+                'p6_track': r.get('p6_track') or '',
                 'current_price': float(r['current_price_r']) if r['current_price_r'] else 0,
                 'cost_price': float(r['cost_price']) if r['cost_price'] else 0,
                 'profit_pct': float(r['profit_pct']) if r['profit_pct'] else 0,
