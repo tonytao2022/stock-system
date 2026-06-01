@@ -1695,16 +1695,6 @@ def watch_pool_refresh():
                     WHERE ss.direction='dual_track_v1' AND ss.trade_date=%s ORDER BY ss.calibrated_score DESC
             """, (trade_date,))
             scores = cur.fetchall()
-            if not scores:
-                cur.execute("""
-                    SELECT ts.ts_code, sb.name, sb.industry, ts.composite_score as raw_score,
-                           ts.composite_score, ts.close_price, '' as track, '' as scoring_strategy
-                    FROM trend_score ts
-                    JOIN watch_pool wp ON ts.ts_code = wp.ts_code AND wp.is_active=1
-                    LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
-                    WHERE ts.trade_date=(SELECT MAX(trade_date) FROM trend_score) ORDER BY ts.composite_score DESC
-                """)
-                scores = cur.fetchall()
         
         # 写入watch_pool_snapshot
         
@@ -1760,13 +1750,16 @@ def watch_pool_refresh():
                             if len(closes) > p:
                                 rets[p] = round((closes[-1] - closes[-p-1]) / closes[-p-1] * 100, 2)
                         
-                        # 真实收盘价
-                        _real_close = float(s['close_price'] or krows[-1]['close'])
+                        # 真实收盘价（从daily_kline取）
+                        c.execute("SELECT close, change_pct FROM daily_kline WHERE ts_code=%s AND trade_date=%s", (code, trade_date))
+                        _kr = c.fetchone()
+                        _real_close = float(_kr['close']) if _kr and _kr['close'] else (float(krows[-1]['close']) if krows else 0)
+                        _chg = float(_kr['change_pct']) if _kr and _kr.get('change_pct') else (_chg if 'chgs' in dir() and chgs else 0)
                         _chg = chgs[-1] if chgs else 0
                     else:
                         signal, sig_label = 'WAIT', '⏳数据不足'
                         rets = {5: 0, 10: 0, 20: 0}
-                        _real_close = float(s['close_price'] or 0)
+                        _real_close = 0
                         _chg = 0
                     
                     c.execute("""
