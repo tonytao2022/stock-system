@@ -735,16 +735,12 @@ async function loadSignals(){
     (d.cards||[]).slice(0,12).forEach(c=>{
       const cls=c.signal==='STRONG_BUY'?'strong_buy':c.signal==='BUY'?'buy':c.signal==='CAUTIOUS_BUY'?'hold':c.signal==='SELL'?'sell':'hold';
       const chgCls=(c.change_pct||0)>=0?'color:#ef4444':'color:#22c55e';
-      // P6双轨精选标记: 深科技/浪潮信息/沪电股份/阳光电源/长飞光纤
-      const p6Stars={'000021.SZ':'🌟','000977.SZ':'🌟','002463.SZ':'🌟','300274.SZ':'🌟','601869.SH':'🌟'};
-      const star=p6Stars[c.ts_code]||'';
       html+=`<div class="signal-card ${cls}" onclick="loadBacktest('${c.ts_code}')">
-        <div class="sc-header"><span class="sc-name">${c.name||''} ${star}</span><span class="sc-code">${c.ts_code}</span></div>
+        <div class="sc-header"><span class="sc-name">${c.name||''}</span><span class="sc-code">${c.ts_code}</span></div>
         <div class="sc-price">${c.close?.toFixed(2)||'--'}<span class="sc-chg" style="${chgCls};margin-left:8px">${(c.change_pct||0)>=0?'+':''}${(c.change_pct||0).toFixed(2)}%</span></div>
         <div class="sc-factors">
           <span>行业: ${c.industry||""}</span><span>止损: ${((c.stop_loss_pct||-0.05)*100).toFixed(1)}%</span><span>趋势: ${c.trend_score?.toFixed(0)||'--'}</span><span>动量: ${c.momentum_score?.toFixed(0)||'--'}</span>
           <span>波动: ${c.volatility_score?.toFixed(0)||'--'}</span><span>量能: ${c.volume_score?.toFixed(0)||'--'}</span>
-          <span>P6: ${c.track||'--'}</span><span>校准分: ${c.calibrated_score?.toFixed(1)||'--'}</span>
         </div>
         <div class="sc-signal" style="color:${c.signal==='STRONG_BUY'?'#ef4444':c.signal==='BUY'?'#f59e0b':c.signal==='CAUTIOUS_BUY'?'#3b82f6':'#6b7280'}">${c.signal_label||'--'}</div>
       </div>`;

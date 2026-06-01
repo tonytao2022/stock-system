@@ -26,16 +26,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(me
 # ═══ API 认证 ═══
 _DEFAULT_USER = os.environ.get('STOCK_USER', 'tony')  # 默认用户ID（环境变量化）
 def _get_user_id():
-    try:
-        with db_cursor(commit=False) as _u_cur:
-            _u_cur.execute("SELECT config_value FROM system_config WHERE config_key=\\\"default_user_id\\\" LIMIT 1")
-            _u_r = _u_cur.fetchone()
-            if _u_r:
-                v = _u_r["config_value"] if isinstance(_u_r, dict) else _u_r[0]
-                if v: return v
-    except: pass
+    """从环境变量获取用户ID，避免db_cursor嵌套导致连接冲突"""
     from db_config import get_default_user
-    return get_default_user()
+    import os
+    return os.environ.get('STOCK_USER') or get_default_user()
 _API_KEY_CACHE = {'key': None}
 def _get_api_key():
     if _API_KEY_CACHE['key']:
@@ -1249,8 +1243,6 @@ def signal_cards():
                 'risk_flags': [],
                 'season': mkt_season,
                 'season_emoji': emoji_map.get(mkt_season, '❓'),
-                'track': r.get('track') or '',
-                'calibrated_score': float(r['calibrated_score']) if r.get('calibrated_score') else 0,
                 'p6_star': 1 if ts_code in ('000021.SZ','000977.SZ','002463.SZ','300274.SZ','601869.SH') else 0,
             })
         
@@ -1980,7 +1972,7 @@ def daily_summary():
             cur.execute("SELECT COUNT(*) as t, SUM(CASE WHEN change_pct>0 THEN 1 ELSE 0 END) as up FROM daily_kline WHERE trade_date=%s",(ld,))
             br=cur.fetchone(); breadth=round(br['up']/br['t'],3) if br and br['t'] else 0.5
 
-            cur.execute("SELECT COUNT(*) as total, SUM(CASE WHEN signal_type='BUY' THEN 1 ELSE 0 END) as buy, SUM(CASE WHEN signal_type='SELL' THEN 1 ELSE 0 END) as sell FROM watch_pool_snapshot WHERE trade_date=(SELECT MAX(trade_date) FROM watch_pool_snapshot)")
+            cur.execute("SELECT COUNT(*) as total, SUM(CASE WHEN signal_type IN ('BUY','STRONG_BUY','CAUTIOUS_BUY') THEN 1 ELSE 0 END) as buy, SUM(CASE WHEN signal_type='SELL' THEN 1 ELSE 0 END) as sell FROM watch_pool_snapshot WHERE trade_date=(SELECT MAX(trade_date) FROM watch_pool_snapshot)")
             wp = cur.fetchone()
 
             cur.execute("SELECT total_assets, total_market_value, available_cash FROM portfolio_account ORDER BY trade_date DESC LIMIT 1")
@@ -2485,8 +2477,17 @@ def strategy_config():
 
 @app.route('/api/v1/management/strategy/signals', methods=['GET'])
 def strategy_signals():
-    """获取当日策略信号（支持trade_date参数）"""
+    """获取当日策略信号（支持trade_date参数，自动回退到最新有数据的交易日）"""
     _td = request.args.get('trade_date', str(date.today()))
+    # 如果指定的日期没有数据，自动回退到最新交易日
+    from db_config import get_connection as _gc2
+    _c2 = _gc2(); _cc2 = _c2.cursor()
+    _cc2.execute("SELECT MAX(trade_date) as latest FROM strategy_signal_daily")
+    _max_row = _cc2.fetchone()
+    _max_td = str(_max_row['latest']) if _max_row and _max_row.get('latest') else None
+    _cc2.close(); _c2.close()
+    if _max_td and _td > str(_max_td):
+        _td = str(_max_td)
     _sid = int(request.args.get('strategy_id', 1))
     
     from db_config import get_connection as _getgc

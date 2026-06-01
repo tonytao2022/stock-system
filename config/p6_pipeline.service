@@ -1,0 +1,10 @@
+[Unit]
+Description=P6 双轨评分管道服务
+After=network.target mysql.service
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash /root/stock-system/backend/p6_pipeline_cron.sh
+StandardOutput=append:/tmp/p6_service.log
+StandardError=append:/tmp/p6_service.log

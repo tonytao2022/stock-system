@@ -1,5 +1,5 @@
-__pycache__/
-*.pyc
+*.bak*
 .DS_Store
 .env
-*.bak*
+*.pyc
+__pycache__/

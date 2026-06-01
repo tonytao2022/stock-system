@@ -1,0 +1,11 @@
+[Unit]
+Description=P6 双轨评分每日定时器
+After=mysql.service
+
+[Timer]
+OnCalendar=Mon-Fri 15:35:00
+Persistent=false
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

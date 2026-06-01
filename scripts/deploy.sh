@@ -58,3 +58,20 @@ echo ""
 echo "✅ 部署完成!"
 echo "前端访问: http://localhost/stock-manager/"
 echo "后端API: http://localhost:8887/health"
+
+# 注册P6双轨评分定时器
+echo ""
+echo "注册P6双轨评分服务..."
+cp ../config/p6_pipeline.service /etc/systemd/system/
+cp ../config/p6_pipeline.timer /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable p6_pipeline.timer
+systemctl start p6_pipeline.timer
+
+echo ""
+echo "P6服务: $(systemctl is-active p6_pipeline.timer)"
+echo ""
+echo "✅ 部署完成!"
+echo "前端访问: http://localhost/stock-manager/"
+echo "后端API: http://localhost:8887/health"
+echo "P6定时器: 工作日15:35自动执行"
