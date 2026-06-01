@@ -983,6 +983,17 @@ async function refreshCycle(){
 }
 
 
+async function triggerRealtimeRefresh(){
+  const btn = event.target;
+  btn.textContent = '⏳ 评分中...'; btn.disabled = true;
+  try{
+    const r = await POST('/management/system/refresh-realtime');
+    if(r?.code===0){ showToast('✅ 实时评分完成: '+r.data.written+'只'); loadPortfolio(); }
+    else showToast('❌ 实时评分失败: '+(r?.error||'未知'));
+  }catch(e){ showToast('❌ 实时评分失败: '+e.message); }
+  btn.textContent = '⚡ 实时评分'; btn.disabled = false;
+}
+
 async function refreshWatchPool(){
   const g=$$('portfolioGrid');const s=$$('portfolioSummary');
   s.innerHTML='⏳ 正在刷新监控池(约2分钟)...';
@@ -1245,7 +1256,7 @@ async function loadPortfolio(){
       return;
     }
     S.portfolio=stocks;
-    s.innerHTML=stocks.length+' 只 | <button onclick="refreshWatchPool()" style="background:var(--color-buy);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer">&#x1F504; 监控刷新</button> | '+sr.data.date;
+    s.innerHTML=stocks.length+' 只 | <button onclick="refreshWatchPool()" style="background:var(--color-buy);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer">&#x1F504; 监控刷新</button> | <button onclick="triggerRealtimeRefresh()" style="background:var(--color-safety);color:#fff;border:none;border-radius:4px;padding:4px 10px;font-size:12px;cursor:pointer">&#x26A1; 实时评分</button> | '+sr.data.date;
     renderPortfolio(stocks);
   }catch(e){console.warn('portfolio:',e);g.innerHTML='<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败</p></div>';}
 }

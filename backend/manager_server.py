@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from db_config import db_cursor, api_success, api_error, api_not_found, serialize_rows, DATA_ERROR_MARKER
 
 # ─── 全局配置 ───────────────────────────────────────────────
-BASE_DIR = os.environ.get('STOCK_BASE_DIR', '/root/stock-system/backend')
+BASE_DIR = os.environ.get('STOCK_BASE_DIR', '/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现')
 API_BASE_8887 = os.environ.get('API_BASE_8887', 'http://localhost:8887')
 
 app = Flask(__name__)
