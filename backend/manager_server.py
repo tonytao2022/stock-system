@@ -1636,10 +1636,12 @@ def portfolio_recalc_all():
                     _sd_row = c.fetchone()
                     if _sd_row and _sd_row.get('buy_score'):
                         v = float(_sd_row['buy_score'])
-                        sig = _sd_row.get('action') or ('HOLD' if v >= 20 else 'SELL')
+                        sig = _sd_row.get('action') or 'HOLD'
                     else:
                         v = 50; sig = 'HOLD'
-                    advice = '🟢 持有/加仓' if sig in ('STRONG_BUY','BUY') else ('⏸️ 持有' if sig in ('HOLD','HOLD_OBSERVE') else '🤔 观察')
+                    # 完全复用strategy页面的动作标签
+                    _act_label = {'STOP_LOSS':'🛑 止损','SELL':'🔴 卖出','BUY':'🟢 买入','HOLD':'⏸️ 持有','HOLD_OBSERVE':'🟡 观察','WAIT':'⏳ 等待','CAUTIOUS_BUY':'🟡 谨慎买入','STRONG_BUY':'🟢 强烈买入'}
+                    advice = _act_label.get(sig, '⏸️ 持有')
                     reason = f'P6={v:.0f}'
                     # 实时价
                     cp = float(closes[-1])
