@@ -1600,7 +1600,6 @@ def portfolio_recalc_all():
         updated=0
         for h in holdings:
             try:
-                # 复用评分逻辑
                 code=h['ts_code']; cur=db_cursor()
                 with cur as c:
                     c.execute("SELECT industry FROM stock_basic WHERE ts_code=%s",(code,))
@@ -1608,6 +1607,7 @@ def portfolio_recalc_all():
                     c.execute("SELECT trade_date,high,low,close,vol,change_pct FROM daily_kline_qfq WHERE ts_code=%s ORDER BY trade_date ASC",(code,))
                     rows=c.fetchall()
                     if len(rows)<200: continue
+                    closes=[float(r['close']) for r in rows]
                     # P6引擎评分
                     from p6_dual_track_engine import MarketContext as _MC2, score_stock as _score2
                     from season_engine import SeasonEngine as _SE2
@@ -1617,51 +1617,23 @@ def portfolio_recalc_all():
                     sig = 'STRONG_BUY' if v >= 60 else ('BUY' if v >= 45 else ('CAUTIOUS_BUY' if v >= 35 else ('HOLD' if v >= 20 else 'SELL')))
                     advice = '🟢 持有/加仓' if sig in ('STRONG_BUY','BUY') else '⏸️ 持有'
                     reason = f'P6={v:.0f}'
-                    # 实时价
+                    # 实时价（Tushare rt_k）
                     cp = float(closes[-1])
                     try:
                         import tushare as _ts2
                         _t2 = os.environ.get('TUSHARE_TOKEN', '')
                         if _t2:
-                            _ts2.set_token(_t2)
-                            _pro2 = _ts2.pro_api()
+                            _ts2.set_token(_t2); _pro2 = _ts2.pro_api()
                             _rt2 = _pro2.rt_k(ts_code=code)
                             if _rt2 is not None and len(_rt2) > 0:
                                 cp = float(_rt2.iloc[-1]['close'])
                     except: pass
-                    closes=[float(r['close']) for r in rows]; vols=[float(r.get('vol',0)or 0) for r in rows]
-                    chgs=[float(r.get('change_pct')or 0) for r in rows]; n=len(closes)
-                    all_win=[{'close':closes[i],'high':float(rows[i]['high']),'low':float(rows[i]['low']),'vol':vols[i]} for i in range(n)]
-                    bw=get_block_weights(industry)
-                    chanlun=score_chanlun_enhanced(all_win,mkt_sea,industry,ts_code=code)
-                    cycle=score_cycle_enhanced(mkt_sea,regime,2.0,industry,closes)
-                    l2=apply_block_weights(chanlun['trend'],chanlun['momentum'],chanlun['volatility'],chanlun['volume'],bw)
-                    cl=round(max(0,min(100,l2+chanlun['chanlun_signal']*0.15)),1)
-                    r14=rsi(closes,14); v5m=sma(vols[-10:],5) if len(vols)>=10 else vols[-1]; v20m=sma(vols[-25:],20) if len(vols)>=25 else v5m
-                    vol_reg='high' if v5m>v20m*1.3 else ('low' if v5m<v20m*0.7 else 'normal')
-                    sent=score_sentiment(breadth,vol_reg,r14,chgs[-1] if chgs else 0)
-                    raw=cycle.score*0.30+cl*0.40+sent.score*0.30; v=vmap_score(raw,25)
-                    from engine.vmap import classify_signal
-                    sig_result=classify_signal(v,cycle.strategy,{'trend':chanlun['trend']})
-                    advice,reason=('🟢 持有/加仓',f'V={v:.0f}/趋势{chanlun["trend"]:.0f}') if sig_result.signal in ('STRONG_BUY','BUY') else ('⏸️ 持有',f'V={v:.0f}/趋势{chanlun["trend"]:.0f}')
-                    # 实时价: 优先用 Tushare rt_k 接口获取盘中实时行情
-                    cp=float(closes[-1])  # fallback
-                    try:
-                        import tushare as _ts
-                        _token = os.environ.get('TUSHARE_TOKEN', '')
-                        if _token:
-                            _ts.set_token(_token)
-                            _pro = _ts.pro_api()
-                            _rt = _pro.rt_k(ts_code=code)
-                            if _rt is not None and len(_rt) > 0:
-                                cp = float(_rt.iloc[-1]['close'])
-                    except:
-                        pass
                     cost=float(h['cost_price'] or 1); qty=int(h['qty'] or 0)
                     profit_amt=round((cp-cost)*qty,2)
                     profit_pct=round((cp-cost)/cost*100,2) if cost>0 else 0
+                    _uid = os.environ.get('STOCK_USER', 'tony')
                     c.execute("UPDATE portfolio_holdings SET current_price=%s,profit_amount=%s,profit_pct=%s,advice=%s,advice_reason=%s,updated_at=NOW() WHERE user_id=%s AND ts_code=%s AND status='HOLDING' ORDER BY trade_date DESC LIMIT 1",
-                              (cp,profit_amt,profit_pct,advice,reason,code))
+                              (cp,profit_amt,profit_pct,advice,reason,_uid,code))
                     updated+=1
             except Exception as _re:
                 logger.warning(f"  recalc {h.get('ts_code','?')}: {_re}")
