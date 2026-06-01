@@ -1630,16 +1630,18 @@ def portfolio_recalc_all():
                     rows=c.fetchall()
                     if len(rows)<200: continue
                     closes=[float(r['close']) for r in rows]
-                    # P6引擎评分
-                    from p6_dual_track_engine import MarketContext as _MC2, score_stock as _score2
-                    from season_engine import SeasonEngine as _SE2
-                    _ctx2 = _MC2(_SE2().judge_market_season())
-                    _res2 = _score2(code, _ctx2)
-                    v = float(_res2.get('score', 50))
-                    sig = 'STRONG_BUY' if v >= 60 else ('BUY' if v >= 45 else ('CAUTIOUS_BUY' if v >= 35 else ('HOLD' if v >= 20 else 'SELL')))
-                    advice = '🟢 持有/加仓' if sig in ('STRONG_BUY','BUY') else '⏸️ 持有'
+                    # 从strategy_signal_daily读P6校准分（统一数据源）
+                    c.execute('''SELECT buy_score, action FROM strategy_signal_daily 
+                        WHERE ts_code=%s AND trade_date=(SELECT MAX(trade_date) FROM strategy_signal_daily) LIMIT 1''', (code,))
+                    _sd_row = c.fetchone()
+                    if _sd_row and _sd_row.get('buy_score'):
+                        v = float(_sd_row['buy_score'])
+                        sig = _sd_row.get('action') or ('HOLD' if v >= 20 else 'SELL')
+                    else:
+                        v = 50; sig = 'HOLD'
+                    advice = '🟢 持有/加仓' if sig in ('STRONG_BUY','BUY') else ('⏸️ 持有' if sig in ('HOLD','HOLD_OBSERVE') else '🤔 观察')
                     reason = f'P6={v:.0f}'
-                    # 实时价（Tushare rt_k）
+                    # 实时价
                     cp = float(closes[-1])
                     try:
                         import tushare as _ts2
