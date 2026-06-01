@@ -32,17 +32,23 @@ def _get_user_id():
     return os.environ.get('STOCK_USER') or get_default_user()
 _API_KEY_CACHE = {'key': None}
 def _get_api_key():
-    if _API_KEY_CACHE['key']:
+    if _API_KEY_CACHE.get('key'):
         return _API_KEY_CACHE['key']
+    # 优先使用环境变量，避免 db_cursor 嵌套连接冲突
+    from db_config import get_connection as _gk_conn
     try:
-        with db_cursor(commit=False) as _ck_cur:
-            _ck_cur.execute("SELECT config_value FROM system_config WHERE config_key='api_key' LIMIT 1")
-            _ck_r = _ck_cur.fetchone()
-            if _ck_r:
-                key = _ck_r['config_value'] if isinstance(_ck_r, dict) else _ck_r[0]
+        _gk_c = _gk_conn(); _gk_cur = _gk_c.cursor()
+        _gk_cur.execute("SELECT config_value FROM system_config WHERE config_key='api_key' LIMIT 1")
+        _gk_r = _gk_cur.fetchone()
+        if _gk_r:
+            key = _gk_r['config_value'] if isinstance(_gk_r, dict) else _gk_r[0]
+            if key:
                 _API_KEY_CACHE['key'] = key
+                _gk_cur.close(); _gk_c.close()
                 return key
+        _gk_cur.close(); _gk_c.close()
     except: pass
+    return os.environ.get('API_KEY', '90a275cbcc004fd5')
     return None
 
 @app.before_request
@@ -2667,6 +2673,8 @@ def strategy_holdings_actions():
                 'price_source': str(r['price_source'] or 'daily'),
                 'action': r['action'],
                 'action_reason': r['action_reason'],
+                'stop_loss_pct': float(r['stop_loss_pct']) if r.get('stop_loss_pct') else 0,
+                'stock_name': r.get('stock_name') or r['ts_code'],
                 'qty': int(r['qty']) if r['qty'] else 0,
                 'buy_date': str(r['buy_date']) if r['buy_date'] else None,
             })
