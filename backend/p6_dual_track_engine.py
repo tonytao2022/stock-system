@@ -419,13 +419,94 @@ def score_stock(ts_code: str, ctx: MarketContext) -> Dict:
     return result
 
 
+def _build_calib_map(original_scores: List[float]) -> Dict[int, float]:
+    """
+    建立百分位映射校准表
+    将P6原始分的排序位置映射到合理的校准分区间
+    
+    校准分目标分布（从v4历史分布验证）:
+      P5=10, P10=15, P25=22, P50=30, P75=40, P90=50, P95=60, P100=80
+    避免顶到100（丧失区分度）
+    """
+    n = len(original_scores)
+    if n == 0: return {}
+    sorted_scores = sorted(original_scores)
+    targets = {
+        5: 10, 10: 15, 15: 18, 20: 20, 25: 22, 30: 24,
+        35: 26, 40: 28, 45: 29, 50: 30, 55: 32,
+        60: 34, 65: 36, 70: 38, 75: 40, 80: 44,
+        85: 48, 90: 50, 93: 55, 95: 60, 97: 68, 99: 75, 100: 80
+    }
+    calib_map = {}
+    for pct, target in targets.items():
+        idx = min(int(n * pct / 100), n - 1)
+        raw = sorted_scores[idx]
+        calib_map[raw] = target
+    
+    # 补全首尾
+    if sorted_scores:
+        calib_map[sorted_scores[0]] = max(0, targets.get(5, 10) - 5)
+        calib_map[sorted_scores[-1]] = 80
+    
+    return calib_map
+
+
+def _apply_calibration(raw_score: float, calib_map: Dict[int, float]) -> float:
+    """
+    对单个原始分应用百分位映射校准
+    对映射表中每个断点做分段线性插值
+    """
+    if not calib_map:
+        return max(0, min(100, raw_score))
+    
+    sorted_raws = sorted(calib_map.keys())
+    
+    # 边界处理
+    if raw_score <= sorted_raws[0]:
+        return float(calib_map[sorted_raws[0]])
+    if raw_score >= sorted_raws[-1]:
+        return float(calib_map[sorted_raws[-1]])
+    
+    # 分段线性插值
+    for i in range(len(sorted_raws) - 1):
+        lo_raw = sorted_raws[i]
+        hi_raw = sorted_raws[i + 1]
+        if lo_raw <= raw_score <= hi_raw:
+            lo_cal = calib_map[lo_raw]
+            hi_cal = calib_map[hi_raw]
+            if hi_raw == lo_raw:
+                return float(lo_cal)
+            ratio = (raw_score - lo_raw) / (hi_raw - lo_raw)
+            return round(lo_cal + ratio * (hi_cal - lo_cal), 1)
+    
+    return round(raw_score, 1)
+
+
+def calibrate_scores(results: List[Dict]) -> List[Dict]:
+    """
+    对批量评分结果执行百分位映射校准
+    
+    两步:
+    1. 根据所有原始分建立百分位映射表
+    2. 对每个结果应用校准
+    """
+    raw_scores = [r['score'] for r in results if r.get('score') is not None]
+    calib_map = _build_calib_map(raw_scores)
+    
+    for r in results:
+        r['calibrated_score'] = _apply_calibration(r['score'], calib_map)
+    
+    results.sort(key=lambda x: x['calibrated_score'], reverse=True)
+    return results
+
+
 def batch_score(ts_codes: List[str], ctx: MarketContext) -> List[Dict]:
     """
     批量评分——全市场或监控池
     
     策略:
-    1. 轨道内排序
-    2. 动量轨道×1.3校准后合并排序
+    1. 全部评分（不分轨道）
+    2. 百分位映射校准（替代固定乘数×1.3）
     
     Returns:
         排序后的评分列表
@@ -436,15 +517,8 @@ def batch_score(ts_codes: List[str], ctx: MarketContext) -> List[Dict]:
         r = score_stock(ts_code, ctx)
         results.append(r)
     
-    # 校准: 动量轨道×1.3
-    for r in results:
-        if r['track'] == 'momentum':
-            r['calibrated_score'] = min(100, round(r['score'] * 1.3, 1))
-        else:
-            r['calibrated_score'] = r['score']
-    
-    # 按校准分排序
-    results.sort(key=lambda x: x['calibrated_score'], reverse=True)
+    # 百分位映射校准（统一校准，不分轨道）
+    calibrate_scores(results)
     
     return results
 
