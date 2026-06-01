@@ -2499,7 +2499,7 @@ def strategy_signals():
                 'hit_stop_loss': bool(r['hit_stop_loss']),
                 'reduce_flag': bool(r['reduce_flag']),
                 'price_source': str(r['price_source'] or 'daily'),
-                'stop_loss_pct': float(r['stop_loss_pct']),
+                "stop_loss_pct": float(r["stop_loss_pct"]) if r.get("stop_loss_pct") else 0,
                 'action': r['action'],
                 'action_reason': r['action_reason'],
                 'buy_date': str(r['buy_date']) if r['buy_date'] else None,
