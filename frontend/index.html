@@ -804,10 +804,11 @@ async function removeFromWatchPool(code){
 async function loadPortfolioManage(filterCode, filterStatus){
   $$('page-portfolio-manage').innerHTML='<div class="loading"><div class="spinner"></div>加载持股数据...</div>';
   try{
-    const url='/management/portfolio/holdings';
-    const [hr,ar]=await Promise.all([GET(url),GET('/management/portfolio/account-history?limit=30')]);
-    const mr=await GET('/management/dashboard');
-    const tr=await GET('/trend/market-state');
+    // 独立请求每个API，单个失败不影响其他
+    const hr = await GET('/management/portfolio/holdings').catch(()=>({data:{holdings:[]}}));
+    const ar = await GET('/management/portfolio/account-history?limit=30').catch(()=>({data:{records:[]}}));
+    const mr = await GET('/management/dashboard').catch(()=>({data:{}}));
+    const tr = await GET('/trend/market-state').catch(()=>({data:{}}));
     const d=hr?.data||{}, ad=ar?.data?.records||[], md=mr?.data||{};
     const hds=(d.holdings||[]).filter(h=>{
       if(filterCode && !h.ts_code.includes(filterCode) && !h.name.includes(filterCode)) return false;
