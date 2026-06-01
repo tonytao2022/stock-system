@@ -758,13 +758,10 @@ def refresh_realtime():
 
     log = []
     try:
-        from score_engine import ScoreEngineV4, score_chanlun_enhanced
-        from engine.cycle_scorer import score_cycle_enhanced
-        from engine.indicators import rsi, sma
-        from engine.sentiment_scorer import score_sentiment
-        from engine.block_weights import get_block_weights, apply_block_weights
+        from p6_dual_track_engine import MarketContext, score_stock, calibrate_scores
+        from season_engine import SeasonEngine
         from engine.vmap import vmap_score, classify_signal
-        import pymysql as _pymysql2, tushare as _ts
+        import tushare as _ts
 
         # 获取 Tushare token
         def _get_token():
@@ -806,12 +803,10 @@ def refresh_realtime():
         all_codes = list(dict.fromkeys(watch_codes + bt_codes))  # 去重
 
         # 获取市场上下文
-        engine = ScoreEngineV4()
-        mkt = engine.get_market_context()
+        ctx = MarketContext(SeasonEngine().judge_market_season())
 
-        # 批量获取实时价（一次rt_k最多20只，分批次）
+        # 批量获取实时价（P6引擎评分）
         rt_prices = {}
-        rt_pre_close = {}
         batch_size = 15
         for i in range(0, len(all_codes), batch_size):
             batch = all_codes[i:i+batch_size]
@@ -819,77 +814,44 @@ def refresh_realtime():
                 df = pro.rt_k(ts_code=','.join(batch))
                 if df is not None and len(df) > 0:
                     for _, row in df.iterrows():
-                        rt_prices[row['ts_code']] = float(row['close'])
-                        rt_pre_close[row['ts_code']] = float(row['pre_close'])
-            except:
-                pass
+                        rt_prices[row['ts_code']] = {
+                            'price': float(row['close']),
+                            'pre_close': float(row['pre_close'])
+                        }
+            except: pass
             time.sleep(0.2)
 
         now = datetime.now()
         trade_date = now.strftime('%Y-%m-%d')
+        
+        # === P6 引擎评分 ===
+        from p6_dual_track_engine import MarketContext as _MC, score_stock as _score_it, calibrate_scores as _calib
+        from season_engine import SeasonEngine as _SE
+        _ctx = _MC(_SE().judge_market_season())
+        _p6_list = []
+        for _code in all_codes:
+            if _code not in rt_prices: continue
+            _r = _score_it(_code, _ctx)
+            _rt = rt_prices[_code]
+            _r['rt_price'] = _rt['price']
+            _r['change_pct'] = round((_rt['price'] - _rt['pre_close']) / _rt['pre_close'] * 100, 2)
+            _p6_list.append(_r)
+        _p6_list = _calib(_p6_list)
 
         written = 0
         errors = []
-
-        for code in all_codes:
-            if code not in rt_prices:
-                continue
-            rt_price = rt_prices[code]
-
+        for _r in _p6_list:
             try:
-                # 拿历史K线数据
-                cur.execute(
-                    "SELECT trade_date, high, low, close, vol, change_pct FROM daily_kline_qfq WHERE ts_code=%s ORDER BY trade_date ASC LIMIT 400",
-                    (code,))
-                rows = cur.fetchall()
-                if len(rows) < 120:
-                    continue
-
-                closes = [float(r['close']) for r in rows]
-                highs = [float(r['high']) for r in rows]
-                lows = [float(r['low']) for r in rows]
-                vols = [float(r.get('vol',0) or 0) for r in rows]
-                chgs = [float(r.get('change_pct') or 0) for r in rows]
-
-                # 用实时价替换最新收盘价（涨跌幅用rt_k的pre_close计算，不复权）
-                pre_close = rt_pre_close.get(code, closes[-1])  # 优先用 rt_k 的昨收
-                hs_orig = highs[-1]
-                closes[-1] = rt_price
-                if rt_price > hs_orig:
-                    highs[-1] = rt_price
-                change_pct = round((rt_price - pre_close) / pre_close * 100, 3)
-
-                all_win = [{'close':closes[i],'high':highs[i],'low':lows[i],'vol':vols[i]} for i in range(len(closes))]
-                industry = engine._get_industry(code) or '未知'
-
-                bw = get_block_weights(industry)
-                chanlun = score_chanlun_enhanced(all_win, mkt['season'], industry, ts_code=code)
-                cycle = score_cycle_enhanced(mkt['season'], mkt['regime'], mkt['market_score'], industry, closes)
-                l2_raw = apply_block_weights(chanlun['trend'], chanlun['momentum'], chanlun['volatility'], chanlun['volume'], bw)
-                cl_total = round(max(0, min(100, l2_raw + chanlun['chanlun_signal'] * 0.15)), 1)
-
-                r14 = rsi(closes, 14)
-                v5m = sma(vols[-10:], 5) if len(vols) >= 10 else vols[-1]
-                v20m = sma(vols[-25:], 20) if len(vols) >= 25 else v5m
-                vol_reg = 'high' if v5m > v20m * 1.3 else ('low' if v5m < v20m * 0.7 else 'normal')
-                sent = score_sentiment(mkt['breadth_ratio'], vol_reg, r14, chgs[-1] if chgs else 0)
-
-                raw = cycle.score * 0.30 + cl_total * 0.40 + sent.score * 0.30
-                v = vmap_score(raw, 25)
-
-                sig_result = classify_signal(v, cycle.strategy, {'trend': chanlun['trend']})
-                signal = getattr(sig_result, 'signal', 'HOLD')
-                sig_label = getattr(sig_result, 'label', '⏸️持有')
-
-                # 从 backtest_pool 拿名称
-                name = ''
-                cur.execute("SELECT name FROM watch_pool WHERE ts_code=%s AND is_active=1", (code,))
-                rn = cur.fetchone()
-                name = rn['name'] if rn else ''
-                if not name:
-                    cur.execute("SELECT name FROM backtest_pool WHERE ts_code=%s", (code,))
-                    rn = cur.fetchone()
-                    name = rn['name'] if rn else code
+                _code = _r['ts_code']
+                _v = _r['calibrated_score']
+                _sig = classify_signal(_v, 'momentum' if _r['track']=='momentum' else 'reversion', {'trend': 50})
+                _signal = getattr(_sig, 'signal', 'HOLD')
+                _sig_label = getattr(_sig, 'label', '持有')
+                
+                _name = ''
+                cur.execute("SELECT name FROM watch_pool WHERE ts_code=%s AND is_active=1", (_code,))
+                _rn = cur.fetchone()
+                _name = _rn['name'] if _rn else _code
 
                 cur.execute("""
                     INSERT INTO realtime_score
@@ -902,22 +864,22 @@ def refresh_realtime():
                         change_pct=VALUES(change_pct), composite_score=VALUES(composite_score),
                         signal_type=VALUES(signal_type), signal_label=VALUES(signal_label)
                 """, (
-                    code, name, trade_date, now,
-                    round(rt_price, 3), round(pre_close, 3), change_pct,
-                    round(cycle.score, 2), round(chanlun.get('total', 50), 2),
-                    round(sent.score, 2), round(v, 2),
-                    signal, sig_label, 50, mkt['season'], mkt['regime']
+                    _code, _name, trade_date, now,
+                    round(_r['rt_price'], 3), round(rt_prices[_code]['pre_close'], 3),
+                    _r['change_pct'],
+                    round(_r['score'], 2), round(_r['score'], 2),
+                    round(_r['score'], 2), round(_v, 2),
+                    _signal, _sig_label, 50, _ctx.season, _ctx.regime
                 ))
                 written += 1
-            except Exception as e2:
-                errors.append(f'{code}:{e2}')
+            except Exception as _e2:
+                errors.append(f'{_code}:{_e2}')
 
             if written % 20 == 0:
                 _conn.commit()
 
         _conn.commit()
         cur.close(); _conn.close()
-        engine.close()
 
         log.append(f'评分{written}只')
         if errors:
@@ -1723,9 +1685,8 @@ def watch_pool_refresh():
         
         # 调用score_engine统一评分（写入trend_score + strategy_signal）
         from score_engine import ScoreEngineV4
-        engine = ScoreEngineV4()
-        mkt = engine.get_market_context()
-        print(f"   季节: {mkt['season']}  置信度: {mkt['confidence']:.0%}")
+        ctx = MarketContext(SeasonEngine().judge_market_season())
+        print(f"   季节: {ctx.season}  置信度: {mkt['confidence']:.0%}")
         engine.score_pool(save_db=True)
         
         # 从trend_score读取最新评分，写入watch_pool_snapshot
@@ -1940,7 +1901,6 @@ def cycle_refresh():
         if not r.get('trade_date') or str(r.get('trade_date')) == 'None':
             r['trade_date'] = str(dt.today())
         from season_engine import save_result_to_db; save_result_to_db(r)
-        engine.close()
         logger.info(f"季节判定已更新: {r['market_season']} 得分{r['raw_score']:.1f}")
         return api_success({'season': r['market_season'], 'raw_score': r['raw_score'], 'confidence': r['market_confidence']})
     except Exception as e:
