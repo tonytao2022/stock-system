@@ -1480,13 +1480,8 @@ def portfolio_recalc():
         ts_code = request.args.get('ts_code', '')
         if not ts_code: return api_error('缺少ts_code')
 
-        from score_engine import score_chanlun_enhanced
-        from engine.cycle_scorer import score_cycle_enhanced
-        from engine.indicators import rsi, sma
-        from engine.sentiment_scorer import score_sentiment
-        from engine.block_weights import get_block_weights, apply_block_weights
-        from engine.vmap import vmap_score
-
+        from p6_dual_track_engine import MarketContext, score_stock, calibrate_scores
+        from season_engine import SeasonEngine
         with db_cursor(commit=False) as cur:
             cur.execute("SELECT season FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1")
             mr = cur.fetchone()
@@ -1613,7 +1608,27 @@ def portfolio_recalc_all():
                     c.execute("SELECT trade_date,high,low,close,vol,change_pct FROM daily_kline_qfq WHERE ts_code=%s ORDER BY trade_date ASC",(code,))
                     rows=c.fetchall()
                     if len(rows)<200: continue
-
+                    # P6引擎评分
+                    from p6_dual_track_engine import MarketContext as _MC2, score_stock as _score2
+                    from season_engine import SeasonEngine as _SE2
+                    _ctx2 = _MC2(_SE2().judge_market_season())
+                    _res2 = _score2(code, _ctx2)
+                    v = float(_res2.get('score', 50))
+                    sig = 'STRONG_BUY' if v >= 60 else ('BUY' if v >= 45 else ('CAUTIOUS_BUY' if v >= 35 else ('HOLD' if v >= 20 else 'SELL')))
+                    advice = '🟢 持有/加仓' if sig in ('STRONG_BUY','BUY') else '⏸️ 持有'
+                    reason = f'P6={v:.0f}'
+                    # 实时价
+                    cp = float(closes[-1])
+                    try:
+                        import tushare as _ts2
+                        _t2 = os.environ.get('TUSHARE_TOKEN', '')
+                        if _t2:
+                            _ts2.set_token(_t2)
+                            _pro2 = _ts2.pro_api()
+                            _rt2 = _pro2.rt_k(ts_code=code)
+                            if _rt2 is not None and len(_rt2) > 0:
+                                cp = float(_rt2.iloc[-1]['close'])
+                    except: pass
                     closes=[float(r['close']) for r in rows]; vols=[float(r.get('vol',0)or 0) for r in rows]
                     chgs=[float(r.get('change_pct')or 0) for r in rows]; n=len(closes)
                     all_win=[{'close':closes[i],'high':float(rows[i]['high']),'low':float(rows[i]['low']),'vol':vols[i]} for i in range(n)]
@@ -1684,11 +1699,8 @@ def watch_pool_refresh():
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         
         # 调用score_engine统一评分（写入trend_score + strategy_signal）
-        from score_engine import ScoreEngineV4
-        ctx = MarketContext(SeasonEngine().judge_market_season())
-        print(f"   季节: {ctx.season}  置信度: {mkt['confidence']:.0%}")
-        engine.score_pool(save_db=True)
-        
+        from p6_dual_track_engine import daily_pipeline as _p6_pipe
+        _p6_pipe(mode='watch_pool')
         # 从trend_score读取最新评分，写入watch_pool_snapshot
         with db_cursor(commit=False) as cur:
             cur.execute("SELECT MAX(trade_date) as d FROM trend_score")
@@ -1696,18 +1708,27 @@ def watch_pool_refresh():
             trade_date = str(ld['d']) if ld and ld['d'] else str(date.today())
             
             cur.execute("""
-                SELECT ts.ts_code, sb.name, sb.industry, ts.composite_score, ts.raw_score,
-                       ts.cycle_score, ts.structure_score, ts.emotion_score, 
-                       ts.close_price, ts.confidence_mult
-                FROM trend_score ts
-                JOIN watch_pool wp ON ts.ts_code = wp.ts_code AND wp.is_active=1
-                LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
-                WHERE ts.trade_date=%s ORDER BY ts.composite_score DESC
+                    SELECT ss.ts_code, sb.name, sb.industry,
+                           ss.composite_score as raw_score, ss.calibrated_score as composite_score,
+                           ss.track, ss.scoring_strategy
+                    FROM strategy_signal ss
+                    JOIN watch_pool wp ON ss.ts_code = wp.ts_code AND wp.is_active=1
+                    LEFT JOIN stock_basic sb ON ss.ts_code = sb.ts_code
+                    WHERE ss.direction='dual_track_v1' AND ss.trade_date=%s ORDER BY ss.calibrated_score DESC
             """, (trade_date,))
             scores = cur.fetchall()
+            if not scores:
+                cur.execute("""
+                    SELECT ts.ts_code, sb.name, sb.industry, ts.composite_score as raw_score,
+                           ts.composite_score, ts.close_price, '' as track, '' as scoring_strategy
+                    FROM trend_score ts
+                    JOIN watch_pool wp ON ts.ts_code = wp.ts_code AND wp.is_active=1
+                    LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
+                    WHERE ts.trade_date=(SELECT MAX(trade_date) FROM trend_score) ORDER BY ts.composite_score DESC
+                """)
+                scores = cur.fetchall()
         
         # 写入watch_pool_snapshot
-        from engine.vmap import vmap_score as _vmap
         
         total = len(scores)
         updated = 0
@@ -1720,11 +1741,11 @@ def watch_pool_refresh():
             
             try:
                 with db_cursor(commit=False) as c:
-                    # 用趋势分数据回填v_score（统一评分口径）
-                    raw_score = float(s['raw_score'] or 0)
-                    v = _vmap(raw_score, 25)
-                    ts_val = float(s['structure_score'] or s['cycle_score'] or 0)
-                    ms_val = float(s['emotion_score'] or 0)
+                    # 用P6校准分作为v_score
+                    v = float(s.get('composite_score') or 0)
+                    raw_score = float(s.get('raw_score') or 0)
+                    ts_val = v
+                    ms_val = 0
                     
                     # 读取行情信息填充分项
                     c.execute("SELECT trade_date, close, high, low, vol, change_pct FROM daily_kline_qfq WHERE ts_code=%s ORDER BY trade_date ASC", (code,))
