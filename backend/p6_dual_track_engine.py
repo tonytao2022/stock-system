@@ -625,11 +625,11 @@ def daily_pipeline(mode: str = 'watch_pool'):
         try:
             cur.execute("""
                 INSERT INTO strategy_signal 
-                    (ts_code, trade_date, track, score, calibrated_score, 
-                     scoring_strategy, strategy, processed)
-                VALUES (%s, %s, %s, %s, %s, %s, 'dual_track_v1', 0)
+                    (ts_code, trade_date, track, composite_score, calibrated_score, 
+                     scoring_strategy, direction)
+                VALUES (%s, %s, %s, %s, %s, %s, 'dual_track_v1')
                 ON DUPLICATE KEY UPDATE
-                    track=VALUES(track), score=VALUES(score),
+                    track=VALUES(track), composite_score=VALUES(composite_score),
                     calibrated_score=VALUES(calibrated_score),
                     scoring_strategy=VALUES(scoring_strategy)
             """, (r['ts_code'], ctx.trade_date, r['track'],
