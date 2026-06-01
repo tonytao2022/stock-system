@@ -2631,10 +2631,12 @@ def strategy_holdings_actions():
         
         _cc.execute("""
             SELECT ssd.*, sb.name as stock_name,
-                   ph.current_price as holding_price, ph.qty, ph.profit_pct as holding_profit
+                   ph.current_price as holding_price, ph.qty, ph.profit_pct as holding_profit,
+                   p6.calibrated_score as p6_score, p6.track as p6_track
             FROM strategy_signal_daily ssd
             LEFT JOIN stock_basic sb ON ssd.ts_code = sb.ts_code
             LEFT JOIN portfolio_holdings ph ON ssd.ts_code = ph.ts_code AND ph.status='HOLDING'
+            LEFT JOIN strategy_signal p6 ON ssd.ts_code = p6.ts_code AND p6.direction='dual_track_v1' AND p6.trade_date=%s
             WHERE ssd.strategy_id=1 AND ssd.trade_date=%s
             ORDER BY 
               CASE ssd.holding_status WHEN 'HOLDING' THEN 0 ELSE 1 END,
@@ -2642,8 +2644,8 @@ def strategy_holdings_actions():
                 WHEN 'STOP_LOSS' THEN 0 WHEN 'SELL' THEN 1
                 WHEN 'HOLD' THEN 2 ELSE 3
               END,
-              COALESCE(ssd.buy_score, 0) DESC
-        """, (_ld,))
+              COALESCE(p6.calibrated_score, ssd.buy_score, 0) DESC
+        """, (_ld, _ld))
         rows = _cc.fetchall()
         
         signals = []
@@ -2655,8 +2657,10 @@ def strategy_holdings_actions():
                 'hold_days': r['hold_days'],
                 'current_checkpoint': r['current_checkpoint'],
                 'days_to_check': r['days_to_check'],
-                'buy_score': float(r['buy_score']) if r['buy_score'] else 0,
+                "buy_score": float(r["p6_score"]) if r.get("p6_score") else (float(r["buy_score"]) if r["buy_score"] else 0),
                 'cost_price': float(r['cost_price']) if r['cost_price'] else 0,
+                "p6_score": float(r["p6_score"]) if r.get("p6_score") else 0,
+                "p6_track": r.get("p6_track") or "",
                 'current_price': float(r['current_price_r']) if r['current_price_r'] else 0,
                 'profit_pct': float(r['profit_pct']) if r['profit_pct'] else 0,
                 'drawdown_pct': float(r['drawdown_pct']) if r['drawdown_pct'] else 0,
