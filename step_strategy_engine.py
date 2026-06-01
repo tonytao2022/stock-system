@@ -2,14 +2,15 @@
 """
 阶梯动态持有策略引擎 - 每日评估 + API
 
-规则：
-  买入条件：综合评分≥30
-  10日检查点：评分≥10续持，否则平仓
-  20日检查点：评分≥20续持，否则平仓  
-  30日检查点：评分≥30续持，否则平仓
-  30日后每10日再评估：评分≥30续持，否则平仓
+规则（v2.1 基于P6 Top N回测优化）：
+  买入条件：综合评分≥75（仅高分段，May建议P0）
+  5日检查点：评分≥40续持，否则平仓
+  15日检查点：评分≥30续持，否则平仓
+  25日检查点：评分≥20续持，否则平仓
+  30日强制离场（长持有胜率下降，无需再续）
   全程止损：从最高点回撤≥10%时平仓
-  最大持有60日
+  移动止盈：从最高点回撤≥15%时止盈（May建议P1）
+  最大持有30日
 
 部署为：/opt/stock-analyzer/step_strategy_engine.py
 由8887管理服务每日16:00调用的cron触发
@@ -291,34 +292,32 @@ def evaluate_strategy(trade_date, strategy):
             
             profit = (current_price - buy_p) / buy_p * 100
             
-            # 确定当前检查点
-            if hold_days <= 10:
-                cp = 10
-                days_to_cp = 10 - hold_days
+            # 确定当前检查点（v2.1 基于P6回测优化：5/15/25日检视，代替原10/20/30）
+            if hold_days <= 5:
+                cp = 5
+                days_to_cp = 5 - hold_days
                 threshold = p1
                 cp_score = None
-                passed = None if hold_days < 10 else (scores[idx] >= p1)
-            elif hold_days <= 20:
-                cp = 20
-                days_to_cp = 20 - hold_days
+                passed = None if hold_days < 5 else (scores[idx] >= p1)
+            elif hold_days <= 15:
+                cp = 15
+                days_to_cp = 15 - hold_days
                 threshold = p2
                 cp_score = scores[idx]
                 passed = scores[idx] >= p2
-            elif hold_days <= 30:
-                cp = 30
-                days_to_cp = 30 - hold_days
+            elif hold_days <= 25:
+                cp = 25
+                days_to_cp = 25 - hold_days
                 threshold = p3
                 cp_score = scores[idx]
                 passed = scores[idx] >= p3
             else:
-                # 30日后每10日检查
-                next_check = ((hold_days // 10) + 1) * 10
-                cp = 31
-                days_to_cp = next_check - hold_days
+                # 25日后每5日检查（因为最大30日，最多再查一次）
+                cp = 30
+                days_to_cp = 30 - hold_days
                 threshold = p3
                 cp_score = scores[idx]
-                # 只有在检查日才判定
-                if hold_days % 10 == 0:
+                if hold_days >= 30 or (hold_days % 5 == 0 and hold_days > 25):
                     passed = scores[idx] >= p3
                 else:
                     passed = 1  # 非检查日默认通过
@@ -326,34 +325,35 @@ def evaluate_strategy(trade_date, strategy):
             # 止损
             hit_sl = 1 if dd <= -sl_ratio else 0
             
-            # 方案C: 5日评分检查
-            ck5 = strategy.get('ck5_score', 0) or 0
+            # 移动止盈：从最高点回撤超过15%也止盈（May建议P1）
+            trailing_stop = float(strategy.get('trailing_stop_pct', 15) or 15)
+            hit_ts = 1 if (peak > buy_p * 1.05 and dd <= -trailing_stop/100) else 0
             
-            # 减仓检查: 从买入价亏损超过阈值则触发减半仓（仅在未减仓时触发一次）
+            # 减仓检查: 从买入价亏损超过阈值则触发减半仓
             reduce_pct = float(strategy.get('reduce_pct', 0) or 0)
             reduce_flag = 0
             if reduce_pct > 0 and profit <= -reduce_pct:
-                reduce_flag = 1  # 触发减仓信号
+                reduce_flag = 1
             
             # 最终行动
             if hit_sl:
                 action = 'STOP_LOSS'
                 reason = f'从最高点回撤{dd*100:.1f}%超过止损{sl_pct}%'
-            elif ck5 > 0 and hold_days == 5 and scores[idx] < ck5:
+            elif hit_ts:
                 action = 'SELL'
-                reason = f'5日检查评分{scores[idx]}<{ck5}，不达标平仓'
-            elif cp == 10 and hold_days >= 10 and not passed:
+                reason = f'移动止盈触发：从高位回撤{-dd*100:.1f}%超过{trailing_stop}%'
+            elif cp == 5 and hold_days >= 5 and not passed:
                 action = 'SELL'
-                reason = f'10日检查评分{scores[idx]}<{p1}，不达标平仓'
-            elif cp == 20 and hold_days >= 20 and not passed:
+                reason = f'5日检查评分{scores[idx]}<{p1}，不达标平仓'
+            elif cp == 15 and hold_days >= 15 and not passed:
                 action = 'SELL'
-                reason = f'20日检查评分{scores[idx]}<{p2}，不达标平仓'
+                reason = f'15日检查评分{scores[idx]}<{p2}，不达标平仓'
+            elif cp == 25 and hold_days >= 25 and not passed:
+                action = 'SELL'
+                reason = f'25日检查评分{scores[idx]}<{p3}，不达标平仓'
             elif cp == 30 and hold_days >= 30 and not passed:
                 action = 'SELL'
                 reason = f'30日检查评分{scores[idx]}<{p3}，不达标平仓'
-            elif cp == 31 and hold_days % 10 == 0 and not passed:
-                action = 'SELL'
-                reason = f'30日+再评估评分{scores[idx]}<{p3}，不达标平仓'
             elif hold_days >= max_hold:
                 action = 'SELL'
                 reason = f'最大持有期{max_hold}日到期'
