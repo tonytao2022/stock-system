@@ -167,7 +167,7 @@ def evaluate_strategy(trade_date, strategy):
         WHERE trade_date >= %s AND trade_date <= %s
         ORDER BY ts_code, trade_date ASC
     """, (
-        (date.today() - timedelta(days=365)).isoformat(),
+        (datetime.strptime(trade_date_str, '%Y-%m-%d') - timedelta(days=365)).strftime('%Y-%m-%d'),
         trade_date_str,
     ))
     kline_map = defaultdict(list)
@@ -238,10 +238,41 @@ def evaluate_strategy(trade_date, strategy):
             # 计算最高价和回撤
             window = closes[buy_idx:idx+1]
             peak = max(window) if window else current_price
-            buy_p = cost
-            dd = (current_price - peak) / peak if peak > 0 else 0
+            buy_p = abs(cost) if cost != 0 else current_price  # 成本为负/0时用当前价（利润仓无成本基准）
             
-            profit = (current_price - buy_p) / buy_p * 100
+            # ═══════════════════════════════════════════════
+            # MAY双轨止血方案（2026-06-03）
+            # 
+            # A. 绝对止损（保护本金）：基于持仓成本
+            #    当前价跌破成本价×(1-止损%) → 平仓
+            #    只在成本>0时有效（负成本=利润仓，本金已安全）
+            #
+            # B. 移动止盈（保护浮盈）：基于期间最高价
+            #    从持仓期间最高收盘价回撤≥X% → 止盈
+            #    只在有浮盈时激活（peak > cost）
+            # ═══════════════════════════════════════════════
+            
+            # A. 绝对止损（基于成本，保护本金）
+            if cost > 0:
+                # 从成本价计算的亏损比例
+                loss_from_cost = (current_price - cost) / cost
+                hit_abs_sl = 1 if loss_from_cost <= -sl_ratio else 0
+            else:
+                # 成本为0或负 → 本金已全部收回，绝对止损关闭
+                loss_from_cost = None
+                hit_abs_sl = 0
+            
+            # B. 移动止盈（基于最高价，保护浮盈）
+            trailing_stop = float(strategy.get('trailing_stop_pct', 15) or 15)
+            has_profit = peak > cost and cost > 0
+            dd = (current_price - peak) / peak if peak > 0 else 0  # 从峰值回撤
+            hit_ts = 1 if (has_profit and dd <= -trailing_stop/100) else 0
+            
+            # 综合盈亏（仅展示，不参与决策）
+            if cost > 0:
+                profit = (current_price - cost) / cost * 100
+            else:
+                profit = 999.9  # 利润仓，不计盈亏率
             
             # 确定当前检查点（v2.1 基于P6回测优化：5/15/25日检视）
             if hold_days <= 5:
@@ -268,21 +299,16 @@ def evaluate_strategy(trade_date, strategy):
                 else:
                     passed = 1  # 非检查日默认通过
             
-            # 止损/止盈
-            hit_sl = 1 if dd <= -sl_ratio else 0
-            trailing_stop = float(strategy.get('trailing_stop_pct', 15) or 15)
-            hit_ts = 1 if (peak > buy_p * 1.05 and dd <= -trailing_stop/100) else 0
-            
             reduce_pct = float(strategy.get('reduce_pct', 0) or 0)
-            reduce_flag = 1 if (reduce_pct > 0 and profit <= -reduce_pct) else 0
+            reduce_flag = 1 if (reduce_pct > 0 and cost > 0 and (current_price - cost)/cost * 100 <= -reduce_pct) else 0
             
             # 最终行动
-            if hit_sl:
+            if hit_abs_sl:
                 action = 'STOP_LOSS'
-                reason = f'从最高点回撤{dd*100:.1f}%超过止损{sl_pct}%'
+                reason = f'⛔绝对止损：从成本{cost:.2f}亏损{loss_from_cost*100:.1f}%超过止损{sl_pct}%'
             elif hit_ts:
                 action = 'SELL'
-                reason = f'移动止盈触发：从高位回撤{-dd*100:.1f}%超过{trailing_stop}%'
+                reason = f'💰移动止盈：从高点{peak:.2f}回撤{-dd*100:.1f}%超过{trailing_stop}%，盈利保护'
             elif cp == 5 and hold_days >= 5 and not passed:
                 action = 'SELL'
                 reason = f'5日检查P6评分{current_score}<{p1}，不达标平仓'
@@ -326,7 +352,7 @@ def evaluate_strategy(trade_date, strategy):
                 'peak_price': round(peak, 3),
                 'drawdown_pct': round(dd*100, 3),
                 'stop_loss_pct': sl_pct,
-                'hit_stop_loss': hit_sl,
+                'hit_stop_loss': hit_abs_sl,
                 'reduce_flag': reduce_flag,
                 'price_source': 'realtime' if (rt and rt.get('realtime')) else 'daily',
                 'action': action,
