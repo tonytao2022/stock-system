@@ -1699,12 +1699,12 @@ def watch_pool_refresh():
         import sys, os
         sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
         
-        # 调用score_engine统一评分（写入trend_score + strategy_signal）
+        # 调用P6双轨评分引擎统一评分（写入strategy_signal）
         from p6_dual_track_engine import daily_pipeline as _p6_pipe
         _p6_pipe(mode='watch_pool')
-        # 从trend_score读取最新评分，写入watch_pool_snapshot
+        # 从strategy_signal（P6评分源）读取最新评分
         with db_cursor(commit=False) as cur:
-            cur.execute("SELECT MAX(trade_date) as d FROM trend_score")
+            cur.execute("SELECT MAX(trade_date) as d FROM strategy_signal")
             ld = cur.fetchone()
             trade_date = str(ld['d']) if ld and ld['d'] else str(date.today())
             
@@ -1715,7 +1715,7 @@ def watch_pool_refresh():
                     FROM strategy_signal ss
                     JOIN watch_pool wp ON ss.ts_code = wp.ts_code AND wp.is_active=1
                     LEFT JOIN stock_basic sb ON ss.ts_code = sb.ts_code
-                    WHERE ss.direction='dual_track_v1' AND ss.trade_date=%s ORDER BY ss.calibrated_score DESC
+                    WHERE ss.trade_date=%s ORDER BY ss.calibrated_score DESC
             """, (trade_date,))
             scores = cur.fetchall()
         
@@ -1741,6 +1741,8 @@ def watch_pool_refresh():
                     # 读取行情信息填充分项
                     c.execute("SELECT trade_date, close, high, low, vol, change_pct FROM daily_kline_qfq WHERE ts_code=%s ORDER BY trade_date ASC", (code,))
                     krows = c.fetchall()
+                    _real_close = 0
+                    _chg = 0.0
                     if len(krows) >= 200:
                         closes = [float(r['close']) for r in krows]
                         chgs = [float(r.get('change_pct') or 0) for r in krows]
@@ -1755,12 +1757,14 @@ def watch_pool_refresh():
                         i300 = c.fetchone()
                         regime = 'bull' if i300 and float(i300['raw_score'] or 0) > 3 else ('bear' if i300 and float(i300['raw_score'] or 0) < -2 else 'range')
                         
-                        # 信号判定
-                        if v >= 42 and ts_val >= 85:
+                        # 信号判定（与P6阶梯策略规则对齐）
+                        # 买入线≥75（P6 v2.1，May建议P0 + Tony确认）
+                        # 5日检视≥40 / 15日≥30 / 25日≥20 续持，否则平仓
+                        if v >= 80:
                             signal, sig_label = 'STRONG_BUY', '🟢强烈买入'
-                        elif v >= 38 and ts_val >= 80:
+                        elif v >= 75:
                             signal, sig_label = 'BUY', '🟢买入'
-                        elif v >= 34 and ts_val >= 75:
+                        elif v >= 40:
                             signal, sig_label = 'CAUTIOUS_BUY', '🟡谨慎买入'
                         elif v >= 20:
                             signal, sig_label = 'HOLD', '⏸️持有'
@@ -1777,13 +1781,10 @@ def watch_pool_refresh():
                         c.execute("SELECT close, change_pct FROM daily_kline WHERE ts_code=%s AND trade_date=%s", (code, trade_date))
                         _kr = c.fetchone()
                         _real_close = float(_kr['close']) if _kr and _kr['close'] else (float(krows[-1]['close']) if krows else 0)
-                        _chg = float(_kr['change_pct']) if _kr and _kr.get('change_pct') else (_chg if 'chgs' in dir() and chgs else 0)
-                        _chg = chgs[-1] if chgs else 0
+                        _chg = chgs[-1] if chgs else 0.0
                     else:
                         signal, sig_label = 'WAIT', '⏳数据不足'
                         rets = {5: 0, 10: 0, 20: 0}
-                        _real_close = 0
-                        _chg = 0
                     
                     c.execute("""
                         INSERT INTO watch_pool_snapshot
