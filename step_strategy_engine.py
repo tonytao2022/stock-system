@@ -43,42 +43,58 @@ def get_pwd():
 PWD = get_pwd()
 DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db','charset':'utf8mb4'}
 
+def _get_ts_token():
+    """从MySQL读取Tushare Token"""
+    conn = pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint', password=PWD, charset='utf8mb4', database='openclaw_config')
+    cur = conn.cursor()
+    cur.execute("SELECT api_key FROM api_credentials WHERE id=1")
+    val = cur.fetchone()[0]
+    cur.close(); conn.close()
+    return val
+
+
 def get_conn():
     return pymysql.connect(**DB)
 
 
-# ─── 实时行情获取（东方财富/腾讯） ───
-def fetch_realtime_price(ts_code):
-    """获取实时股价（盘中用腾讯行情，收盘用东方财富）"""
-    import urllib.request
+# ─── 实时行情获取（Tushare rt_k API） ───
+def fetch_realtime_price(ts_code, retries=2):
+    """获取实时股价——使用Tushare rt_k接口（盘中实时），失败次数fallback"""
+    import urllib.request, json, time
     
-    if ts_code.endswith('.SH'):
-        qcode = 'sh' + ts_code[:6]
-    elif ts_code.endswith('.SZ'):
-        qcode = 'sz' + ts_code[:6]
-    else:
-        return None
+    token = _get_ts_token()
+    url = "http://api.waditu.com/"
+    payload = json.dumps({
+        "api_name": "rt_k",
+        "token": token,
+        "params": {"ts_code": ts_code},
+        "fields": ""
+    })
     
-    url = f'https://qt.gtimg.cn/q={qcode}'
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        resp = urllib.request.urlopen(req, timeout=5)
-        text = resp.read().decode('gbk')
-        parts = text.split('~')
-        if len(parts) >= 5:
-            now_price = parts[3].strip()
-            close_price = parts[4].strip()
-            try:
-                return {
-                    'price': float(now_price),
-                    'prev_close': float(close_price),
-                    'change_pct': round((float(now_price) - float(close_price)) / float(close_price) * 100, 2) if float(close_price) > 0 else 0,
-                    'realtime': True,
-                }
-            except:
-                return None
-    except Exception as e:
-        return None
+    for attempt in range(retries + 1):
+        try:
+            req = urllib.request.Request(url, data=payload.encode(), headers={"Content-Type": "application/json"})
+            resp = urllib.request.urlopen(req, timeout=15)
+            j = json.loads(resp.read().decode())
+            if j.get("data") and j["data"].get("items"):
+                item = j["data"]["items"][0]
+                cols = j["data"]["fields"]
+                d = dict(zip(cols, item))
+                now_price = float(d.get("close", 0) or 0)
+                pre_close = float(d.get("pre_close", 0) or 0)
+                if now_price > 0 and pre_close > 0:
+                    return {
+                        'price': now_price,
+                        'prev_close': pre_close,
+                        'change_pct': round((now_price - pre_close) / pre_close * 100, 2),
+                        'realtime': True,
+                        'source': 'tushare_rt_k',
+                    }
+        except Exception:
+            if attempt < retries:
+                time.sleep(3)
+            continue
+    return None
 
 
 # ════════════════════════════════════════════
