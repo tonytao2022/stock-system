@@ -254,11 +254,14 @@ def dashboard():
             _ld = cur.fetchone()
             _td = str(_ld['d']) if _ld and _ld['d'] else trade_date
             
+            # Top5 买入: 按v_score排序取前5（与全量评分页面对齐，不依赖signal_type字段）
             cur.execute(
                 """SELECT wps.*, sb.industry
                    FROM watch_pool_snapshot wps
                    LEFT JOIN stock_basic sb ON wps.ts_code = sb.ts_code
-                   WHERE wps.trade_date=%s AND wps.signal_type IN ('STRONG_BUY','BUY','CAUTIOUS_BUY')
+                   WHERE wps.trade_date=%s AND wps.ts_code IN (
+                       SELECT ts_code FROM watch_pool WHERE is_active=1
+                   )
                    ORDER BY wps.v_score DESC LIMIT 5""",
                 [_td]
             )
