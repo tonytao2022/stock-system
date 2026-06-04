@@ -421,9 +421,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hira
         </div>
         <div class="pagination" id="historyPagination"></div>
       </div>
-      <div class="card mt-16" style="display:none" id="historyChartCard">
-        <div class="card-header"><span class="card-title">&#x1F4C9; 评分趋势</span></div>
-        <div class="chart-container" id="chartHistoryTrend"></div>
+      <div class="card mt-16" style="display:none" id="historyScoreTrendCard">
+        <div class="card-header">
+          <span class="card-title">&#x1F4C9; <span id="scoreTrendTitle">评分趋势</span></span>
+          <span class="card-subtitle">
+            <select id="scoreTrendStock" class="filter-select" onchange="loadScoreTrend()" style="max-width:200px">
+              <option value="">-- 选择股票查看评分趋势 --</option>
+            </select>
+            <button class="btn secondary" onclick="loadScoreTrend()" style="margin-left:8px">&#x1F50D; 查询20日趋势</button>
+          </span>
+        </div>
+        <div class="chart-container" id="chartScoreTrend" style="height:300px"></div>
+        <div class="text-muted text-sm" style="text-align:center;padding:8px" id="scoreTrendInfo">选择股票后点击查询</div>
       </div>
     </div>
 
@@ -1470,7 +1479,9 @@ async function loadHistory(){
   $$('historyInfo').textContent='查询中...';
   $$('historySnapshotView').style.display='none';
   $$('historyTableView').style.display='block';
-  $$('historyChartCard').style.display='none';
+  $$('historyScoreTrendCard').style.display='none';
+  $$('scoreTrendStock').innerHTML='<option value="">-- 选择股票查看评分趋势 --</option>';
+  $$('scoreTrendInfo').textContent='';
   $$('historyPagination').innerHTML='';
 
   if(type==='snapshots'){
@@ -1564,26 +1575,18 @@ function renderHistScores(data){
   const tp=Math.ceil(data.length/PAGE_SIZE);
   let ph=''; for(let i=1;i<=tp;i++) ph+='<button class="'+(i===S.histPage?'active':'')+'" onclick="S.histPage='+i+';renderHistScores(S.histFiltered||S.histData);">'+i+'</button>';
   $$('historyPagination').innerHTML=ph+'<span class="page-info">'+data.length+' 条，'+tp+' 页</span>';
-  // Trend chart
-  if(data.length>1){
-    $$('historyChartCard').style.display='block';
-    const c=echarts.init($$('chartHistoryTrend'));
-    const sorted=data.slice().sort((a,b)=>(a.trade_date||'').localeCompare(b.trade_date||''));
-    c.setOption({
-      tooltip:{trigger:'axis'},
-      legend:{data:['综合','周期','缠论','情绪'],textStyle:{color:'#94a3b8'},top:0},
-      grid:{left:'3%',right:'4%',bottom:'3%',containLabel:true},
-      xAxis:{type:'category',data:sorted.map(s=>s.trade_date||s.date||''),axisLabel:{color:'#64748b',fontSize:10,rotate:30}},
-      yAxis:{type:'value',min:0,max:100,splitLine:{lineStyle:{color:'#1e2d4a'}},axisLabel:{color:'#64748b'}},
-      series:[
-        {name:'综合',type:'line',data:sorted.map(s=>s.raw_score||s.v_score||50),lineStyle:{color:'#f59e0b',width:2},itemStyle:{color:'#f59e0b'},smooth:true},
-        {name:'周期',type:'line',data:sorted.map(s=>s.cycle_score),lineStyle:{color:'#22c55e',width:1},itemStyle:{color:'#22c55e'}},
-        {name:'缠论',type:'line',data:sorted.map(s=>s.chanlun_score||s.structure_score),lineStyle:{color:'#3b82f6',width:1},itemStyle:{color:'#3b82f6'}},
-        {name:'情绪',type:'line',data:sorted.map(s=>s.sentiment_score||s.emotion_score),lineStyle:{color:'#a855f7',width:1},itemStyle:{color:'#a855f7'}},
-      ]
-    });
-    window.addEventListener('resize',()=>c.resize());
-  }
+  
+  // Populate stock select for trend chart
+  var sel=$$('scoreTrendStock');
+  var seen={};
+  data.forEach(function(s){{ 
+    var code=s.ts_code||s.code||'';
+    if(code && !seen[code]){{
+      seen[code]=1;
+      var name=s.name||s.stock_name||code;
+      sel.innerHTML+='<option value="'+code+'">'+name+' ('+code+')</option>';
+    }}
+  }});
 }
 
 function renderHistSignals(data){
@@ -1601,6 +1604,52 @@ function renderHistSignals(data){
 }
 
 function filterHistory(){ if(S.histData.length) loadHistory(); }
+
+// 📅 评分趋势折线图
+async function loadScoreTrend(ts_code){
+  var code = ts_code || $$('scoreTrendStock').value;
+  if(!code){ showToast('请先选择股票'); return; }
+  $$('scoreTrendInfo').textContent='查询中...';
+  $$('scoreTrendTitle').textContent=code+' 评分趋势';
+  try{
+    var r=await GET('/management/history/score-trend',{ts_code:code,days:20});
+    var pts=r?.data?.points||[];
+    if(!pts.length){ $$('scoreTrendInfo').textContent=code+' 暂无历史评分数据'; return; }
+    
+    // 清空得分选择栏的已选项，仅显示当前查询结果
+    $$('scoreTrendStock').value=code;
+    $$('scoreTrendInfo').textContent='共 '+pts.length+' 个交易日';
+    $$('historyScoreTrendCard').style.display='block';
+    
+    var c=echarts.init($$('chartScoreTrend'));
+    var dates=pts.map(function(p){return p.trade_date;});
+    var calScores=pts.map(function(p){return parseFloat(p.calibrated_score||0);});
+    var rawScores=pts.map(function(p){return parseFloat(p.composite_score||0);});
+    
+    c.setOption({
+      tooltip:{trigger:'axis',formatter:function(params){
+        var s='<b>'+params[0].axisValue+'</b><br/>';
+        params.forEach(function(p){s+=p.marker+' '+p.seriesName+': <b>'+p.value+'</b><br/>';});
+        return s;
+      }},
+      legend:{data:['校准评分(P6)','原始评分'],textStyle:{color:'#94a3b8'},top:0},
+      grid:{left:'3%',right:'4%',bottom:'8%',containLabel:true},
+      xAxis:{type:'category',data:dates,axisLabel:{color:'#64748b',fontSize:10,rotate:30}},
+      yAxis:{type:'value',min:0,max:100,splitLine:{lineStyle:{color:'#1e2d4a'}},axisLabel:{color:'#64748b'}},
+      series:[
+        {name:'校准评分(P6)',type:'line',data:calScores,
+          lineStyle:{color:'#f59e0b',width:2},itemStyle:{color:'#f59e0b'},
+          areaStyle:{color:'rgba(245,158,11,0.1)'},smooth:true,
+          markLine:{data:[{yAxis:75,label:{formatter:'买入线(75)',color:'#f59e0b'},lineStyle:{color:'#f59e0b',type:'dashed'}}]}},
+        {name:'原始评分',type:'line',data:rawScores,
+          lineStyle:{color:'#3b82f6',width:1},itemStyle:{color:'#3b82f6'},smooth:true},
+      ]
+    });
+    window.addEventListener('resize',function(){c.resize();});
+  }catch(e){
+    $$('scoreTrendInfo').textContent='加载失败: '+e.message;
+  }
+}
 
 // ================================================================
 // 🛠️ 系统管理

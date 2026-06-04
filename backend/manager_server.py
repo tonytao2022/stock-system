@@ -549,6 +549,41 @@ def history_signals():
         return api_error(str(e))
 
 
+# ─── GET /api/v1/management/history/score-trend ──────────────
+@app.route('/api/v1/management/history/score-trend', methods=['GET'])
+def history_score_trend():
+    """单只股票近N日评分趋势（用于折线图）"""
+    try:
+        ts_code = request.args.get('ts_code', '')
+        days = int(request.args.get('days', 20))
+        if not ts_code:
+            return api_error('缺少ts_code参数')
+        start = (datetime.now() - timedelta(days=days*2)).strftime('%Y-%m-%d')
+        end = datetime.now().strftime('%Y-%m-%d')
+        
+        with db_cursor(commit=False) as cur:
+            cur.execute(
+                """SELECT ss.trade_date, ss.calibrated_score, ss.composite_score, ss.track,
+                           ss.scoring_strategy, sb.name
+                    FROM strategy_signal ss
+                    LEFT JOIN stock_basic sb ON ss.ts_code = sb.ts_code
+                    WHERE ss.ts_code=%s AND ss.trade_date BETWEEN %s AND %s
+                    ORDER BY ss.trade_date ASC""",
+                [ts_code, start, end]
+            )
+            rows = cur.fetchall()
+        
+        return api_success({
+            'ts_code': ts_code,
+            'name': rows[0]['name'] if rows else '',
+            'count': len(rows),
+            'points': serialize_rows(rows)
+        })
+    except Exception as e:
+        logger.error(f"history_score_trend error: {e}")
+        return api_error(str(e))
+
+
 # ─── GET /api/v1/management/history/snapshots ───────────────
 @app.route('/api/v1/management/history/snapshots', methods=['GET'])
 def history_snapshots():
