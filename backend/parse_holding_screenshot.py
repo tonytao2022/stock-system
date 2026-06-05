@@ -9,7 +9,7 @@
   4. 更新数据库
   5. 给出操作建议(结合评分引擎信号)
 """
-import pytesseract, re, json, sys, os
+import pytesseract, re, json, sys, os, pymysql
 from db_config import get_connection
 from PIL import Image
 from datetime import date, datetime

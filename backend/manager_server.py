@@ -1423,8 +1423,8 @@ def portfolio_holdings():
                 SELECT ph.*, ss.season as market_season
                 FROM portfolio_holdings ph
                 LEFT JOIN (SELECT season FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1) ss ON 1=1
-                WHERE ph.status='HOLDING' AND ph.trade_date = (
-                    SELECT MAX(trade_date) FROM portfolio_holdings WHERE ts_code=ph.ts_code AND status='HOLDING'
+                WHERE ph.status='HOLDING' AND ph.qty>0 AND ph.trade_date = (
+                    SELECT MAX(trade_date) FROM portfolio_holdings WHERE ts_code=ph.ts_code AND status='HOLDING' AND qty>0
                 )
                 ORDER BY ph.market_value DESC
             """)
@@ -1780,7 +1780,7 @@ def portfolio_recalc_all():
             with db_cursor() as _sync_cur:
                 _sync_cur.execute("""
                     UPDATE strategy_signal_daily ssd 
-                    INNER JOIN portfolio_holdings ph ON ssd.ts_code = ph.ts_code AND ph.status='HOLDING'
+                    INNER JOIN portfolio_holdings ph ON ssd.ts_code = ph.ts_code AND ph.status='HOLDING' AND ph.qty>0
                     SET ssd.holding_status = 'HOLDING'
                     WHERE ssd.strategy_id=1 AND ssd.trade_date = (SELECT MAX(trade_date) FROM strategy_signal_daily WHERE strategy_id=1)
                 """)
@@ -2790,7 +2790,7 @@ def strategy_holdings_actions():
                    p6.calibrated_score as p6_score, p6.track as p6_track
             FROM strategy_signal_daily ssd
             LEFT JOIN stock_basic sb ON ssd.ts_code = sb.ts_code
-            LEFT JOIN portfolio_holdings ph ON ssd.ts_code = ph.ts_code AND ph.status='HOLDING'
+            LEFT JOIN portfolio_holdings ph ON ssd.ts_code = ph.ts_code AND ph.status='HOLDING' AND ph.qty>0
             LEFT JOIN strategy_signal p6 ON ssd.ts_code = p6.ts_code AND p6.direction='dual_track_v1' AND p6.trade_date=%s
             WHERE ssd.strategy_id=1 AND ssd.trade_date=%s
             ORDER BY 
