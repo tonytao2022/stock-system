@@ -1241,6 +1241,9 @@ class SeasonEngine:
         # 仓位建议
         position = self._get_position_advice(market_season, market_confidence)
 
+        # 恒纪元等级/评分（使用共享函数推断）
+        hj_level, hj_score = infer_hengjiyuan(market_season, market_raw)
+
         return {
             'trade_date': target_date.isoformat() if hasattr(target_date, 'isoformat') else str(target_date),
             'market_season': market_season,
@@ -1252,6 +1255,8 @@ class SeasonEngine:
             'season_votes': {s: round(v, 3) for s, v in season_votes.items()},
             'rule_chain': rule_chain,
             'position_advice': position,
+            'hengjiyuan_level': hj_level,
+            'hengjiyuan_score': hj_score,
         }
 
     def get_realtime_season(self) -> Dict:
@@ -1413,6 +1418,21 @@ class SeasonEngine:
 # 数据库持久化
 # ═══════════════════════════════════════════════════════════════
 
+def infer_hengjiyuan(season: str, raw_score: float) -> tuple:
+    """
+    根据季节和原始评分推断恒纪元等级和评分
+    用于 season_engine 返回结果和 manager_server 各接口的恒纪元数据补齐
+    输出: (hengjiyuan_level, hengjiyuan_score)
+    """
+    if season in ('summer', 'spring'):
+        level = 'strong_heng' if raw_score > 2 else 'weak_heng'
+    elif season in ('chaos', 'chaos_spring'):
+        level = 'weak_heng' if raw_score > 0 else 'weak_luan'
+    else:
+        level = 'weak_luan' if raw_score < -1 else 'strong_luan'
+    score = round(max(0, min(100, (raw_score + 10) * 5)), 1)
+    return (level, score)
+
 CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS season_state (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -1426,6 +1446,13 @@ CREATE TABLE IF NOT EXISTS season_state (
     rule_chain TEXT COMMENT '可解释规则链',
     position_advice VARCHAR(200) COMMENT '仓位建议',
     season_votes JSON COMMENT '各季节投票权重',
+    hengjiyuan_level VARCHAR(20) COMMENT '恒纪元等级 strong_heng/weak_heng/weak_luan/strong_luan',
+    hengjiyuan_score DECIMAL(5,2) COMMENT '恒纪元评分(0-100)',
+    confidence_mult DECIMAL(5,2) COMMENT '恒纪元置信度系数',
+    regime VARCHAR(10) COMMENT '市场状态 bull/bear/range',
+    regime_strength DECIMAL(5,3) COMMENT '状态强度',
+    chaos_subtype VARCHAR(20) COMMENT '混沌细分',
+    scoring_strategy VARCHAR(20) COMMENT '评分策略 momentum/reversion',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     UNIQUE KEY uk_date_code (trade_date, index_code),
     INDEX idx_date (trade_date),
@@ -1458,14 +1485,24 @@ def save_result_to_db(result: Dict, db_config: dict = None):
     cur = conn.cursor()
 
     # 全市场综合
+    hj_level, hj_score = (
+        (result.get('hengjiyuan_level'), result.get('hengjiyuan_score'))
+        if result.get('hengjiyuan_level')
+        else infer_hengjiyuan(result['market_season'], result['raw_score'])
+    )
+    hj_conf = result.get('market_confidence', 0)
     cur.execute("""
         INSERT INTO season_state (trade_date, index_code, season, raw_score, confidence,
-                                   rule_chain, position_advice, season_votes)
-        VALUES (%s, 'MARKET', %s, %s, %s, %s, %s, %s)
+                                   rule_chain, position_advice, season_votes,
+                                   hengjiyuan_level, hengjiyuan_score, confidence_mult)
+        VALUES (%s, 'MARKET', %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE season=VALUES(season), raw_score=VALUES(raw_score),
                                 confidence=VALUES(confidence), rule_chain=VALUES(rule_chain),
                                 position_advice=VALUES(position_advice),
-                                season_votes=VALUES(season_votes)
+                                season_votes=VALUES(season_votes),
+                                hengjiyuan_level=VALUES(hengjiyuan_level),
+                                hengjiyuan_score=VALUES(hengjiyuan_score),
+                                confidence_mult=VALUES(confidence_mult)
     """, (
         result['trade_date'],
         result['market_season'],
@@ -1474,6 +1511,9 @@ def save_result_to_db(result: Dict, db_config: dict = None):
         result['rule_chain'],
         result['position_advice'],
         json.dumps(result['season_votes'], ensure_ascii=False),
+        hj_level,
+        hj_score,
+        hj_conf,
     ))
 
     # 各指数明细

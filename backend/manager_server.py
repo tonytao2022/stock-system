@@ -290,17 +290,10 @@ def dashboard():
             if market_row:
                 hj_level = market_row['hengjiyuan_level']
                 hj_score = market_row['hengjiyuan_score']
-                # 恒纪元字段为空时按季节+评分推断
+                # 恒纪元字段为空时使用共享函数推断
                 if not hj_level:
-                    season_str = market_row['season'] or 'chaos'
-                    score = float(market_row['raw_score'] or 0)
-                    if season_str in ('summer', 'spring'):
-                        hj_level = 'strong_heng' if score > 2 else 'weak_heng'
-                    elif season_str in ('chaos', 'chaos_spring'):
-                        hj_level = 'weak_heng' if score > 0 else 'weak_luan'
-                    else:
-                        hj_level = 'weak_luan' if score < -1 else 'strong_luan'
-                    hj_score = max(0, min(100, (score + 10) * 5))
+                    from season_engine import infer_hengjiyuan
+                    hj_level, hj_score = infer_hengjiyuan(market_row['season'] or 'chaos', float(market_row['raw_score'] or 0))
                 se = market_row['season'] or 'chaos'
                 season_data = {
                     'season': se,
@@ -1966,17 +1959,10 @@ def watch_pool_snapshot():
         if heng_row:
             heng_level = heng_row['hengjiyuan_level']
             heng_score = float(heng_row['hengjiyuan_score']) if heng_row['hengjiyuan_score'] else None
-            # 恒纪元字段为空时按季节+评分推断
+            # 恒纪元字段为空时使用共享函数推断
             if not heng_level:
-                season_str = heng_row['season'] or 'chaos'
-                score = float(heng_row['raw_score'] or 0)
-                if season_str in ('summer', 'spring'):
-                    heng_level = 'strong_heng' if score > 2 else 'weak_heng'
-                elif season_str in ('chaos', 'chaos_spring'):
-                    heng_level = 'weak_heng' if score > 0 else 'weak_luan'
-                else:
-                    heng_level = 'weak_luan' if score < -1 else 'strong_luan'
-                heng_score = max(0, min(100, (score + 10) * 5))
+                from season_engine import infer_hengjiyuan
+                heng_level, heng_score = infer_hengjiyuan(heng_row['season'] or 'chaos', float(heng_row['raw_score'] or 0))
             for item in result_list:
                 item['hengjiyuan_level'] = heng_level
                 item['hengjiyuan_score'] = heng_score
@@ -2096,15 +2082,8 @@ def daily_summary():
             hj_score = 0
             hj_conf = 0
         if not hj_level and ss:
-            season_str = ss['season'] or 'chaos'
-            score_val = season_score
-            if season_str in ('summer', 'spring'):
-                hj_level = 'strong_heng' if score_val > 2 else 'weak_heng'
-            elif season_str in ('chaos', 'chaos_spring'):
-                hj_level = 'weak_heng' if score_val > 0 else 'weak_luan'
-            else:
-                hj_level = 'weak_luan' if score_val < -1 else 'strong_luan'
-            hj_score = max(0, min(100, (score_val + 10) * 5))
+            from season_engine import infer_hengjiyuan
+            hj_level, hj_score = infer_hengjiyuan(ss['season'] or 'chaos', season_score)
             hj_conf = season_conf
 
         # 拼7因子（从hengjiyuan_score + confidence推算）
