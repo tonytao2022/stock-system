@@ -1449,7 +1449,11 @@ def create_table_if_not_exists(db_config: dict = None):
 
 def save_result_to_db(result: Dict, db_config: dict = None):
     """保存单次判定结果到数据库"""
-    cfg = db_config or {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint'}
+    import os
+    if db_config is None:
+        pwd = os.environ.get('MYSQL_PASS', '') or 'iXve1rVBXfdA4tL9'
+        db_config = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':pwd,'database':'stock_db','charset':'utf8mb4'}
+    cfg = db_config
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
 

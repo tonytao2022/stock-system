@@ -2,14 +2,15 @@
 """
 每日数据管道调度器 v1.0
 ======================
-每日15:30自动执行:
-  1. 拉取回测池+监控池 最新K线 (三级回退)
+每日17:00自动执行（收盘后Tushare数据出全）:
+  原则: 数据只从 Tushare Pro 获取（拒绝腾讯/东方财富等替代源）
+  1. 拉取回测池+监控池 K线 (Tushare, 5次重试)
   2. 同步到前复权表
   3. 跑缠论结构分析 (chanlun_structure)
-  4. 跑季节判定 (season_engine_v2.0)
-  5. 跑全量评分入库 (score_engine → trend_score + strategy_signal)
+  4. 季节判定 (season_engine v2.1 自动入库)
+  5. P6双轨评分 (strategy_signal)
   6. 写 watch_pool_snapshot (监控池快照)
-  7. 生成 daily_market_summary
+  7. 多周期回测
 
 用法:
   python3 daily_pipeline.py              # 全量运行
@@ -91,41 +92,45 @@ def step_kline():
     today = datetime.now().strftime('%Y%m%d')
     start = '20260101'
     success = 0; fail = 0
-    batch_size = 15
+    batch_size = 10
     
     cur2 = conn.cursor()
-    
+
     for i in range(0, len(codes), batch_size):
         batch = codes[i:i+batch_size]
-        codes_str = ','.join(batch)
         
-        try:
-            # 用 Tushare daily 批量拉取（指定单只做批量效果不好，改每只独立但共用token）
-            from data_fetcher import DataFetcherV2
-            for code in batch:
-                # 只拉最近7天的数据，已有历史K线，仅补最新
-                df = pro.daily(ts_code=code, start_date='20260520', end_date=today)
-                if df is not None and len(df) > 0:
-                    for _, row in df.iterrows():
-                        cur2.execute("""
-                            INSERT INTO daily_kline (ts_code, trade_date, open, high, low, close, vol, amount, change_pct)
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                            ON DUPLICATE KEY UPDATE close=VALUES(close), vol=VALUES(vol), change_pct=VALUES(change_pct)
-                        """, (code, row['trade_date'],
-                              float(row['open']), float(row['high']), float(row['low']),
-                              float(row['close']), float(row['vol']), float(row['amount']),
-                              float(row.get('pct_chg',0)or 0)))
-                    conn.commit()
-                    success += 1
-                else:
-                    fail += 1
-                time.sleep(0.15)
-        except Exception as e:
-            fail += len(batch)
-            logger.warning(f"  批次 {i}-{i+batch_size} 失败: {e}")
+        for code in batch:
+            # Tushare 拉取（5次重试，间隔指数增长让API喘口气）
+            ok = False
+            for retry in range(5):
+                try:
+                    df = pro.daily(ts_code=code, start_date='20260520', end_date=today)
+                    if df is not None and len(df) > 0:
+                        for _, row in df.iterrows():
+                            cur2.execute("""
+                                INSERT INTO daily_kline (ts_code, trade_date, open, high, low, close, vol, amount, change_pct)
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                                ON DUPLICATE KEY UPDATE close=VALUES(close), vol=VALUES(vol), change_pct=VALUES(change_pct)
+                            """, (code, row['trade_date'],
+                                  float(row['open']), float(row['high']), float(row['low']),
+                                  float(row['close']), float(row['vol']), float(row['amount']),
+                                  float(row.get('pct_chg',0)or 0)))
+                        conn.commit()
+                        success += 1
+                        ok = True
+                        break
+                except Exception as e:
+                    wait = 3 + retry * 2  # 3, 5, 7, 9, 11秒
+                    if retry < 4:
+                        time.sleep(wait)
+                    continue
+            
+            if not ok:
+                fail += 1
+            time.sleep(0.4)
         
-        if (i+batch_size) % 60 == 0:
-            logger.info(f"  进度: {min(i+batch_size, len(codes))}/{len(codes)} ({success}成功, {fail}失败)")
+        if (i+batch_size) % 50 == 0:
+            logger.info(f"  进度: {min(i+batch_size, len(codes))}/{len(codes)} (Tushare: {success}成功, {fail}失败)")
     
     # 同步到前复权表
     cur2.execute(
@@ -146,14 +151,24 @@ def step_chanlun():
     return 'ok'
 
 def step_season():
-    """Step 3: 季节判定"""
-    import importlib.util
-    spec = importlib.util.spec_from_file_location('season_engine',
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'season_engine_v2.0.py'))
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    if hasattr(mod, 'main'):
-        mod.main()
+    """Step 3: 季节判定（使用 v2.1，时序更稳定）"""
+    import sys
+    # 统一用 season_engine.py (v2.1)，移除了并列的 v2.0
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from season_engine import SeasonEngine
+    from season_engine import save_result_to_db as save_season_result_to_db
+    engine = SeasonEngine()
+    result = engine.judge_market_season()
+    # 打印关键结果
+    logger.info(f"📅 季节判定: {result.get('market_season','?')}/{result.get('regime','?')} "
+                f"置信度={result.get('market_confidence',0):.2f} "
+                f"评分={result.get('raw_score',0):.2f}")
+    # 保存到数据库
+    try:
+        save_season_result_to_db(result)
+        logger.info("💾 季节判定结果已入库")
+    except Exception as e:
+        logger.warning(f"⚠️ 季节判定入库失败: {e}")
     return 'ok'
 
 def step_score():
@@ -205,6 +220,9 @@ def step_snapshot():
         api_key = row[0] if row else ''
         cur.close(); conn.close()
         
+        if not api_key:
+            # 回退到环境变量或硬编码默认值
+            api_key = os.environ.get('API_KEY', '90a275cbcc004fd5')
         headers = {'X-API-Key': api_key}
         _api_base_8887 = os.environ.get('API_BASE_8887', 'http://localhost:8887')
         r = requests.post(f'{_api_base_8887}/api/v1/management/watch-pool/refresh',

@@ -255,6 +255,20 @@ def dashboard():
             _td = str(_ld['d']) if _ld and _ld['d'] else trade_date
             
             # Top5 买入: 按v_score排序取前5（与全量评分页面对齐，不依赖signal_type字段）
+            # 统计信号分布
+            cur.execute(
+                """SELECT 
+                      SUM(CASE WHEN signal_type='STRONG_BUY' THEN 1 ELSE 0 END) as strong_buy,
+                      SUM(CASE WHEN signal_type='BUY' THEN 1 ELSE 0 END) as buy,
+                      SUM(CASE WHEN signal_type='CAUTIOUS_BUY' THEN 1 ELSE 0 END) as cautious,
+                      SUM(CASE WHEN signal_type='HOLD' THEN 1 ELSE 0 END) as hold,
+                      SUM(CASE WHEN signal_type IN ('SELL','STRONG_SELL') THEN 1 ELSE 0 END) as sell
+                   FROM watch_pool_snapshot
+                   WHERE trade_date=%s""",
+                [_td]
+            )
+            cnt_row = cur.fetchone()
+            
             cur.execute(
                 """SELECT wps.*, sb.industry
                    FROM watch_pool_snapshot wps
@@ -320,6 +334,12 @@ def dashboard():
             'trade_date': _td,
             'market_state': serialize_rows([snapshot])[0] if snapshot else None,
             'top5_buys': [_fmt_top(t) for t in top_buys],
+            'buy_count': int(cnt_row['buy'] if cnt_row else 0),
+            'strong_buy_count': int(cnt_row['strong_buy'] if cnt_row else 0),
+            'cautious_count': int(cnt_row['cautious'] if cnt_row else 0),
+            'hold_count': int(cnt_row['hold'] if cnt_row else 0),
+            'sell_count': int(cnt_row['sell'] if cnt_row else 0),
+            'watch_pool_count': int(sum(int(cnt_row[k] or 0) for k in ['strong_buy','buy','cautious','hold','sell'])) if cnt_row else 0,
             'risk_alerts': {'autumn_tiger_count': 0, 'direction_change_alerts': 0},
             **season_data,
         })
@@ -469,16 +489,16 @@ def history_scores():
 
         with db_cursor(commit=False) as cur:
             cur.execute(
-                f"SELECT COUNT(*) as cnt FROM trend_score WHERE {where_clause}",
+                f"SELECT COUNT(*) as cnt FROM strategy_signal WHERE {where_clause}",
                 params
             )
             total = cur.fetchone()['cnt']
 
             cur.execute(
-                f"""SELECT ts.*, sb.name FROM trend_score ts
-                    LEFT JOIN stock_basic sb ON ts.ts_code = sb.ts_code
+                f"""SELECT ss.*, sb.name FROM strategy_signal ss
+                    LEFT JOIN stock_basic sb ON ss.ts_code = sb.ts_code
                     WHERE {where_clause}
-                    ORDER BY ts.trade_date DESC, ts.composite_score DESC
+                    ORDER BY ss.trade_date DESC, ss.composite_score DESC
                     LIMIT %s OFFSET %s""",
                 params + [page_size, offset]
             )
@@ -1812,10 +1832,16 @@ def watch_pool_refresh():
                             if len(closes) > p:
                                 rets[p] = round((closes[-1] - closes[-p-1]) / closes[-p-1] * 100, 2)
                         
-                        # 真实收盘价（从daily_kline取）
+                        # 真实收盘价（优先从daily_kline取，回退到daily_kline_qfq）
                         c.execute("SELECT close, change_pct FROM daily_kline WHERE ts_code=%s AND trade_date=%s", (code, trade_date))
                         _kr = c.fetchone()
-                        _real_close = float(_kr['close']) if _kr and _kr['close'] else (float(krows[-1]['close']) if krows else 0)
+                        if _kr and _kr['close']:
+                            _real_close = float(_kr['close'])
+                        else:
+                            # 回退到qfq表取当日close
+                            c.execute("SELECT close, change_pct FROM daily_kline_qfq WHERE ts_code=%s AND trade_date=%s", (code, trade_date))
+                            _kr2 = c.fetchone()
+                            _real_close = float(_kr2['close']) if _kr2 and _kr2['close'] else 0
                         _chg = chgs[-1] if chgs else 0.0
                     else:
                         signal, sig_label = 'WAIT', '⏳数据不足'
@@ -1975,7 +2001,7 @@ def daily_summary():
 
         with db_cursor(commit=False) as cur:
             # 写一行汇总数据
-            cur.execute("SELECT season, raw_score, confidence FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1")
+            cur.execute("SELECT season, raw_score, confidence, position_advice FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1")
             ss = cur.fetchone()
             cur.execute("SELECT hengjiyuan_level, hengjiyuan_score, confidence_mult FROM daily_snapshot ORDER BY trade_date DESC LIMIT 1")
             snap = cur.fetchone()
@@ -2021,6 +2047,7 @@ def daily_summary():
             'watch_pool_total': int(wp['total']) if wp else 0,
             'watch_pool_buy': int(wp['buy']) if wp else 0,
             'watch_pool_sell': int(wp['sell']) if wp else 0,
+            'position_advice': ss['position_advice'] if ss and ss.get('position_advice') else '观望',
             'watch_pool_hold': int((wp['total']-wp['buy']-wp['sell'])) if wp else 0,
             'portfolio_total': float(pa['total_market_value']) if pa else 0,
             'portfolio_profit': 0,

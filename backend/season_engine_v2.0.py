@@ -884,7 +884,11 @@ class SeasonEngine:
     """
 
     def __init__(self, db_config: dict = None, use_market_breadth: bool = True):
-        self.db_config = db_config or None
+        if db_config is None:
+            from db_config import _get_password
+            pwd = _get_password()
+            db_config = {'host': '127.0.0.1', 'port': 3306, 'user': 'debian-sys-maint', 'password': pwd, 'database': 'stock_db'}
+        self.db_config = db_config
         self.use_market_breadth = use_market_breadth
         self.loader = DataLoader()
         self._prev_seasons: Dict[str, str] = {}  # 上一季的记忆(用于防横跳)

@@ -6,7 +6,7 @@
 跑完整缠论分析(分型→笔→中枢→背驰→买卖点)并写入 chanlun_structure 表
 """
 import os, sys, time, json, math
-from db_config import get_connection
+from db_config import get_connection, get_user_id
 import pymysql
 from datetime import datetime
 
@@ -36,7 +36,7 @@ def load_kline(cur, ts_code, lookback=400):
     return {'trade_date': trade_date, 'ohlc': ohlc}, None
 
 def main():
-    conn = db_conn()
+    conn = get_connection()
     cur = conn.cursor(pymysql.cursors.DictCursor)
 
     # 获取股票池: 回测池 ACTIVE + 监控池 ACTIVE
