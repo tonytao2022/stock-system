@@ -1016,7 +1016,7 @@ async function refreshPortfolioAdvice(){
   try{
     const ctrl = new AbortController();
     const tid = setTimeout(()=>ctrl.abort(), 60000);
-    const r = await fetch(API+'/portfolio/recalc-all', {headers:{Accept:'application/json'},signal:ctrl.signal});
+    const r = await fetch(API+'/management/portfolio/recalc-all', {headers:{Accept:'application/json'},signal:ctrl.signal});
     clearTimeout(tid);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const d = await r.json();
