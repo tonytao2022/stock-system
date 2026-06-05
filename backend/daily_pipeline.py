@@ -193,11 +193,10 @@ def step_score():
         for r in results:
             cur.execute("""
                 UPDATE trend_score 
-                SET composite_score = %s,
-                    calibrated_score = %s
+                SET composite_score = %s
                 WHERE ts_code = %s 
                   AND trade_date = (SELECT MAX(trade_date) FROM trend_score WHERE ts_code = %s)
-            """, (r['score'], r.get('calibrated_score', r['score']), r['ts_code'], r['ts_code']))
+            """, (r['score'], r['ts_code'], r['ts_code']))
             if cur.rowcount > 0:
                 synced += 1
         conn.commit()

@@ -1211,7 +1211,7 @@ CREATE TABLE IF NOT EXISTS season_state (
 
 def create_table_if_not_exists(db_config: dict = None):
     """创建season_state表"""
-    cfg = db_config or None
+    cfg = db_config or {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':'iXve1rVBXfdA4tL9','database':'stock_db','charset':'utf8mb4'}
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
     cur.execute(CREATE_TABLE_SQL)
@@ -1222,7 +1222,7 @@ def create_table_if_not_exists(db_config: dict = None):
 
 def save_result_to_db(result: Dict, db_config: dict = None):
     """保存单次判定结果到数据库"""
-    cfg = db_config or None
+    cfg = db_config or {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':'iXve1rVBXfdA4tL9','database':'stock_db','charset':'utf8mb4'}
     conn = pymysql.connect(**cfg)
     cur = conn.cursor()
 

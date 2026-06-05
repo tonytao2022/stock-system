@@ -645,13 +645,13 @@ def history_snapshots():
                 [limit]
             )
             rows = cur.fetchall()
-        for r in rows:
-            cur.execute(
-                "SELECT COUNT(*) as total FROM watch_pool_snapshot WHERE trade_date=%s",
-                [r['trade_date']]
-            )
-            wp = cur.fetchone()
-            r['total_analyzed'] = wp['total'] if wp else 0
+            for r in rows:
+                cur.execute(
+                    "SELECT COUNT(*) as total FROM watch_pool_snapshot WHERE trade_date=%s",
+                    [r['trade_date']]
+                )
+                wp = cur.fetchone()
+                r['total_analyzed'] = wp['total'] if wp else 0
 
         return api_success({'count': len(rows), 'snapshots': serialize_rows(rows)})
     except Exception as e:
@@ -1857,19 +1857,19 @@ def watch_pool_refresh():
                     krows = c.fetchall()
                     _real_close = 0
                     _chg = 0.0
+                    # 读取市场季节(放在if外确保始终有值)
+                    c.execute("SELECT season FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1")
+                    mr = c.fetchone()
+                    mkt_sea = mr['season'] if mr else 'chaos'
+                    
+                    c.execute("SELECT raw_score FROM season_state WHERE index_code='000300.SH' ORDER BY trade_date DESC LIMIT 1")
+                    i300 = c.fetchone()
+                    regime = 'bull' if i300 and float(i300['raw_score'] or 0) > 3 else ('bear' if i300 and float(i300['raw_score'] or 0) < -2 else 'range')
+
                     if len(krows) >= 200:
                         closes = [float(r['close']) for r in krows]
                         chgs = [float(r.get('change_pct') or 0) for r in krows]
                         vols = [float(r.get('vol') or 0) for r in krows]
-                        
-                        # 读取市场季节
-                        c.execute("SELECT season FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1")
-                        mr = c.fetchone()
-                        mkt_sea = mr['season'] if mr else 'chaos'
-                        
-                        c.execute("SELECT raw_score FROM season_state WHERE index_code='000300.SH' ORDER BY trade_date DESC LIMIT 1")
-                        i300 = c.fetchone()
-                        regime = 'bull' if i300 and float(i300['raw_score'] or 0) > 3 else ('bear' if i300 and float(i300['raw_score'] or 0) < -2 else 'range')
                         
                         # 信号判定（与P6阶梯策略规则对齐）
                         # 买入线≥75（P6 v2.1，May建议P0 + Tony确认）
