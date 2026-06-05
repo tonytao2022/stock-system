@@ -796,16 +796,16 @@ def refresh_all():
         # 实际执行: chanlun + season + score + snapshot
         log = []
 
-        # Step 1: 季节判定 (直接用 season_engine_v2.0)
+        # Step 1: 季节判定 (直接用 season_engine.py v2.1)
         import importlib.util as _ilu
         try:
-            se_path = os.path.join(script_dir, 'season_engine_v2.0.py')
+            se_path = os.path.join(script_dir, 'season_engine.py')
             spec = _ilu.spec_from_file_location('season_engine', se_path)
-            mod = _ilu.module_from_spec(spec)
-            spec.loader.exec_module(mod)
-            if hasattr(mod, 'main'):
-                mod.main()
-            log.append('季节: ok')
+            from season_engine import SeasonEngine, save_result_to_db
+            engine = SeasonEngine()
+            result = engine.judge_market_season()
+            save_result_to_db(result)
+            log.append(f'季节: {result.get("market_season","?")}')
         except Exception as e:
             log.append(f'季节: error-{e}')
 
