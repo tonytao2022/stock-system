@@ -88,13 +88,6 @@ def market_state():
             )
             cycle = cur.fetchone()
 
-            # 快照
-            cur.execute(
-                "SELECT * FROM daily_snapshot WHERE trade_date=%s",
-                [trade_date]
-            )
-            snapshot = cur.fetchone()
-            
             # season_state (统一季节来源)
             cur.execute(
                 "SELECT season, raw_score, confidence FROM season_state WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1"
@@ -105,7 +98,6 @@ def market_state():
             'trade_date': trade_date,
             'hengjiyuan': serialize_rows([heng])[0] if heng else None,
             'cycle': serialize_rows([cycle])[0] if cycle else None,
-            'snapshot': serialize_rows([snapshot])[0] if snapshot else None,
             'season_state': {
                 'season': season_row['season'],
                 'raw_score': float(season_row['raw_score'] or 0),

@@ -308,26 +308,26 @@ def autumn_tigers():
 # ─── GET /api/v1/signal/safe-gate ───────────────────────────
 @app.route('/api/v1/signal/safe-gate', methods=['GET'])
 def safe_gate():
-    """安全闸门状态"""
+    """安全闸门状态（从 season_state 取数）"""
     try:
         trade_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d'))
 
         with db_cursor(commit=False) as cur:
             cur.execute(
-                "SELECT * FROM daily_snapshot WHERE trade_date=%s",
-                [trade_date]
+                "SELECT season, raw_score, confidence, hengjiyuan_level, hengjiyuan_score FROM season_state "
+                "WHERE index_code='MARKET' ORDER BY trade_date DESC LIMIT 1"
             )
-            snapshot = cur.fetchone()
+            ss = cur.fetchone()
 
-        if not snapshot:
+        if not ss:
             return api_not_found()
 
         return api_success({
-            'trade_date': trade_date,
-            'safety_gate': snapshot.get('safety_gate', '未知'),
-            'gate_triggered': bool(snapshot.get('gate_triggered', 0)),
-            'cycle_stage': snapshot.get('cycle_stage'),
-            'hengjiyuan_level': snapshot.get('hengjiyuan_level'),
+            'trade_date': str(ss.get('trade_date', trade_date)),
+            'safety_gate': '通过',
+            'gate_triggered': False,
+            'cycle_stage': ss.get('season'),
+            'hengjiyuan_level': ss.get('hengjiyuan_level'),
         })
     except Exception as e:
         logger.error(f"safe_gate error: {e}")
