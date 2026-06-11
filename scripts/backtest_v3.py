@@ -19,6 +19,29 @@ import pymysql
 from step_strategy_engine import get_conn, PWD, DB
 
 
+def _calc_vol_ratio(ts_code: str, trade_date: str) -> float:
+    """量比：当日vol/前20日均vol"""
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT k.vol / NULLIF(ma.avg_vol, 0) as vol_ratio
+            FROM daily_kline_qfq k
+            JOIN (
+                SELECT AVG(vol) as avg_vol FROM daily_kline_qfq 
+                WHERE ts_code=%s AND trade_date < %s AND trade_date >= DATE_SUB(%s, INTERVAL 20 DAY)
+            ) ma ON 1=1
+            WHERE k.ts_code=%s AND k.trade_date=%s
+        """, (ts_code, trade_date, trade_date, ts_code, trade_date))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if row and row[0] is not None:
+            return float(row[0])
+    except:
+        pass
+    return 1.0
+
+
 def safe(v, defv=0.0):
     try:
         f = float(v or 0)
@@ -254,9 +277,17 @@ class PoolBacktestV3:
             if not ck:
                 continue
 
-            # 买入线75
+            # 买入线
             if sc < self.p['buy_threshold']:
                 continue
+            
+            # V4过滤层：量比检查（爆量>2倍排除）
+            try:
+                vr = _calc_vol_ratio(code, td)
+                if vr > 2.0:
+                    continue  # 爆量排除
+            except:
+                pass
 
             cand.append((code, sc, ck['c']))
 

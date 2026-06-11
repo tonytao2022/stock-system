@@ -26,6 +26,29 @@ import pymysql, sys, json, os
 from datetime import datetime, date, timedelta
 from collections import defaultdict
 
+# V4过滤函数（内嵌，避免外部依赖）
+def _get_vol_ratio(ts_code: str, trade_date: str) -> float:
+    """量比：当日vol/前20日均vol"""
+    try:
+        conn = get_conn()
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT k.vol / NULLIF(ma.avg_vol, 0) as vol_ratio
+            FROM daily_kline_qfq k
+            JOIN (
+                SELECT AVG(vol) as avg_vol FROM daily_kline_qfq 
+                WHERE ts_code=%s AND trade_date < %s AND trade_date >= DATE_SUB(%s, INTERVAL 20 DAY)
+            ) ma ON 1=1
+            WHERE k.ts_code=%s AND k.trade_date=%s
+        """, (ts_code, trade_date, trade_date, ts_code, trade_date))
+        row = cur.fetchone()
+        cur.close(); conn.close()
+        if row and row[0] is not None:
+            return float(row[0])
+    except:
+        pass
+    return 1.0
+
 # ─── P6引擎路径 ───
 P6_PROJECT = '/root/.openclaw/workspace/projects/陶的投资预测模型项目/代码实现'
 sys.path.insert(0, P6_PROJECT)
@@ -417,8 +440,18 @@ def evaluate_strategy(trade_date, strategy):
                 cur_action = 'WAIT'
                 cur_reason = f'冷却期(距上次信号{days_since}日)，P6评分{current_score}'
             elif current_score >= buy_min:
+                # V4过滤层：检查量比和资金
                 cur_action = 'BUY'
-                cur_reason = f'评分{current_score}≥{buy_min}，触发买入条件'
+                cur_reason = f'评分{current_score}≥{buy_min}'
+                try:
+                    vratio = _get_vol_ratio(ts_code, trade_date_str)
+                    if vratio > 2.0:
+                        cur_action = 'WAIT'
+                        cur_reason = f'评分{current_score}但爆量{vratio:.1f}倍，过滤'
+                    elif vratio < 0.5:
+                        cur_reason = f'评分{current_score}≥{buy_min}+缩量{vratio:.2f}倍'
+                except:
+                    pass
             else:
                 cur_action = 'WAIT'
                 cur_reason = f'评分{current_score}<{buy_min}，等待买入'
