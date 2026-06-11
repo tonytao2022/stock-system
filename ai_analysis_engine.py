@@ -394,24 +394,40 @@ def collect_stock_data(ts_code: str) -> Dict[str, Any]:
             data['ret_60d'] = round((float(klines[0]['close']) - float(klines[-1]['close'])) / float(klines[-1]['close']) * 100, 2)
         data['sources']['klines'] = 'daily_kline_qfq (Tushare Pro 前复权)'
     
-    # 3. 最新评分数据（从trend_score）
+    # 3. 最新评分数据（从backtest_score_daily - P6引擎）
     cur.execute("""
-        SELECT trade_date, cycle_score, structure_score, emotion_score, 
-               composite_score, confidence_mult, close_price
-        FROM trend_score WHERE ts_code=%s 
+        SELECT trade_date, total_score, trend_score, momentum_score,
+               wave_score, volume_score, close_price
+        FROM backtest_score_daily WHERE ts_code=%s 
         ORDER BY trade_date DESC LIMIT 1
     """, (ts_code,))
     score = cur.fetchone()
     if score:
         data['score'] = {
             'trade_date': str(score['trade_date']),
-            'cycle_score': float(score['cycle_score']) if score['cycle_score'] else 0,
-            'structure_score': float(score['structure_score']) if score['structure_score'] else 0,
-            'emotion_score': float(score['emotion_score']) if score['emotion_score'] else 0,
-            'composite_score': float(score['composite_score']) if score['composite_score'] else 0,
-            'confidence': float(score['confidence_mult']) if score['confidence_mult'] else 0,
+            'total_score': float(score['total_score']) if score['total_score'] else 0,
+            'trend_score': float(score['trend_score']) if score['trend_score'] else 0,
+            'momentum_score': float(score['momentum_score']) if score['momentum_score'] else 0,
+            'wave_score': float(score['wave_score']) if score['wave_score'] else 0,
+            'volume_score': float(score['volume_score']) if score['volume_score'] else 0,
+            'composite_score': float(score['total_score']) if score['total_score'] else 0,
+            'confidence': 0,
         }
-        data['sources']['score'] = f"trend_score (score_engine v4.0, 评分日:{score['trade_date']})"
+        data['sources']['score'] = f"backtest_score_daily (P6引擎, 评分日:{score['trade_date']})"
+    else:
+        # fallback: 从strategy_signal取composite_score
+        cur.execute("""
+            SELECT trade_date, composite_score FROM strategy_signal
+            WHERE ts_code=%s ORDER BY trade_date DESC LIMIT 1
+        """, (ts_code,))
+        score2 = cur.fetchone()
+        if score2 and score2['composite_score']:
+            data['score'] = {
+                'trade_date': str(score2['trade_date']),
+                'composite_score': float(score2['composite_score']),
+                'confidence': 0,
+            }
+            data['sources']['score'] = f"strategy_signal (P6引擎, 评分日:{score2['trade_date']})"
     
     # 4. 缠论结构信号
     cur.execute("""

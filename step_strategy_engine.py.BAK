@@ -268,25 +268,13 @@ def evaluate_strategy(trade_date, strategy):
             #    只在有浮盈时激活（peak > cost）
             # ═══════════════════════════════════════════════
             
-            # A. 止损时间衰减（V3新规则）
-            # 从DB读取sl_time_decay，格式: (5,5),(7,10),(8,999) = (跌幅%,天数上限)
-            sl_time_decay_cfg = strategy.get('sl_time_decay', '')
-            if sl_time_decay_cfg and isinstance(sl_time_decay_cfg, str):
-                try:
-                    decay_pairs = eval(sl_time_decay_cfg)
-                    effective_sl_decay = 8
-                    for d_sl, d_days in decay_pairs:
-                        if hold_days <= d_days:
-                            effective_sl_decay = d_sl
-                            break
-                    decay_ratio = effective_sl_decay / 100.0
-                    sl_ratio = decay_ratio  # 覆盖默认sl_ratio
-                except:
-                    pass
+            # A. 绝对止损（基于成本，保护本金）
             if cost > 0:
+                # 从成本价计算的亏损比例
                 loss_from_cost = (current_price - cost) / cost
                 hit_abs_sl = 1 if loss_from_cost <= -sl_ratio else 0
             else:
+                # 成本为0或负 → 本金已全部收回，绝对止损关闭
                 loss_from_cost = None
                 hit_abs_sl = 0
             
@@ -303,19 +291,11 @@ def evaluate_strategy(trade_date, strategy):
                 profit = 999.9  # 利润仓，不计盈亏率
             
             # 确定当前检查点（v2.1 基于P6回测优化：5/15/25日检视）
-            # V3: P1退坡加延判期，评分在60-74之间低于买入线时继续持有观察
-            p1_grace = int(strategy.get('p1_grace_days', 0) or 0)
             if hold_days <= 5:
                 cp = 5
                 days_to_cp = 5 - hold_days
                 threshold = p1
-                if hold_days < 5:
-                    passed = None
-                elif p1_grace > 0 and current_score >= 60 and current_score < buy_min:
-                    # 延判期内视为通过
-                    passed = 1
-                else:
-                    passed = current_score >= p1
+                passed = None if hold_days < 5 else (current_score >= p1)
             elif hold_days <= 15:
                 cp = 15
                 days_to_cp = 15 - hold_days
@@ -388,8 +368,6 @@ def evaluate_strategy(trade_date, strategy):
                 'peak_price': round(peak, 3),
                 'drawdown_pct': round(dd*100, 3),
                 'stop_loss_pct': sl_pct,
-                'effective_sl_pct': round(sl_ratio * 100, 1),
-                'p1_grace_days': p1_grace,
                 'hit_stop_loss': hit_abs_sl,
                 'reduce_flag': reduce_flag,
                 'price_source': 'realtime' if (rt and rt.get('realtime')) else 'daily',
