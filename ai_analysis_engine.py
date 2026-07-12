@@ -26,7 +26,7 @@ def _get_mysql_pass():
     return ''
 
 PWD = _get_mysql_pass()
-STOCK_DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db','charset':'utf8mb4'}
+STOCK_DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db_v2','charset':'utf8mb4'}
 CONFIG_DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'openclaw_config','charset':'utf8mb4'}
 
 def get_conn(db='stock'):

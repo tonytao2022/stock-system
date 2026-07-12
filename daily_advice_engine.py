@@ -252,7 +252,7 @@ def generate_report():
     report.append(f"【今日策略参数】")
     report.append(f"  买入阈值：≥{params['threshold']}分 | 单只仓位上限：{params['max_pos_pct']}%")
     report.append(f"  止损：-{params['stop_loss']:.0f}% | 移动止盈：{params['trailing_stop']:.0f}%回撤")
-    report.append(f"  检视点：5日({params['p1']}) / 10日({params['p2']}) / 20日({params['p3']}) | 冷却期：{params['cool_days']}日")
+    report.append(f"  检视点：5日({params['p1']}) / 10日({params['p2']}) / 20日({params['p3']})")
     report.append(f"  总仓位上限：90% | 最大持有：{params['max_hold']}日")
     report.append("")
     

@@ -64,7 +64,7 @@ def get_pwd():
     return ''
 
 PWD = get_pwd()
-DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db','charset':'utf8mb4'}
+DB = {'host':'127.0.0.1','port':3306,'user':'debian-sys-maint','password':PWD,'database':'stock_db_v2','charset':'utf8mb4'}
 
 def _get_ts_token():
     """从MySQL读取Tushare Token"""
@@ -192,9 +192,9 @@ def evaluate_strategy(trade_date, strategy):
     # 3. 获取持仓
     cur.execute("""
         SELECT ts_code, name, buy_date, cost_price, current_price, profit_pct, 
-               qty, lock_until, lock_active
+               shares
         FROM portfolio_holdings 
-        WHERE status='HOLDING'
+        WHERE status='HOLDING' OR status='locked'
     """)
     holdings = {r['ts_code']: r for r in cur.fetchall()}
     
@@ -436,7 +436,7 @@ def evaluate_strategy(trade_date, strategy):
             else:
                 days_since = 999
             
-            if last_buy_date is not None and days_since < cool_days:
+            if last_buy_date is not None and cool_days > 0 and days_since < cool_days:
                 cur_action = 'WAIT'
                 cur_reason = f'冷却期(距上次信号{days_since}日)，P6评分{current_score}'
             elif current_score >= buy_min:

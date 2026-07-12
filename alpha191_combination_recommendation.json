@@ -1,0 +1,404 @@
+{
+  "rankings": [
+    {
+      "factor": "alpha052",
+      "abs_ic": 0.035,
+      "ir": 0.2,
+      "pos_pct": 59.1,
+      "stable_season": true,
+      "total_score": 14.32
+    },
+    {
+      "factor": "alpha062",
+      "abs_ic": 0.0219,
+      "ir": 0.11,
+      "pos_pct": 54.2,
+      "stable_season": true,
+      "total_score": 10.23
+    },
+    {
+      "factor": "alpha122",
+      "abs_ic": 0.02,
+      "ir": 0.12,
+      "pos_pct": 55.2,
+      "stable_season": false,
+      "total_score": 5.44
+    },
+    {
+      "factor": "alpha037",
+      "abs_ic": 0.0199,
+      "ir": 0.12,
+      "pos_pct": 54.8,
+      "stable_season": false,
+      "total_score": 5.35
+    },
+    {
+      "factor": "alpha163",
+      "abs_ic": 0.024,
+      "ir": 0.1,
+      "pos_pct": 54.1,
+      "stable_season": false,
+      "total_score": 5.22
+    },
+    {
+      "factor": "alpha169",
+      "abs_ic": 0.0223,
+      "ir": 0.1,
+      "pos_pct": 54.9,
+      "stable_season": false,
+      "total_score": 5.21
+    },
+    {
+      "factor": "alpha035",
+      "abs_ic": 0.0196,
+      "ir": 0.11,
+      "pos_pct": 55.2,
+      "stable_season": false,
+      "total_score": 5.2
+    },
+    {
+      "factor": "alpha039",
+      "abs_ic": 0.0196,
+      "ir": 0.11,
+      "pos_pct": 55.1,
+      "stable_season": false,
+      "total_score": 5.18
+    },
+    {
+      "factor": "alpha116",
+      "abs_ic": 0.0196,
+      "ir": 0.11,
+      "pos_pct": 55.1,
+      "stable_season": false,
+      "total_score": 5.18
+    },
+    {
+      "factor": "alpha031",
+      "abs_ic": 0.023,
+      "ir": 0.1,
+      "pos_pct": 53.5,
+      "stable_season": false,
+      "total_score": 5.0
+    },
+    {
+      "factor": "alpha027",
+      "abs_ic": 0.0213,
+      "ir": -0.08,
+      "pos_pct": 46.7,
+      "stable_season": true,
+      "total_score": 4.87
+    },
+    {
+      "factor": "alpha067",
+      "abs_ic": 0.0242,
+      "ir": -0.1,
+      "pos_pct": 47.1,
+      "stable_season": true,
+      "total_score": 4.84
+    },
+    {
+      "factor": "alpha066",
+      "abs_ic": 0.0257,
+      "ir": -0.11,
+      "pos_pct": 47.2,
+      "stable_season": true,
+      "total_score": 4.81
+    },
+    {
+      "factor": "alpha095",
+      "abs_ic": 0.0257,
+      "ir": -0.11,
+      "pos_pct": 47.2,
+      "stable_season": true,
+      "total_score": 4.81
+    },
+    {
+      "factor": "alpha161",
+      "abs_ic": 0.0257,
+      "ir": -0.11,
+      "pos_pct": 47.2,
+      "stable_season": true,
+      "total_score": 4.81
+    },
+    {
+      "factor": "alpha179",
+      "abs_ic": 0.0257,
+      "ir": -0.11,
+      "pos_pct": 47.2,
+      "stable_season": true,
+      "total_score": 4.81
+    },
+    {
+      "factor": "alpha152",
+      "abs_ic": 0.0248,
+      "ir": -0.1,
+      "pos_pct": 46.3,
+      "stable_season": true,
+      "total_score": 4.74
+    },
+    {
+      "factor": "alpha004",
+      "abs_ic": 0.0191,
+      "ir": 0.1,
+      "pos_pct": 53.6,
+      "stable_season": true,
+      "total_score": 4.63
+    },
+    {
+      "factor": "alpha157",
+      "abs_ic": 0.0233,
+      "ir": -0.1,
+      "pos_pct": 46.0,
+      "stable_season": true,
+      "total_score": 4.53
+    },
+    {
+      "factor": "alpha114",
+      "abs_ic": 0.0236,
+      "ir": -0.11,
+      "pos_pct": 46.8,
+      "stable_season": true,
+      "total_score": 4.52
+    },
+    {
+      "factor": "alpha093",
+      "abs_ic": 0.0185,
+      "ir": 0.09,
+      "pos_pct": 53.4,
+      "stable_season": false,
+      "total_score": 4.33
+    },
+    {
+      "factor": "alpha006",
+      "abs_ic": 0.017,
+      "ir": 0.09,
+      "pos_pct": 54.1,
+      "stable_season": true,
+      "total_score": 4.32
+    },
+    {
+      "factor": "alpha015",
+      "abs_ic": 0.017,
+      "ir": 0.09,
+      "pos_pct": 54.1,
+      "stable_season": true,
+      "total_score": 4.32
+    },
+    {
+      "factor": "alpha175",
+      "abs_ic": 0.0162,
+      "ir": 0.09,
+      "pos_pct": 54.2,
+      "stable_season": true,
+      "total_score": 4.26
+    },
+    {
+      "factor": "alpha149",
+      "abs_ic": 0.0264,
+      "ir": -0.13,
+      "pos_pct": 45.0,
+      "stable_season": true,
+      "total_score": 4.04
+    },
+    {
+      "factor": "alpha002",
+      "abs_ic": 0.0165,
+      "ir": 0.08,
+      "pos_pct": 52.9,
+      "stable_season": false,
+      "total_score": 3.83
+    },
+    {
+      "factor": "alpha106",
+      "abs_ic": 0.0143,
+      "ir": 0.07,
+      "pos_pct": 53.2,
+      "stable_season": false,
+      "total_score": 3.47
+    },
+    {
+      "factor": "alpha130",
+      "abs_ic": 0.0131,
+      "ir": 0.07,
+      "pos_pct": 52.5,
+      "stable_season": true,
+      "total_score": 3.21
+    },
+    {
+      "factor": "alpha105",
+      "abs_ic": 0.0128,
+      "ir": 0.06,
+      "pos_pct": 53.3,
+      "stable_season": false,
+      "total_score": 3.14
+    },
+    {
+      "factor": "alpha001",
+      "abs_ic": 0.0136,
+      "ir": 0.06,
+      "pos_pct": 52.6,
+      "stable_season": false,
+      "total_score": 3.08
+    },
+    {
+      "factor": "alpha104",
+      "abs_ic": 0.0124,
+      "ir": 0.06,
+      "pos_pct": 53.2,
+      "stable_season": false,
+      "total_score": 3.08
+    },
+    {
+      "factor": "alpha162",
+      "abs_ic": 0.0148,
+      "ir": 0.06,
+      "pos_pct": 51.2,
+      "stable_season": false,
+      "total_score": 2.92
+    },
+    {
+      "factor": "alpha074",
+      "abs_ic": 0.0126,
+      "ir": 0.05,
+      "pos_pct": 52.5,
+      "stable_season": false,
+      "total_score": 2.76
+    },
+    {
+      "factor": "alpha185",
+      "abs_ic": 0.0087,
+      "ir": 0.05,
+      "pos_pct": 53.6,
+      "stable_season": false,
+      "total_score": 2.59
+    },
+    {
+      "factor": "alpha186",
+      "abs_ic": 0.0087,
+      "ir": 0.05,
+      "pos_pct": 53.6,
+      "stable_season": false,
+      "total_score": 2.59
+    },
+    {
+      "factor": "alpha117",
+      "abs_ic": 0.0097,
+      "ir": 0.05,
+      "pos_pct": 52.9,
+      "stable_season": false,
+      "total_score": 2.55
+    },
+    {
+      "factor": "alpha123",
+      "abs_ic": 0.0102,
+      "ir": 0.05,
+      "pos_pct": 52.5,
+      "stable_season": false,
+      "total_score": 2.52
+    },
+    {
+      "factor": "alpha124",
+      "abs_ic": 0.0101,
+      "ir": 0.05,
+      "pos_pct": 52.1,
+      "stable_season": false,
+      "total_score": 2.43
+    },
+    {
+      "factor": "alpha118",
+      "abs_ic": 0.0097,
+      "ir": 0.05,
+      "pos_pct": 52.2,
+      "stable_season": false,
+      "total_score": 2.41
+    },
+    {
+      "factor": "alpha089",
+      "abs_ic": 0.0108,
+      "ir": 0.05,
+      "pos_pct": 49.9,
+      "stable_season": false,
+      "total_score": 2.06
+    },
+    {
+      "factor": "alpha013",
+      "abs_ic": 0.0091,
+      "ir": 0.04,
+      "pos_pct": 51.3,
+      "stable_season": false,
+      "total_score": 1.97
+    },
+    {
+      "factor": "alpha168",
+      "abs_ic": 0.0074,
+      "ir": 0.03,
+      "pos_pct": 51.3,
+      "stable_season": false,
+      "total_score": 1.6
+    },
+    {
+      "factor": "alpha126",
+      "abs_ic": 0.0016,
+      "ir": 0.01,
+      "pos_pct": 50.7,
+      "stable_season": false,
+      "total_score": 0.5
+    },
+    {
+      "factor": "alpha151",
+      "abs_ic": 0.0016,
+      "ir": 0.01,
+      "pos_pct": 50.7,
+      "stable_season": false,
+      "total_score": 0.5
+    },
+    {
+      "factor": "alpha080",
+      "abs_ic": 0.0002,
+      "ir": 0.0,
+      "pos_pct": 51.4,
+      "stable_season": false,
+      "total_score": 0.3
+    },
+    {
+      "factor": "alpha127",
+      "abs_ic": 0.0096,
+      "ir": -0.04,
+      "pos_pct": 50.7,
+      "stable_season": false,
+      "total_score": 0.3
+    },
+    {
+      "factor": "alpha005",
+      "abs_ic": 0.0011,
+      "ir": 0.01,
+      "pos_pct": 49.9,
+      "stable_season": false,
+      "total_score": 0.29
+    },
+    {
+      "factor": "alpha044",
+      "abs_ic": 0.0001,
+      "ir": 0.0,
+      "pos_pct": 50.8,
+      "stable_season": false,
+      "total_score": 0.17
+    },
+    {
+      "factor": "alpha064",
+      "abs_ic": 0.0001,
+      "ir": 0.0,
+      "pos_pct": 50.8,
+      "stable_season": false,
+      "total_score": 0.17
+    },
+    {
+      "factor": "alpha077",
+      "abs_ic": 0.0003,
+      "ir": 0.0,
+      "pos_pct": 50.6,
+      "stable_season": false,
+      "total_score": 0.15
+    }
+  ]
+}

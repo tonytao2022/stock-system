@@ -22,6 +22,7 @@ P6 分季评分双轨引擎 v1.0
 """
 
 import sys, os, math, json
+import numpy as np
 from datetime import date, datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 from collections import defaultdict
@@ -31,7 +32,7 @@ warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from season_engine import SeasonEngine
-from score_engine import score_chanlun_enhanced
+# score_chanlun_enhanced 已内联到本文件末尾（见底部），不再依赖 score_engine
 
 # ============================================================
 # 核心数据模型
@@ -113,19 +114,16 @@ def _calc_vol_ratio(ts_code: str, trade_date: str) -> float:
 
 
 def _calc_moneyflow_score(ts_code: str, trade_date: str) -> tuple:
-    """计算资金因子
+    """计算资金因子 (适配 stock_db_v2 简化版 money_flow 表)
     Returns:
-        (moneyflow_score, net_mf_amount, lg_ratio, vol_ratio)
+        (moneyflow_score, net_mf_amount, lg_ratio)
     """
     try:
         conn = get_connection()
         cur = conn.cursor()
-        # 近5日累计净流入 + 当日大单占比
         cur.execute("""
-            SELECT SUM(net_mf_amount) as mf_5d,
-                   CASE WHEN SUM(buy_lg_amount+sell_lg_amount+buy_elg_amount+sell_elg_amount) > 0
-                        THEN SUM(net_mf_amount) / SUM(buy_lg_amount+sell_lg_amount+buy_elg_amount+sell_elg_amount)
-                        ELSE 0 END as lg_ratio
+            SELECT SUM(main_net) as mf_5d,
+                   SUM(net_value) as net_val
             FROM money_flow
             WHERE ts_code=%s AND trade_date <= %s AND trade_date >= DATE_SUB(%s, INTERVAL 5 DAY)
         """, (ts_code, trade_date, trade_date))
@@ -134,25 +132,17 @@ def _calc_moneyflow_score(ts_code: str, trade_date: str) -> tuple:
         
         if row and row['mf_5d'] is not None:
             mf_5d = float(row['mf_5d'])
-            lg_r = float(row['lg_ratio'] or 0)
             
-            # 资金因子评分: 净流入正/负 => 0~100
-            if mf_5d > 100000:  # 1亿以上
+            if mf_5d > 50000000:   # 5千万以上
                 mf_score = 80
             elif mf_5d > 0:
                 mf_score = 60
-            elif mf_5d > -100000:
+            elif mf_5d > -50000000:
                 mf_score = 40
             else:
                 mf_score = 20
             
-            # 大单比例修正：主力净占比>5%加分
-            if lg_r > 0.05:
-                mf_score = min(100, mf_score + 10)
-            elif lg_r < -0.05:
-                mf_score = max(0, mf_score - 10)
-            
-            return mf_score, mf_5d, lg_r
+            return mf_score, mf_5d, 0
     except:
         pass
     return 50, 0, 0
@@ -202,12 +192,14 @@ def track_momentum(ts_code: str, ctx: MarketContext) -> Dict:
         cl_row = cur.fetchone()
         cur.close(); conn.close()
         
-        # ──────── 计算三个因子 ────────
+        # ──────── 计算四个因子 ────────
         
-        # 1. 缠论趋势分 (50%)
+        # 1. 缠论趋势分 (40%)
         trend_score = 50
+        raw_structure_score = 50  # 独立结构分（用于10%权重）
         if cl_row and cl_row.get('structure_score') is not None:
             ss = float(cl_row['structure_score'])
+            raw_structure_score = ss  # 保存原始结构分
             if ss >= 75: trend_score = 85
             elif ss >= 60: trend_score = 70
             elif ss >= 40: trend_score = 55
@@ -257,19 +249,60 @@ def track_momentum(ts_code: str, ctx: MarketContext) -> Dict:
         # 3. 资金因子 (25%)
         mf_score, mf_5d, lg_r = _calc_moneyflow_score(ts_code, ctx.trade_date)
         
+        # 4. Alpha因子 (新增 2026-07-11)
+        # alpha062: 高量负相关 Corr(high, volume, 5)，IC=+0.0333, IR=0.32
+        # alpha046: 多均线位置 (ma3+ma6+ma12+ma24)/(4*close)，IC=+0.0301, IR=0.16
+        alpha062_score = 50
+        alpha046_score = 50
+        try:
+            # alpha062: (-1 * Corr(high, volume, 5))
+            if n >= 5:
+                high_5 = [float(r['high']) for r in reversed(rows[:5])]
+                vol_5 = [float(r['vol']) for r in reversed(rows[:5])]
+                if np.std(high_5) > 0 and np.std(vol_5) > 0:
+                    corr_hv = np.corrcoef(high_5, vol_5)[0, 1]
+                    # corr在[-1,1]，取负后映射到[0,100]
+                    # -corr=1时（强负相关）→80分，-corr=0时→50分，-corr=-1时（强正相关）→20分
+                    alpha062_score = max(0, min(100, 50 + (-corr_hv) * 30))
+                    details['alpha062_corr'] = round(float(corr_hv), 3)
+                
+            # alpha046: (ma3+ma6+ma12+ma24)/(4*close)
+            # 值>1说明均线在价格之上（超涨），<1说明在价格之下（超跌）
+            # ratio在[0.85,1.15]范围，映射到[0,100]
+            # ratio=1→50分，ratio>1.1→低分（均线上方太远），ratio<0.9→高分（均线下方）
+            if n >= 24:
+                ma3 = np.mean(closes[-3:])
+                ma6 = np.mean(closes[-6:])
+                ma12 = np.mean(closes[-12:])
+                ma24 = np.mean(closes[-24:])
+                ratio = (ma3 + ma6 + ma12 + ma24) / (4 * closes[-1])
+                # ratio=1→50, ratio=0.92→80, ratio=1.08→20
+                alpha046_score = max(0, min(100, 50 + (1 - ratio) * 100 * 3))
+                details['alpha046_ratio'] = round(float(ratio), 4)
+        except Exception as e:
+            details['alpha_error'] = str(e)[:50]
+        
+        details['alpha062_score'] = alpha062_score
+        details['alpha046_score'] = alpha046_score
         details['chanlun_trend'] = trend_score
         details['momentum_raw'] = momentum
         details['mf_score'] = mf_score
         details['mf_5d'] = round(mf_5d, 0)
         details['lg_ratio'] = round(lg_r, 4)
         details['chanlun_row'] = bool(cl_row)
+        details['structure_score'] = raw_structure_score
         
-        # 4. 综合：缠论×0.50 + 动量×0.25 + 资金×0.25
-        final_score = trend_score * 0.50 + momentum * 0.25 + mf_score * 0.25
+        # 5. 综合权重调整（2026-07-12: Alpha062×15%回测最优，移除alpha046）
+        #    旧权重: trend×0.40 + struct×0.10 + moment×0.20 + mf×0.20 + α062×0.05 + α046×0.05 = 1.0
+        #    新权重: trend×0.40 + struct×0.10 + moment×0.20 + mf×0.20 + α062×0.15 = 1.05
+        #    归一化(/1.05): trendy×0.381 + struct×0.095 + moment×0.190 + mf×0.190 + α062×0.143
+        final_score = (trend_score * 0.381 + raw_structure_score * 0.095 +
+                       momentum * 0.190 + mf_score * 0.190 +
+                       alpha062_score * 0.143)
         final_score = max(0, min(100, round(final_score, 1)))
         
         return {'track': 'momentum', 'score': final_score, 'details': details}
-        
+    
     except Exception as e:
         return {'track': 'momentum', 'score': 50, 'reason': str(e)}
 
@@ -561,23 +594,33 @@ def score_stock(ts_code: str, ctx: MarketContext) -> Dict:
     return result
 
 
-def _build_calib_map(original_scores: List[float]) -> Dict[int, float]:
+def _build_calib_map(original_scores: List[float], confidence: float = 1.0) -> Dict[int, float]:
     """
     建立百分位映射校准表
-    将P6原始分的排序位置映射到合理的校准分区间
+    将P6原始分的排序位置映射到校准分区间
     
-    校准分目标分布（从v4历史分布验证）:
-      P5=10, P10=15, P25=22, P50=30, P75=40, P90=50, P95=60, P100=80
-    避免顶到100（丧失区分度）
+    [2026-07-09 调整] 取消置信度压缩映射。
+    取消按confidence打折的逻辑。
+    校准分与综合分（原始分）保持一致，不再做压缩：
+      校准分 = 综合分（不做折扣）
+      买入判定改用综合分≥80
     """
     n = len(original_scores)
     if n == 0: return {}
     sorted_scores = sorted(original_scores)
+    
+    # 校准目标：与综合分一致，不做折扣
+    # P100=100（保留顶部空间），各分位点映射到接近原值
     targets = {
-        5: 10, 10: 15, 15: 18, 20: 20, 25: 22, 30: 24,
-        35: 26, 40: 28, 45: 29, 50: 30, 55: 32,
-        60: 34, 65: 36, 70: 38, 75: 40, 80: 44,
-        85: 48, 90: 50, 93: 55, 95: 60, 97: 68, 99: 75, 100: 80
+        5: 10, 10: 18, 15: 22,
+        20: 25, 25: 30, 30: 33,
+        35: 36, 40: 40, 45: 42,
+        50: 50, 55: 52,
+        60: 55, 65: 58, 70: 62,
+        75: 68, 80: 72,
+        85: 78, 90: 82, 93: 86,
+        95: 90, 97: 93, 99: 96,
+        100: 100
     }
     calib_map = {}
     for pct, target in targets.items():
@@ -588,7 +631,7 @@ def _build_calib_map(original_scores: List[float]) -> Dict[int, float]:
     # 补全首尾
     if sorted_scores:
         calib_map[sorted_scores[0]] = max(0, targets.get(5, 10) - 5)
-        calib_map[sorted_scores[-1]] = 80
+        calib_map[sorted_scores[-1]] = 100
     
     return calib_map
 
@@ -624,16 +667,13 @@ def _apply_calibration(raw_score: float, calib_map: Dict[int, float]) -> float:
     return round(raw_score, 1)
 
 
-def calibrate_scores(results: List[Dict]) -> List[Dict]:
+def calibrate_scores(results: List[Dict], confidence: float = 1.0) -> List[Dict]:
     """
     对批量评分结果执行百分位映射校准
-    
-    两步:
-    1. 根据所有原始分建立百分位映射表
-    2. 对每个结果应用校准
+    [2026-07-09 调整] 取消置信度压缩，校准分接近综合分原值
     """
     raw_scores = [r['score'] for r in results if r.get('score') is not None]
-    calib_map = _build_calib_map(raw_scores)
+    calib_map = _build_calib_map(raw_scores, confidence)
     
     for r in results:
         r['calibrated_score'] = _apply_calibration(r['score'], calib_map)
@@ -660,7 +700,7 @@ def batch_score(ts_codes: List[str], ctx: MarketContext) -> List[Dict]:
         results.append(r)
     
     # 百分位映射校准（统一校准，不分轨道）
-    calibrate_scores(results)
+    calibrate_scores(results, ctx.confidence)
     
     return results
 
@@ -744,6 +784,14 @@ def daily_pipeline(mode: str = 'watch_pool'):
           f"策略: {ctx.scoring_strategy} | "
           f"轨道: {'动量' if ctx.is_momentum_track() else '均值回归'}")
     
+    # 1.5 季节判定结果入库
+    from season_engine import save_result_to_db
+    try:
+        save_result_to_db(judge_result)
+        print(f"💾 季节判定结果已写入 season_state ({judge_result.get('market_season','?')}/{judge_result.get('hengjiyuan_level','?')})")
+    except Exception as e:
+        print(f"⚠️ 季节入库失败: {e}")
+    
     # 2. 获取评分池
     conn = get_connection()
     cur = conn.cursor()
@@ -769,17 +817,21 @@ def daily_pipeline(mode: str = 'watch_pool'):
     print(f"🔒 过滤层: 排除{len(filtered_out)}只 | {len(results)-len(filtered_out)}只可通过")
     
     # 4. 入库+打印top
+    # 重新获取连接（避免评分计算中连接被关闭）
+    conn = get_connection()
+    cur = conn.cursor()
     saved, skipped = 0, 0
     for i, r in enumerate(results):
         try:
             code = r['ts_code']
             
             # 从 chanlun_structure 读取缠论买卖点（当日最新）
+            has_details = r.get('details') is not None and r['details'].get('chanlun_trend') is not None
             cur.execute("""
                 SELECT buy_sell_point, zoushi_type, beichi_type, structure_score,
                        autumn_tiger, tiger_confidence
                 FROM chanlun_structure
-                WHERE ts_code=%s AND trade_date=%s
+                WHERE ts_code=%s AND trade_date <= %s
                 ORDER BY trade_date DESC LIMIT 1
             """, (code, ctx.trade_date))
             cl = cur.fetchone()
@@ -827,13 +879,44 @@ def daily_pipeline(mode: str = 'watch_pool'):
                 reason_parts.append('秋老虎')
             reason = '+'.join(reason_parts)
             
+            # 构建子因子值：有details用details，无details用缠论数据推算或保留旧值
+            if has_details:
+                v_trend = r['details'].get('chanlun_trend', 55)
+                v_momentum = r['details'].get('momentum_raw', 50)
+                v_structure = r['details'].get('structure_score', ss)
+                v_emotion = r['details'].get('emotion_score', 0)
+                v_alpha062 = r['details'].get('alpha062_score', 50)
+                v_alpha062_corr = r['details'].get('alpha062_corr', None)
+                v_alpha046 = r['details'].get('alpha046_score', 50)
+                v_alpha046_ratio = r['details'].get('alpha046_ratio', None)
+            else:
+                # details为空时：用 chanlun_structure 的 structure_score 推算合理值
+                if ss >= 75: v_trend = 85
+                elif ss >= 60: v_trend = 70
+                elif ss >= 40: v_trend = 55
+                else: v_trend = 35
+                v_momentum = 50
+                v_structure = ss
+                v_emotion = 0
+                v_alpha062 = 50
+                v_alpha062_corr = None
+                v_alpha046 = 50
+                v_alpha046_ratio = None
+                
+                # 有买卖点信号时增强趋势
+                bs_boost = {'buy3': 15, 'buy2': 8, 'buy1': 3, 'sell3': -15, 'sell2': -8, 'sell1': -3}.get(bs, 0)
+                v_trend = max(0, min(100, v_trend + bs_boost))
+            
             cur.execute("""
                 INSERT INTO strategy_signal 
                     (ts_code, trade_date, track, composite_score, calibrated_score,
                      scoring_strategy, direction, operation_mode, buy_sell_point,
                      reason_chain, signal_confidence, autumn_tiger, tiger_confidence,
-                     hengjiyuan_level)
-                VALUES (%s, %s, %s, %s, %s, %s, 'dual_track_v1', %s, %s, %s, %s, %s, %s, %s)
+                     hengjiyuan_level,
+                     trend_score, momentum_score, structure_score, emotion_score,
+                     alpha062_score, alpha062_corr, alpha046_score, alpha046_ratio)
+                VALUES (%s, %s, %s, %s, %s, %s, 'dual_track_v1', %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s)
                 ON DUPLICATE KEY UPDATE
                     track=VALUES(track), composite_score=VALUES(composite_score),
                     calibrated_score=VALUES(calibrated_score),
@@ -844,14 +927,23 @@ def daily_pipeline(mode: str = 'watch_pool'):
                     signal_confidence=VALUES(signal_confidence),
                     autumn_tiger=VALUES(autumn_tiger),
                     tiger_confidence=VALUES(tiger_confidence),
-                    hengjiyuan_level=VALUES(hengjiyuan_level)
+                    hengjiyuan_level=VALUES(hengjiyuan_level),
+                    trend_score=VALUES(trend_score),
+                    momentum_score=VALUES(momentum_score),
+                    structure_score=VALUES(structure_score),
+                    emotion_score=VALUES(emotion_score),
+                    alpha062_score=VALUES(alpha062_score),
+                    alpha062_corr=VALUES(alpha062_corr),
+                    alpha046_score=VALUES(alpha046_score),
+                    alpha046_ratio=VALUES(alpha046_ratio)
             """, (code, ctx.trade_date, r['track'],
                   r['score'], r['calibrated_score'],
                   'momentum' if r['track'] == 'momentum' else 'reversion',
                   op_mode, bs, reason, sig_conf,
                   autumn, tiger_conf,
-                  ctx.raw.get('hengjiyuan_level', 'weak_heng')))
-            saved += 1
+                  ctx.raw.get('hengjiyuan_level', 'weak_heng'),
+                  v_trend, v_momentum, v_structure, v_emotion,
+                  v_alpha062, v_alpha062_corr, v_alpha046, v_alpha046_ratio))
             if (i+1) % 50 == 0:
                 print(f"  💾 已入库 {i+1}/{tot}")
         except Exception as e:
@@ -862,8 +954,6 @@ def daily_pipeline(mode: str = 'watch_pool'):
     conn.commit()
     cur.close()
     conn.close()
-    
-    # 5. Top排序结果
     print(f"\n{'='*60}")
     print(f"🏆 P6 双轨评分 TOP 20 ({ctx.trade_date})")
     print(f"   市场: {ctx.season}/{ctx.regime} | 轨道: {'动量(A)' if ctx.is_momentum_track() else '回归(B)'}")
@@ -884,3 +974,257 @@ def daily_pipeline(mode: str = 'watch_pool'):
 
 if __name__ == '__main__':
     results = daily_pipeline(mode='watch_pool')
+
+# ═══ 以下从score_engine.py迁移（供score_chanlun_enhanced使用） ═══
+def sma(d,p):
+    if len(d)<p: return sum(d)/len(d) if d else 0
+    return sum(d[-p:])/p
+
+
+def rsi(c,p=14):
+    if len(c)<p+1: return 50
+    g=sum(max(0,c[i]-c[i-1]) for i in range(-p,0))
+    l=sum(max(0,c[i-1]-c[i]) for i in range(-p,0))+0.0001
+    return 100-100/(1+g/l)
+
+
+def roc(c,p):
+    if len(c)<=p: return 0
+    return (c[-1]-c[-p-1])/c[-p-1]
+
+
+def score_chanlun_enhanced(rows, season, industry, ts_code=None):
+    """
+    v4.0 缠论增强:
+    - 优先从数据库读取chanlun_structure(buy_sell_point/structure_score/beichi)
+    - 数据为空时用多周期背离代理: MACD背离 + RSI背离 + MA乖离
+    """
+    # ── 从chanlun_structure表读取真实缠论数据 ──
+    if ts_code:
+        try:
+            cur=get_connection().cursor()
+            cur.execute(
+                "SELECT buy_sell_point, structure_score, beichi_type, beichi_strength, "
+                "zoushi_type, zoushi_stage, autumn_tiger, tiger_confidence, "
+                "bi_direction, bi_strength, zhongshu_count, zhongshu_stability "
+                "FROM chanlun_structure WHERE ts_code=%s ORDER BY trade_date DESC LIMIT 1",
+                (ts_code,)
+            )
+            cl_row=cur.fetchone()
+            cur.close()
+            if cl_row and cl_row.get('structure_score') is not None:
+                ss=float(cl_row['structure_score'])
+                bs=cl_row['buy_sell_point'] or 'none'
+                bt=cl_row['beichi_type'] or 'none'
+                bstr=float(cl_row.get('beichi_strength',0) or 0)
+                zt=cl_row['zoushi_type'] or 'unknown'
+                at=cl_row['autumn_tiger'] or 0
+                
+                # 用结构评分映射到趋势/动量/波动/量能子维度
+                base_cl=50.0
+                if ss>=75: base_cl=80
+                elif ss>=60: base_cl=65
+                elif ss>=40: base_cl=50
+                else: base_cl=30
+                
+                # 买卖点修正
+                bs_boost=0
+                if bs=='buy3': bs_boost=20
+                elif bs=='buy2': bs_boost=10
+                elif bs=='buy1': bs_boost=5
+                elif bs=='sell3': bs_boost=-20
+                elif bs=='sell2': bs_boost=-10
+                elif bs=='sell1': bs_boost=-5
+                
+                # 背驰修正
+                beichi_boost=0
+                if bt=='bottom' and bstr>40: beichi_boost=15
+                elif bt=='top' and bstr>40: beichi_boost=-15
+                
+                # 走势类型修正
+                zoushi_boost=0
+                if zt=='盘整' and bs in ('buy2','buy3'): zoushi_boost=10
+                elif zt=='unknown': zoushi_boost=-5
+                
+                # 秋老虎加分
+                tiger_boost=15 if at else 0
+                
+                chanlun_signal=bs_boost+beichi_boost+zoushi_boost+tiger_boost
+                chanlun_signal=max(-100, min(100, chanlun_signal))
+                
+                return {
+                    'total':round(max(0,min(100,base_cl+chanlun_signal*0.3)),1),
+                    'trend':round(max(0,min(100,base_cl-10+chanlun_signal*0.2)),1),
+                    'momentum':round(max(0,min(100,base_cl+bs_boost*0.5+tiger_boost*0.3)),1),
+                    'volatility':round(max(0,min(100,base_cl-20+abs(chanlun_signal)*0.2)),1),
+                    'volume':round(max(0,min(100,50+tiger_boost*0.3)),1),
+                    'chanlun_signal':chanlun_signal,
+                }
+        except Exception:
+            pass  # DB查询失败则fallback到代理算法
+    
+    closes=[float(r['close']) for r in rows]
+    highs=[float(r['high']) for r in rows]
+    lows=[float(r['low']) for r in rows]
+    vols=[float(r.get('vol',0) or 0) for r in rows]
+    n=len(closes)
+
+    if n<120:
+        return {'total':50,'trend':50,'momentum':50,'volatility':50,'volume':50,'chanlun_signal':0}
+
+    close=closes[-1]
+
+    # ── 趋势(40%) ──
+    ma5=sma(closes,5); ma10=sma(closes,10); ma20=sma(closes,20)
+    ma60=sma(closes,60); ma120=sma(closes,120)
+
+    tr=0
+    if ma5>ma10: tr+=8
+    if ma5>ma20: tr+=7
+    if ma10>ma20: tr+=10
+    if ma20>ma60: tr+=10
+    if ma20>ma120: tr+=5
+    if close>ma5: tr+=5
+    if close>ma20: tr+=5
+    old_ma20=sma(closes[:-20],20) if n>80 else ma20
+    slope20=(ma20-old_ma20)/old_ma20 if old_ma20>0 else 0
+    tr+=max(0,min(25,(slope20+0.05)*250))
+    yh=max(closes[-250:]) if n>=250 else max(closes)
+    yl=min(closes[-250:]) if n>=250 else min(closes)
+    if yh>yl: tr+=(close-yl)/(yh-yl)*25
+    trend_score=round(max(0,min(100,tr)),1)
+
+    # ── 动量(35%) ──
+    r5=roc(closes,5); r10=roc(closes,10); r20=roc(closes,20); r14=rsi(closes,14)
+    mo=0
+    mo+=max(0,min(25,12.5+r5*50))
+    mo+=max(0,min(20,10+r10*30))
+    mo+=max(0,min(15,7.5+r20*20))
+    mo+=max(0,min(20,r14*0.2))
+    acc=r5-r20
+    if acc>0.02: mo+=10
+    elif acc>0: mo+=5
+    if n>=6:
+        up_vol=sum(1 for i in range(-5,0) if closes[i]>closes[i-1] and vols[i]>vols[i-1])
+        mo+=up_vol*2
+    momentum_score=round(max(0,min(100,mo)),1)
+
+    # ── 波动(15%, 反转版) — 连续函数+滚动标准化 ──
+    vol20=stddev(closes,20); vol60=stddev(closes,60)
+    daily_vol=vol20/close if close>0 else 0.02
+    # 波动率Z-score（相对自身60日历史的位置）
+    vol_zscore = 0
+    if vol60>0 and n>=60:
+        vol_mean = sum(stddev(closes[i-20:i],20)/close for i in range(-60,0) if len(closes[i-20:i])==20) / 60
+        vol_std = (sum((stddev(closes[i-20:i],20)/close - vol_mean)**2 for i in range(-60,0) if len(closes[i-20:i])==20) / 60)**0.5
+        if vol_std > 0:
+            vol_zscore = (daily_vol - vol_mean) / vol_std
+    # 连续映射: 低波动=高分(低波异象), 高波动=低分
+    vl = 50 - vol_zscore * 8  # 每1个标准差±8分
+    vl = max(10, min(90, vl))
+    # 滚动相对位置修正
+    if vol60>0:
+        vr=vol20/vol60
+        if vr<0.7: vl+=8
+        elif vr<0.85: vl+=4
+        elif vr>1.5: vl-=8
+        elif vr>1.2: vl-=4
+    if n>=20:
+        h20=max(closes[-20:]); mdd=(h20-close)/h20
+        if mdd>0.15: vl+=6
+        elif mdd>0.10: vl+=3
+    volatility_score=round(max(10,min(90,vl)),1)
+
+    # ── 量能(10%) ──
+    v20m=sma(vols,20); v60m=sma(vols,60)
+    vr_day=vols[-1]/v20m if v20m>0 else 1
+    vo=50
+    if v60m>0:
+        vt=v20m/v60m
+        if vt>1.3: vo-=8
+        elif vt>1.1: vo-=3
+        elif vt<0.7: vo+=5
+        elif vt<0.9: vo+=3
+    if vr_day>2.0: vo-=10
+    elif vr_day>1.5: vo-=5
+    elif 0.7<=vr_day<=1.3: vo+=3
+    elif vr_day<0.5: vo+=5
+    if n>=6:
+        dn_vol=sum(1 for i in range(-5,0) if closes[i]<closes[i-1] and vols[i]>vols[i-1])
+        vo-=dn_vol*3
+    volume_score=round(max(0,min(100,vo)),1)
+
+    # ── 缠论代理: 多周期背离检测 ──
+    chanlun_signal=0  # -100~+100: 负=超跌反弹窗口, 正=趋势延续
+
+    # MACD金叉/死叉 (12/26/9)
+    ema12=sma(closes,12); ema26=sma(closes,26)
+    # 简化: 判断MACD柱状图趋势
+    if n>=35:
+        old_ema12=sma(closes[-9:-1],12) if n>=38 else ema12
+        if ema12>ema26 and old_ema12<=sma(closes[-9:-1],26) if n>=38 else False:
+            chanlun_signal+=15  # 金叉
+
+    # RSI背离: 价格创新高但RSI未创新高=顶背离
+    if n>=40:
+        h20_p=max(closes[-30:-10]); r20_p=rsi(closes[-30:-10],14)
+        h20_n=max(closes[-10:]); r20_n=rsi(closes[-10:],14)
+        if h20_n>h20_p and r20_n<r20_p-5: chanlun_signal-=20  # 顶背离
+        l20_p=min(closes[-30:-10]); r20_p2=rsi(closes[-30:-10],14)
+        l20_n=min(closes[-10:]); r20_n2=rsi(closes[-10:],14)
+        if l20_n<l20_p and r20_n2>r20_p2+5: chanlun_signal+=20  # 底背离
+
+    # MA乖离: 价格远离MA20=超跌/超涨
+    if close>0 and n>=20:
+        ma20_dev=(close-ma20)/ma20
+        if ma20_dev<-0.1: chanlun_signal+=15  # 深度超跌
+        elif ma20_dev<-0.05: chanlun_signal+=8
+        elif ma20_dev>0.1: chanlun_signal-=10  # 追高危险
+
+    # 连续K线方向
+    if n>=5:
+        cons_up=sum(1 for i in range(-4,0) if closes[i]>closes[i-1])
+        cons_dn=sum(1 for i in range(-4,0) if closes[i]<closes[i-1])
+        if cons_up>=4: chanlun_signal+=10
+        elif cons_dn>=4: chanlun_signal-=5
+
+    chanlun_signal=max(-100,min(100,chanlun_signal))
+
+    # 合成
+    total = trend_score*0.40 + momentum_score*0.35 + volatility_score*0.15 + volume_score*0.10
+    # 缠论信号修正: ±15分
+    total += chanlun_signal * 0.15
+
+    return {
+        'total':round(max(0,min(100,total)),1),
+        'trend':trend_score,'momentum':momentum_score,
+        'volatility':volatility_score,'volume':volume_score,
+        'chanlun_signal':chanlun_signal
+    }
+
+# ═══ 优化3: 板块特化权重 ═══
+BLOCK_WEIGHTS = {
+    # 科技/AI类: 趋势+缠论权重大
+    '半导体': {'trend':0.45,'momentum':0.30,'volatility':0.15,'volume':0.10},
+    '元器件': {'trend':0.40,'momentum':0.30,'volatility':0.15,'volume':0.15},
+    '通信设备': {'trend':0.40,'momentum':0.35,'volatility':0.10,'volume':0.15},
+    'IT设备': {'trend':0.45,'momentum':0.30,'volatility':0.10,'volume':0.15},
+    '软件服务': {'trend':0.35,'momentum':0.40,'volatility':0.10,'volume':0.15},
+    # 消费类: 动量大
+    '家用电器': {'trend':0.30,'momentum':0.40,'volatility':0.15,'volume':0.15},
+    '中成药': {'trend':0.30,'momentum':0.35,'volatility':0.15,'volume':0.20},
+    '化学制药': {'trend':0.30,'momentum':0.35,'volatility':0.15,'volume':0.20},
+    '乳制品': {'trend':0.30,'momentum':0.40,'volatility':0.15,'volume':0.15},
+    '批发业': {'trend':0.30,'momentum':0.35,'volatility':0.15,'volume':0.20},
+    # 周期类: 均值回归权重大(波动因子上调)
+    '化工原料': {'trend':0.30,'momentum':0.30,'volatility':0.20,'volume':0.20},
+    '电气设备': {'trend':0.35,'momentum':0.30,'volatility':0.20,'volume':0.15},
+    '专用机械': {'trend':0.30,'momentum':0.30,'volatility':0.20,'volume':0.20},
+    '玻璃': {'trend':0.25,'momentum':0.30,'volatility':0.25,'volume':0.20},
+    '普钢': {'trend':0.25,'momentum':0.25,'volatility':0.25,'volume':0.25},
+    '化工机械': {'trend':0.30,'momentum':0.30,'volatility':0.20,'volume':0.20},
+    '水力发电': {'trend':0.30,'momentum':0.25,'volatility':0.20,'volume':0.25},
+    '火力发电': {'trend':0.30,'momentum':0.30,'volatility':0.20,'volume':0.20},
+    '小金属': {'trend':0.25,'momentum':0.30,'volatility':0.25,'volume':0.20},
+}
+

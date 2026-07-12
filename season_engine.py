@@ -13,7 +13,7 @@ v2.1 升级:
 输出：season + confidence + regime + scoring_strategy + rule_chain
 
 设计者: May (首席模型设计师)
-数据源: Tushare Pro → stock_db.daily_kline
+数据源: Tushare Pro → stock_db_v2.daily_kline
 """
 
 import os

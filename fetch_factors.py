@@ -29,7 +29,7 @@ def get_mysql_pass():
             return re.search(r'password\s*=\s*(\S+)', f.read()).group(1)
 
 def get_stock_conn(pwd):
-    return pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='stock_db',charset='utf8mb4')
+    return pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='stock_db_v2',charset='utf8mb4')
 
 def get_config_conn(pwd):
     return pymysql.connect(host='127.0.0.1',port=3306,user='debian-sys-maint',password=pwd,database='openclaw_config',charset='utf8mb4')

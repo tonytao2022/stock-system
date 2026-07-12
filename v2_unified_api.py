@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""V2统一API服务 (完整版) — 数据源: stock_db (P6引擎)"""
+"""V2统一API服务 (完整版) — 数据源: stock_db_v2 (P6引擎)"""
 import sys, os, json, subprocess, re
 sys.path.insert(0, '/opt/stock-analyzer')
 from flask import Flask, jsonify, request
@@ -11,7 +11,7 @@ if not _pwd:
 
 def conn():
     return pymysql.connect(host='127.0.0.1', port=3306, user='debian-sys-maint',
-                           password=_pwd, database='stock_db', charset='utf8mb4')
+                           password=_pwd, database='stock_db_v2', charset='utf8mb4')
 
 app = Flask(__name__)
 app.config['JSON_AS_ASCII'] = False
@@ -162,9 +162,9 @@ def srotation():
 
 @app.route('/api/v2/health')
 def health():
-    return jsonify({"status":"ok","version":"v2-unified","database":"stock_db"})
+    return jsonify({"status":"ok","version":"v2-unified","database":"stock_db_v2"})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8891))
-    print(f"V2统一API :{port} 数据源: stock_db")
+    print(f"V2统一API :{port} 数据源: stock_db_v2")
     app.run(host='0.0.0.0', port=port, debug=False)
