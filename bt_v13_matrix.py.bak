@@ -1,0 +1,465 @@
+#!/usr/bin/env python3
+"""
+bt_v13_matrix.py — 情景化因子矩阵回测框架（MAY方案B 实施第二步）
+2026-07-13 by Main
+
+功能：
+1. 读取 alpha_factor_score 表中的候选因子日度评分
+2. 根据5情景配置组合 Alpha因子模块
+3. 情景化权重配置
+4. 回测比较：情景矩阵 vs 当前M1引擎
+
+情景配置（基于MAY方案B）：
+  S1 牛市:      base(0.70) + α052×0.15 + α122×0.08 + α093×0.07
+  S2 震荡暖:    base(0.70) + α062×0.15 + α001×0.08 + α052×0.07
+  S3 震荡(主):  base(0.70) + α169×0.10 + α013×0.08 + α052×0.07(+高仓位)
+  S4 震荡弱:    base(0.70) + α031×0.12 + α162×0.10 + α168×0.08
+  S5 弱市:      base(0.85) + α062×0.15（保守模式，少Alpha）
+
+注：base = trend×0.381 + struct×0.095 + momentum×0.190 + mf×0.190（归一化至0.70）
+"""
+
+import pymysql
+import numpy as np
+import pandas as pd
+import json
+from datetime import datetime, date, timedelta
+import sys
+import os
+import warnings
+warnings.filterwarnings('ignore')
+
+# ==================== 配置 ====================
+MYSQL_PASS = None
+
+SCENARIO_CONFIG = {
+    'summer': {  # 牛市
+        'name': 'S1 牛市',
+        'buy_threshold': 68,
+        'stop_loss': 0.08,
+        'position_base': 0.50,  # 总仓位上限
+        'per_stock': 0.30,
+        'cooldown': 0,
+        'alpha_factors': {'alpha052': 0.15, 'alpha122': 0.08, 'alpha093': 0.07},
+        'alpha_total': 0.30,
+        'base_weight': 0.70,
+    },
+    'chaos_spring': {  # 震荡暖
+        'name': 'S2 震荡暖',
+        'buy_threshold': 70,
+        'stop_loss': 0.08,
+        'position_base': 0.40,
+        'per_stock': 0.25,
+        'cooldown': 0,
+        'alpha_factors': {'alpha062': 0.15, 'alpha001': 0.08, 'alpha052': 0.07},
+        'alpha_total': 0.30,
+        'base_weight': 0.70,
+    },
+    'spring': {
+        'name': 'S2 震荡暖(spring)',
+        'buy_threshold': 70,
+        'stop_loss': 0.07,
+        'position_base': 0.40,
+        'per_stock': 0.25,
+        'cooldown': 0,
+        'alpha_factors': {'alpha062': 0.12, 'alpha001': 0.10, 'alpha052': 0.08},
+        'alpha_total': 0.30,
+        'base_weight': 0.70,
+    },
+    'chaos': {  # 震荡（主力）
+        'name': 'S3 震荡',
+        'buy_threshold': 72,
+        'stop_loss': 0.08,
+        'position_base': 0.35,
+        'per_stock': 0.20,
+        'cooldown': 3,
+        'alpha_factors': {'alpha169': 0.10, 'alpha013': 0.08, 'alpha052': 0.07},
+        'alpha_total': 0.25,
+        'base_weight': 0.75,
+    },
+    'chaos_autumn': {  # 震荡弱
+        'name': 'S4 震荡弱',
+        'buy_threshold': 72,
+        'stop_loss': 0.06,
+        'position_base': 0.20,
+        'per_stock': 0.12,
+        'cooldown': 5,
+        'alpha_factors': {'alpha031': 0.12, 'alpha162': 0.10, 'alpha168': 0.08},
+        'alpha_total': 0.30,
+        'base_weight': 0.70,
+    },
+    'weak_autumn': {  # 弱秋
+        'name': 'S5 弱市(weak_autumn)',
+        'buy_threshold': 75,
+        'stop_loss': 0.05,
+        'position_base': 0.15,
+        'per_stock': 0.08,
+        'cooldown': 7,
+        'alpha_factors': {'alpha062': 0.15},
+        'alpha_total': 0.15,
+        'base_weight': 0.85,
+    },
+    'autumn': {  # 弱市
+        'name': 'S5 弱市(autumn)',
+        'buy_threshold': 78,
+        'stop_loss': 0.05,
+        'position_base': 0.10,
+        'per_stock': 0.05,
+        'cooldown': 10,
+        'alpha_factors': {'alpha062': 0.15},
+        'alpha_total': 0.15,
+        'base_weight': 0.85,
+    },
+    'winter': {  # 极端
+        'name': 'S5 弱市(winter)',
+        'buy_threshold': 85,
+        'stop_loss': 0.03,
+        'position_base': 0.05,
+        'per_stock': 0.03,
+        'cooldown': 15,
+        'alpha_factors': {},
+        'alpha_total': 0.00,
+        'base_weight': 1.00,
+    },
+}
+
+
+# ==================== 数据库 ====================
+
+def get_mysql_pass():
+    global MYSQL_PASS
+    if MYSQL_PASS: return MYSQL_PASS
+    try:
+        with open('/etc/mysql/debian.cnf') as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith('password'):
+                    MYSQL_PASS = line.split('=')[1].strip()
+                    return MYSQL_PASS
+    except: pass
+    MYSQL_PASS = 'iXve1rVBXfdA4tL9'
+    return MYSQL_PASS
+
+def get_db():
+    return pymysql.connect(
+        host='localhost', user='debian-sys-maint', password=get_mysql_pass(),
+        database='stock_db_v2', charset='utf8mb4',
+        cursorclass=pymysql.cursors.DictCursor, connect_timeout=10, read_timeout=120
+    )
+
+
+# ==================== 情景判定 ====================
+
+_SEASON_CACHE = {}
+
+def get_season_cache(db):
+    if _SEASON_CACHE:
+        return _SEASON_CACHE
+    with db.cursor() as c:
+        c.execute("""
+            SELECT trade_date, season, confidence, regime
+            FROM season_state
+            WHERE trade_date >= '2023-01-01'
+            ORDER BY trade_date
+        """)
+        for r in c.fetchall():
+            _SEASON_CACHE[str(r['trade_date'])] = {
+                'season': r['season'],
+                'confidence': float(r['confidence'] or 0.5),
+                'regime': r['regime'],
+            }
+    return _SEASON_CACHE
+
+
+def get_scenario(trade_date, season_cache):
+    """获取交易日的场景配置"""
+    key = str(trade_date)
+    if key not in season_cache:
+        return None, SCENARIO_CONFIG['chaos']  # 默认震荡
+    season = season_cache[key]['season']
+    conf = season_cache[key]['confidence']
+    
+    if season in SCENARIO_CONFIG:
+        return season, SCENARIO_CONFIG[season]
+    
+    # 季节映射（如果season_state用了不同命名）
+    mapping = {
+        'summer': 'summer',
+        'spring': 'spring',
+        'weak_spring': 'spring',
+        'chaos_spring': 'chaos_spring',
+        'chaos': 'chaos',
+        'chaos_autumn': 'chaos_autumn',
+        'weak_autumn': 'weak_autumn',
+        'autumn': 'autumn',
+        'winter': 'winter',
+    }
+    mapped = mapping.get(season, 'chaos')
+    return season, SCENARIO_CONFIG[mapped]
+
+
+# ==================== 计算综合评分 ====================
+
+def load_base_scores(db, trade_date, stock_codes):
+    """加载当日的基础引擎评分（alpha因子除外）"""
+    if not stock_codes:
+        return {}
+    
+    # 从 strategy_signal 表读取 composite_score
+    # 这是当前M1引擎产出的评分，但包含已原有的alpha062
+    # 我们需要 base score = trend×0.381 + struct×0.095 + momentum×0.190 + mf×0.190
+    # 从 r JSON 里提取各子维度
+    results = {}
+    chunk_size = 100
+    for i in range(0, len(stock_codes), chunk_size):
+        chunk = stock_codes[i:i+chunk_size]
+        placeholders = ','.join(['%s'] * len(chunk))
+        with db.cursor() as c:
+            c.execute(f"""
+                SELECT ts_code, trend_score, structure_score, momentum_score,
+                       mf_score, calibrated_score
+                FROM strategy_signal
+                WHERE trade_date = %s AND ts_code IN ({placeholders})
+            """, [trade_date] + chunk)
+            for row in c.fetchall():
+                ts = row['ts_code']
+                
+                trend = float(row['trend_score'] or 50)
+                struct = float(row['structure_score'] or 50)
+                momentum = float(row['momentum_score'] or 50)
+                mf = float(row['mf_score'] or 50)
+                
+                # base score (不含alpha)
+                base = (trend * 0.381 + struct * 0.095 + momentum * 0.190 + mf * 0.190)
+                results[ts] = {
+                    'base_score': round(base, 1),
+                    'calibrated': float(row['calibrated_score'] or 50),
+                    'trend': trend, 'struct': struct,
+                    'momentum': momentum, 'mf': mf,
+                }
+    return results
+
+
+def load_alpha_scores(db, trade_date, stock_codes):
+    """加载候选Alpha因子的日度评分"""
+    if not stock_codes:
+        return {}
+    results = {ts: {} for ts in stock_codes}
+    chunk_size = 200
+    for i in range(0, len(stock_codes), chunk_size):
+        chunk = stock_codes[i:i+chunk_size]
+        placeholders = ','.join(['%s'] * len(chunk))
+        with db.cursor() as c:
+            c.execute(f"""
+                SELECT ts_code, factor_name, factor_score
+                FROM alpha_factor_score
+                WHERE trade_date = %s AND ts_code IN ({placeholders})
+            """, [trade_date] + chunk)
+            for r in c.fetchall():
+                if r['ts_code'] in results:
+                    results[r['ts_code']][r['factor_name']] = float(r['factor_score'])
+    return results
+
+
+def calc_matrix_score(base_scores, alpha_scores, scenario_config):
+    """
+    根据情景配置计算矩阵综合评分
+    
+    blended = base * base_weight + Σ(alpha_i * w_i)
+    归一化到 [0,100]
+    """
+    results = {}
+    
+    base_weight = scenario_config['base_weight']
+    alpha_total = scenario_config['alpha_total']
+    alpha_factors = scenario_config['alpha_factors']
+    
+    for ts_code, base_data in base_scores.items():
+        base = base_data['base_score']
+        alpha_sum = 0
+        
+        for factor_name, w in alpha_factors.items():
+            a_score = alpha_scores.get(ts_code, {}).get(factor_name, 50)
+            alpha_sum += a_score * w
+        
+        # 归一化
+        total_weight = base_weight + alpha_total
+        blended = (base * base_weight + alpha_sum) / total_weight
+        
+        results[ts_code] = {
+            'blended': round(blended, 1),
+            'base_score': round(base, 1),
+            'alpha_score': round(alpha_sum / alpha_total, 1) if alpha_total > 0 else 0,
+        }
+    
+    return results
+
+
+# ==================== 回测 ====================
+
+def backtest_matrix(start_date='2023-01-01', end_date=None):
+    """执行情景化因子矩阵回测"""
+    db = get_db()
+    try:
+        # 1. 加载季节数据
+        season_cache = get_season_cache(db)
+        print(f"✅ 季节数据: {len(season_cache)} 天")
+        
+        # 2. 获取所有交易日（按季节分组统计）
+        dates = sorted(season_cache.keys())
+        if end_date:
+            dates = [d for d in dates if d <= end_date]
+        dates = [d for d in dates if d >= start_date]
+        
+        print(f"📅 回测日期范围: {dates[0]} ~ {dates[-1]} ({len(dates)} 天)")
+        
+        # 3. 获取回测股票池（监控池）
+        with db.cursor() as c:
+            c.execute("SELECT ts_code, name FROM watch_pool")
+            pool = {r['ts_code']: r['name'] for r in c.fetchall()}
+        print(f"📊 股票池: {len(pool)} 只")
+        
+        # 统计各情景交易日
+        from collections import Counter
+        scenario_days = Counter()
+        for d in dates:
+            season, _ = get_scenario(d, season_cache)
+            if season:
+                scenario_days[season] += 1
+        print(f"📊 情景分布:")
+        for s, cnt in scenario_days.most_common():
+            print(f"  {SCENARIO_CONFIG.get(s, {}).get('name', s):20s}: {cnt} 天 ({cnt/len(dates)*100:.1f}%)")
+        
+        # 4. 简化回测：抽样交易日（计算所有日期的全量评分太耗时）
+        # 策略：每周五评估一次，每月第一个交易日调仓
+        # 这里采用简化版：每5个交易日采样一次评分
+        
+        sample_dates = dates[::5]  # 每周采一个交易日
+        
+        print(f"\n🔄 采样计算: {len(sample_dates)} 个评估日")
+        
+        # 按情景分组统计矩阵评分 vs M1评分
+        stats_by_scenario = {}
+        
+        for i, d in enumerate(sample_dates):
+            season, config = get_scenario(d, season_cache)
+            if not season:
+                continue
+            
+            # 获取当日有评分数据的股票
+            stock_codes = list(pool.keys())
+            
+            # 加载数据
+            base_scores = load_base_scores(db, d, stock_codes)
+            alpha_scores = load_alpha_scores(db, d, stock_codes)
+            
+            if not base_scores:
+                continue
+            
+            # 计算矩阵评分
+            matrix_scores = calc_matrix_score(base_scores, alpha_scores, config)
+            
+            # 统计
+            matrix_vals = [v['blended'] for v in matrix_scores.values()]
+            base_vals = [v['base_score'] for v in base_scores.values()]
+            
+            if season not in stats_by_scenario:
+                stats_by_scenario[season] = {
+                    'name': config['name'],
+                    'buy_threshold': config['buy_threshold'],
+                    'days': 0,
+                    'matrix_above_threshold': 0,
+                    'base_above_threshold': 0,
+                    'matrix_scores': [],
+                    'base_scores': [],
+                    'matrix_top5_avg': [],
+                    'base_top5_avg': [],
+                }
+            
+            s = stats_by_scenario[season]
+            s['days'] += 1
+            s['matrix_scores'].extend(matrix_vals)
+            s['base_scores'].extend(base_vals)
+            
+            # 高于买入线的数量
+            m_above = sum(1 for v in matrix_vals if v >= config['buy_threshold'])
+            b_above = sum(1 for v in base_vals if v >= config['buy_threshold'])
+            s['matrix_above_threshold'] += m_above
+            s['base_above_threshold'] += b_above
+            
+            # Top5平均分
+            s['matrix_top5_avg'].append(np.mean(sorted(matrix_vals, reverse=True)[:5]) if matrix_vals else 0)
+            s['base_top5_avg'].append(np.mean(sorted(base_vals, reverse=True)[:5]) if base_vals else 0)
+            
+            if (i + 1) % 50 == 0:
+                print(f"  进度 {i+1}/{len(sample_dates)}...")
+        
+        # 5. 输出结果
+        print(f"\n{'='*70}")
+        print(f"📊 情景化因子矩阵回测结果")
+        print(f"{'='*70}")
+        
+        for season, s in sorted(stats_by_scenario.items()):
+            if s['days'] == 0:
+                continue
+            m_avg = np.mean(s['matrix_scores']) if s['matrix_scores'] else 0
+            b_avg = np.mean(s['base_scores']) if s['base_scores'] else 0
+            m_top5 = np.mean(s['matrix_top5_avg']) if s['matrix_top5_avg'] else 0
+            b_top5 = np.mean(s['base_top5_avg']) if s['base_top5_avg'] else 0
+            
+            print(f"\n{'─'*70}")
+            print(f"  {s['name']} ({season}) — 买入线 {s['buy_threshold']} | {s['days']} 天")
+            print(f"{'─'*70}")
+            print(f"  {'指标':20s} {'情景矩阵':>10s} {'M1基础':>10s} {'差值':>10s}")
+            print(f"  {'综合均分':20s} {m_avg:>10.2f} {b_avg:>10.2f} {m_avg-b_avg:>+10.2f}")
+            print(f"  {'Top5均分':20s} {m_top5:>10.2f} {b_top5:>10.2f} {m_top5-b_top5:>+10.2f}")
+            print(f"  {'合格候选/天':20s} {s['matrix_above_threshold']/max(s['days'],1):>10.1f} {s['base_above_threshold']/max(s['days'],1):>10.1f} {(s['matrix_above_threshold']-s['base_above_threshold'])/max(s['days'],1):>+10.1f}")
+        
+        # 6. 整体汇总
+        print(f"\n{'='*70}")
+        print(f"📈 整体汇总")
+        print(f"{'='*70}")
+        
+        total_days = sum(s['days'] for s in stats_by_scenario.values())
+        total_m_scores = []
+        total_b_scores = []
+        
+        for s in stats_by_scenario.values():
+            total_m_scores.extend(s['matrix_scores'])
+            total_b_scores.extend(s['base_scores'])
+        
+        print(f"  回测天数: {total_days}")
+        print(f"  样本总数: {len(total_m_scores)}")
+        print(f"  情景矩阵均分: {np.mean(total_m_scores):.2f}")
+        print(f"  M1基础均分:   {np.mean(total_b_scores):.2f}")
+        print(f"  增益: {np.mean(total_m_scores) - np.mean(total_b_scores):+.2f}")
+        
+        # 区分度分析
+        print(f"\n  📊 区分度分析（高于买入线的比例差异）:")
+        for season, s in sorted(stats_by_scenario.items()):
+            if s['days'] == 0:
+                continue
+            config = SCENARIO_CONFIG.get(season, {})
+            bt = config.get('buy_threshold', 70)
+            m_pct = s['matrix_above_threshold'] / max(len(s['matrix_scores']), 1) * 100
+            b_pct = s['base_above_threshold'] / max(len(s['base_scores']), 1) * 100
+            print(f"    {s['name']:18s}: 矩阵{m_pct:5.1f}% vs M1{b_pct:5.1f}% {(m_pct-b_pct):+5.1f}%")
+        
+    finally:
+        db.close()
+
+
+# ==================== 主入口 ====================
+
+def main():
+    print(f"{'='*60}")
+    print(f"bt_v13_matrix.py — 情景化因子矩阵回测")
+    print(f"时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"{'='*60}")
+    
+    # 执行回测
+    backtest_matrix(start_date='2023-07-01', end_date='2026-07-10')
+
+
+if __name__ == '__main__':
+    main()
